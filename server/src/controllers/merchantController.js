@@ -61,6 +61,7 @@ export async function createQueue(req, res, next) {
 
     const queueNumber = await generateQueueNumber(merchant._id);
     const orderId = `ANT-${merchant.slug}-${Date.now()}-${nanoid(8)}`;
+    const isPaidService = service.price > 0;
 
     const queuesAhead = await Queue.countDocuments({
       merchantId: merchant._id,
@@ -68,15 +69,15 @@ export async function createQueue(req, res, next) {
     });
 
     const estimatedMinutes = calculateEstimatedTime(queuesAhead, service.duration);
-    const estimatedStartTime = new Date(Date.now() + estimatedMinutes * 60000);
+    const estimatedStartTime = isPaidService ? null : new Date(Date.now() + estimatedMinutes * 60000);
 
     let snapToken = null;
-    if (service.price > 0) {
+    if (isPaidService) {
       try {
         const transaction = await createTransaction(orderId, service.price, {
           name: customerName,
           phone: customerPhone,
-        });
+        }, merchant);
         snapToken = transaction.token;
       } catch (midtransErr) {
         console.error('Midtrans error:', midtransErr.message);
@@ -90,9 +91,10 @@ export async function createQueue(req, res, next) {
       queueNumber,
       customerName: customerName.trim(),
       customerPhone: customerPhone || '',
-      paymentStatus: service.price > 0 ? 'pending' : 'paid',
+      status: isPaidService ? 'pending_payment' : 'waiting',
+      paymentStatus: isPaidService ? 'pending' : 'paid',
       midtransOrderId: orderId,
-      estimatedStartTime: service.price > 0 ? null : estimatedStartTime,
+      estimatedStartTime,
     });
 
     return success(res, {
@@ -107,7 +109,7 @@ export async function createQueue(req, res, next) {
       },
       snapToken,
       orderId,
-      paymentRequired: service.price > 0,
+      paymentRequired: isPaidService,
       amount: service.price,
     }, 201);
   } catch (err) {
@@ -122,10 +124,10 @@ export async function getLiveQueue(req, res, next) {
       return error(res, 'Merchant tidak ditemukan', 404);
     }
 
-    const current = await Queue.findOne({ merchantId: merchant._id, status: 'serving' })
+    const current = await Queue.findOne({ merchantId: merchant._id, status: 'serving', paymentStatus: 'paid' })
       .populate('serviceId', 'name duration');
 
-    const waiting = await Queue.find({ merchantId: merchant._id, status: 'waiting' })
+    const waiting = await Queue.find({ merchantId: merchant._id, status: 'waiting', paymentStatus: 'paid' })
       .sort({ createdAt: 1 })
       .populate('serviceId', 'name duration');
 

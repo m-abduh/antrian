@@ -31,10 +31,10 @@ const queueSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ['waiting', 'called', 'serving', 'done', 'skipped'],
+      values: ['pending_payment', 'waiting', 'called', 'serving', 'done', 'skipped'],
       message: 'Status antrean tidak valid',
     },
-    default: 'waiting',
+    default: 'pending_payment',
   },
   paymentStatus: {
     type: String,

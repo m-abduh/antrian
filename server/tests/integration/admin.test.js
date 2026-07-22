@@ -1,28 +1,16 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/globals';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import express from 'express';
 import request from 'supertest';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import Merchant from '../../src/models/Merchant.js';
-import Service from '../../src/models/Service.js';
-import Queue from '../../src/models/Queue.js';
-import Admin from '../../src/models/Admin.js';
 
 let mongoServer;
 let app;
 let merchant;
 let admin;
 let token;
-
-async function setupApp() {
-  jest.resetModules();
-  const adminRoutes = (await import('../../src/routes/admin.js')).default;
-  app = express();
-  app.use(express.json());
-  app.use('/api/admin', adminRoutes);
-}
+let Merchant, Service, Queue, Admin, adminRoutes;
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
@@ -33,6 +21,17 @@ beforeAll(async () => {
   process.env.NODE_ENV = 'test';
 
   await mongoose.connect(mongoServer.getUri());
+
+  const MerchantMod = await import('../../src/models/Merchant.js');
+  const ServiceMod = await import('../../src/models/Service.js');
+  const QueueMod = await import('../../src/models/Queue.js');
+  const AdminMod = await import('../../src/models/Admin.js');
+  const adminRoutesMod = await import('../../src/routes/admin.js');
+  Merchant = MerchantMod.default;
+  Service = ServiceMod.default;
+  Queue = QueueMod.default;
+  Admin = AdminMod.default;
+  adminRoutes = adminRoutesMod.default;
 });
 
 afterAll(async () => {
@@ -47,17 +46,22 @@ afterEach(async () => {
   }
 });
 
+function createApp() {
+  app = express();
+  app.use(express.json());
+  app.use('/api/admin', adminRoutes);
+}
+
 describe('POST /api/admin/login', () => {
   beforeEach(async () => {
     merchant = await Merchant.create({ name: 'Test', slug: 'test' });
-    const hashedPassword = await bcrypt.hash('password123!', 4);
     admin = await Admin.create({
       merchantId: merchant._id,
       name: 'Admin',
       email: 'admin@test.com',
-      password: hashedPassword,
+      password: 'password123!',
     });
-    await setupApp();
+    createApp();
   });
 
   it('should login with valid credentials', async () => {
@@ -107,28 +111,27 @@ describe('POST /api/admin/login', () => {
 describe('Protected Admin Routes', () => {
   beforeEach(async () => {
     merchant = await Merchant.create({ name: 'Test', slug: 'test' });
-    const hashedPassword = await bcrypt.hash('password123!', 4);
     admin = await Admin.create({
       merchantId: merchant._id,
       name: 'Admin',
       email: 'admin@test.com',
-      password: hashedPassword,
+      password: 'password123!',
     });
     token = jwt.sign(
       { id: admin._id, merchantId: merchant._id, role: 'admin' },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
-    await setupApp();
+    createApp();
   });
 
   describe('GET /api/admin/stats', () => {
     it('should return stats for authenticated admin', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
 
-      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'A', status: 'done' });
-      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A002', customerName: 'B', status: 'done' });
-      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A003', customerName: 'C', status: 'waiting' });
+      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'A', status: 'done', paymentStatus: 'paid' });
+      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A002', customerName: 'B', status: 'done', paymentStatus: 'paid' });
+      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A003', customerName: 'C', status: 'waiting', paymentStatus: 'paid' });
 
       const res = await request(app)
         .get('/api/admin/stats')
@@ -156,7 +159,7 @@ describe('Protected Admin Routes', () => {
   describe('PATCH /api/admin/queues/:id/status', () => {
     it('should call next queue', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
+      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting', paymentStatus: 'paid' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)
@@ -169,7 +172,7 @@ describe('Protected Admin Routes', () => {
 
     it('should skip a queue', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
+      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting', paymentStatus: 'paid' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)
@@ -182,7 +185,7 @@ describe('Protected Admin Routes', () => {
 
     it('should reject invalid action', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
+      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting', paymentStatus: 'paid' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)

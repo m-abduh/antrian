@@ -51,11 +51,12 @@ describe('Merchant Model', () => {
     })).rejects.toThrow();
   });
 
-  it('should reject slug with uppercase', async () => {
-    await expect(Merchant.create({
+  it('should lowercase slug automatically', async () => {
+    const merchant = await Merchant.create({
       name: 'Test',
       slug: 'Test-Slug',
-    })).rejects.toThrow();
+    });
+    expect(merchant.slug).toBe('test-slug');
   });
 
   it('should set isActive default to true', async () => {

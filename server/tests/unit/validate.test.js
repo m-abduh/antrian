@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import { validate, rules } from '../../src/middleware/validate.js';
+import { calculateEstimatedTime } from '../../src/utils/queueNumber.js';
 
 describe('Validation Rules', () => {
   describe('required', () => {

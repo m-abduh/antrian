@@ -2,12 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cron from 'node-cron';
 import { connectDB } from './config/db.js';
 import env from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import merchantRoutes from './routes/merchant.js';
 import adminRoutes from './routes/admin.js';
 import midtransRoutes from './routes/midtrans.js';
+import { cleanupExpiredQueues } from './cron/cleanupQueue.js';
 
 const app = express();
 
@@ -59,8 +61,14 @@ app.use(errorHandler);
 
 async function start() {
   await connectDB();
+
+  cron.schedule('*/5 * * * *', () => {
+    cleanupExpiredQueues();
+  });
+
   app.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+    console.log('Cron job: cleanup expired queues every 5 minutes');
   });
 }
 

@@ -2,13 +2,24 @@ import crypto from 'crypto';
 import midtransClient from 'midtrans-client';
 import env from '../config/env.js';
 
-const snap = new midtransClient.Snap({
-  isProduction: env.MIDTRANS_IS_PRODUCTION,
-  serverKey: env.MIDTRANS_SERVER_KEY,
-  clientKey: env.MIDTRANS_CLIENT_KEY,
-});
+function createSnapInstance(merchant) {
+  if (merchant && merchant.midtrans && merchant.midtrans.serverKey) {
+    return new midtransClient.Snap({
+      isProduction: env.MIDTRANS_IS_PRODUCTION,
+      serverKey: merchant.midtrans.serverKey,
+      clientKey: merchant.midtrans.clientKey,
+    });
+  }
+  return new midtransClient.Snap({
+    isProduction: env.MIDTRANS_IS_PRODUCTION,
+    serverKey: env.MIDTRANS_SERVER_KEY,
+    clientKey: env.MIDTRANS_CLIENT_KEY,
+  });
+}
 
-export async function createTransaction(orderId, amount, customer) {
+export async function createTransaction(orderId, amount, customer, merchant) {
+  const snap = createSnapInstance(merchant);
+
   const parameter = {
     transaction_details: {
       order_id: orderId,
@@ -31,10 +42,10 @@ export async function createTransaction(orderId, amount, customer) {
   return snap.createTransaction(parameter);
 }
 
-export function verifyNotification(reqBody) {
+export function verifyNotification(reqBody, merchantServerKey) {
   const { order_id, status_code, gross_amount, signature_key, transaction_status } = reqBody;
 
-  const serverKey = env.MIDTRANS_SERVER_KEY;
+  const serverKey = merchantServerKey || env.MIDTRANS_SERVER_KEY;
   const computedSignature = crypto
     .createHash('sha512')
     .update(order_id + status_code + gross_amount + serverKey)

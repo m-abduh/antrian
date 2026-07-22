@@ -171,6 +171,7 @@ export async function getStats(req, res, next) {
     const waitingNow = await Queue.countDocuments({
       merchantId: req.admin.merchantId,
       status: { $in: ['waiting', 'called'] },
+      paymentStatus: 'paid',
     });
 
     return success(res, {

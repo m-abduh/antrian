@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from '@jest/globals';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { generateQueueNumber, calculateEstimatedTime } from '../../src/utils/queueNumber.js';
 import Merchant from '../../src/models/Merchant.js';
 import Queue from '../../src/models/Queue.js';
+import Counter from '../../src/models/Counter.js';
 import Service from '../../src/models/Service.js';
 
 let mongoServer;
@@ -12,7 +13,6 @@ let merchant;
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   await mongoose.connect(mongoServer.getUri());
-  merchant = await Merchant.create({ name: 'Test', slug: 'test' });
 });
 
 afterAll(async () => {
@@ -20,8 +20,14 @@ afterAll(async () => {
   await mongoServer.stop();
 });
 
+beforeEach(async () => {
+  merchant = await Merchant.create({ name: 'Test', slug: `test-${Date.now()}` });
+});
+
 afterEach(async () => {
   await Queue.deleteMany({});
+  await Counter.deleteMany({});
+  await Merchant.deleteMany({});
 });
 
 describe('generateQueueNumber', () => {
@@ -31,23 +37,16 @@ describe('generateQueueNumber', () => {
   });
 
   it('should increment queue number', async () => {
-    await Queue.create({
-      merchantId: merchant._id,
-      serviceId: new mongoose.Types.ObjectId(),
-      queueNumber: 'A001',
-      customerName: 'Test',
-    });
+    await Counter.create({ merchantId: merchant._id, date: new Date().toISOString().slice(0, 10), seq: 1 });
     const num = await generateQueueNumber(merchant._id);
     expect(num).toBe('A002');
   });
 
   it('should reset daily', async () => {
-    await Queue.create({
+    await Counter.create({
       merchantId: merchant._id,
-      serviceId: new mongoose.Types.ObjectId(),
-      queueNumber: 'A010',
-      customerName: 'Test',
-      createdAt: new Date(Date.now() - 86400000),
+      date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+      seq: 10,
     });
     const num = await generateQueueNumber(merchant._id);
     expect(num).toBe('A001');

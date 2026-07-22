@@ -1,21 +1,31 @@
 import Queue from '../models/Queue.js';
+import Merchant from '../models/Merchant.js';
 import Service from '../models/Service.js';
 import { verifyNotification } from '../utils/midtrans.js';
-import { generateQueueNumber, calculateEstimatedTime } from '../utils/queueNumber.js';
+import { calculateEstimatedTime } from '../utils/queueNumber.js';
 
 export async function handleNotification(req, res, next) {
   try {
-    const result = verifyNotification(req.body);
-
-    if (!result.valid) {
-      return res.status(400).json({ error: 'Invalid signature' });
-    }
-
     const { order_id, transaction_id, transaction_status } = req.body;
 
     const queue = await Queue.findOne({ midtransOrderId: order_id });
     if (!queue) {
       return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const merchant = await Merchant.findById(queue.merchantId);
+    if (!merchant) {
+      return res.status(404).json({ error: 'Merchant not found' });
+    }
+
+    const serverKey = (merchant.midtrans && merchant.midtrans.serverKey)
+      ? merchant.midtrans.serverKey
+      : null;
+
+    const result = verifyNotification(req.body, serverKey);
+
+    if (!result.valid) {
+      return res.status(400).json({ error: 'Invalid signature' });
     }
 
     if (queue.paymentStatus === 'paid') {
@@ -24,6 +34,7 @@ export async function handleNotification(req, res, next) {
 
     if (transaction_status === 'settlement' || transaction_status === 'capture') {
       queue.paymentStatus = 'paid';
+      queue.status = 'waiting';
       queue.midtransTransactionId = transaction_id || '';
 
       const service = await Service.findById(queue.serviceId);
@@ -36,6 +47,7 @@ export async function handleNotification(req, res, next) {
       queue.estimatedStartTime = new Date(Date.now() + Math.max(1, estimatedMinutes) * 60000);
     } else if (transaction_status === 'expire' || transaction_status === 'deny' || transaction_status === 'cancel') {
       queue.paymentStatus = 'expired';
+      queue.status = 'skipped';
     }
 
     await queue.save();

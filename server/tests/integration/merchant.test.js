@@ -3,12 +3,10 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import express from 'express';
 import request from 'supertest';
-import Merchant from '../../src/models/Merchant.js';
-import Service from '../../src/models/Service.js';
-import Queue from '../../src/models/Queue.js';
 
 let mongoServer;
 let app;
+let Merchant, Service, Queue, merchantRoutes;
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
@@ -16,14 +14,39 @@ beforeAll(async () => {
   process.env.JWT_SECRET = 'test-secret-key-min-16-chars!!';
   process.env.MIDTRANS_SERVER_KEY = 'test-server-key';
   process.env.MIDTRANS_CLIENT_KEY = 'test-client-key';
+  process.env.MIDTRANS_IS_PRODUCTION = 'false';
   process.env.NODE_ENV = 'test';
 
   await mongoose.connect(mongoServer.getUri());
+
+  jest.unstable_mockModule('../../src/utils/midtrans.js', () => ({
+    createTransaction: jest.fn(() => Promise.resolve({ token: null })),
+    verifyNotification: jest.fn(() => ({ valid: true, paymentStatus: 'paid' })),
+  }));
+
+  const MerchantMod = await import('../../src/models/Merchant.js');
+  const ServiceMod = await import('../../src/models/Service.js');
+  const QueueMod = await import('../../src/models/Queue.js');
+  const merchantRoutesMod = await import('../../src/routes/merchant.js');
+  Merchant = MerchantMod.default;
+  Service = ServiceMod.default;
+  Queue = QueueMod.default;
+  merchantRoutes = merchantRoutesMod.default;
+});
+
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
+});
+
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany({});
+  }
 });
 
 beforeEach(async () => {
-  jest.resetModules();
-  const merchantRoutes = (await import('../../src/routes/merchant.js')).default;
   app = express();
   app.use(express.json());
   app.use('/api/merchant', merchantRoutes);
@@ -187,6 +210,7 @@ describe('GET /api/merchant/:slug/queue/live', () => {
       queueNumber: 'A001',
       customerName: 'Budi',
       status: 'serving',
+      paymentStatus: 'paid',
     });
     await Queue.create({
       merchantId: merchant._id,
@@ -194,6 +218,7 @@ describe('GET /api/merchant/:slug/queue/live', () => {
       queueNumber: 'A002',
       customerName: 'Ani',
       status: 'waiting',
+      paymentStatus: 'paid',
     });
     await Queue.create({
       merchantId: merchant._id,
@@ -201,6 +226,7 @@ describe('GET /api/merchant/:slug/queue/live', () => {
       queueNumber: 'A003',
       customerName: 'Citra',
       status: 'waiting',
+      paymentStatus: 'paid',
     });
 
     const res = await request(app).get('/api/merchant/test/queue/live');

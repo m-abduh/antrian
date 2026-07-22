@@ -1,9 +1,16 @@
 import { describe, it, expect, beforeAll } from '@jest/globals';
 import crypto from 'crypto';
-import { verifyNotification } from '../../src/utils/midtrans.js';
 
-beforeAll(() => {
+let verifyNotification;
+
+beforeAll(async () => {
+  process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
   process.env.MIDTRANS_SERVER_KEY = 'test-server-key';
+  process.env.MIDTRANS_CLIENT_KEY = 'test-client-key';
+  process.env.JWT_SECRET = 'test-secret-key-min-16-chars!!';
+  process.env.NODE_ENV = 'test';
+  const midtrans = await import('../../src/utils/midtrans.js');
+  verifyNotification = midtrans.verifyNotification;
 });
 
 describe('verifyNotification', () => {

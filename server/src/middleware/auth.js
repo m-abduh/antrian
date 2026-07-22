@@ -1,0 +1,55 @@
+import jwt from 'jsonwebtoken';
+import env from '../config/env.js';
+import Admin from '../models/Admin.js';
+
+export async function authenticate(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Akses ditolak. Token tidak ditemukan.' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Akses ditolak. Token tidak valid.' });
+    }
+
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+
+    const admin = await Admin.findById(decoded.id);
+    if (!admin) {
+      return res.status(401).json({ error: 'Akses ditolak. Admin tidak ditemukan.' });
+    }
+
+    req.admin = {
+      id: admin._id,
+      merchantId: admin.merchantId,
+      email: admin.email,
+      role: admin.role,
+    };
+
+    next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Sesi telah habis. Silakan login ulang.' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Token tidak valid.' });
+    }
+    return res.status(500).json({ error: 'Terjadi kesalahan autentikasi.' });
+  }
+}
+
+export function authorize(...roles) {
+  return (req, res, next) => {
+    if (!req.admin) {
+      return res.status(401).json({ error: 'Akses ditolak.' });
+    }
+    if (!roles.includes(req.admin.role)) {
+      return res.status(403).json({ error: 'Tidak memiliki izin.' });
+    }
+    next();
+  };
+}

@@ -1,0 +1,47 @@
+import Queue from '../models/Queue.js';
+import Service from '../models/Service.js';
+import { verifyNotification } from '../utils/midtrans.js';
+import { generateQueueNumber, calculateEstimatedTime } from '../utils/queueNumber.js';
+
+export async function handleNotification(req, res, next) {
+  try {
+    const result = verifyNotification(req.body);
+
+    if (!result.valid) {
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    const { order_id, transaction_id, transaction_status } = req.body;
+
+    const queue = await Queue.findOne({ midtransOrderId: order_id });
+    if (!queue) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (queue.paymentStatus === 'paid') {
+      return res.status(200).json({ message: 'Already processed' });
+    }
+
+    if (transaction_status === 'settlement' || transaction_status === 'capture') {
+      queue.paymentStatus = 'paid';
+      queue.midtransTransactionId = transaction_id || '';
+
+      const service = await Service.findById(queue.serviceId);
+      const queuesAhead = await Queue.countDocuments({
+        merchantId: queue.merchantId,
+        status: { $in: ['waiting', 'called'] },
+        _id: { $lt: queue._id },
+      });
+      const estimatedMinutes = calculateEstimatedTime(queuesAhead, service ? service.duration : 15);
+      queue.estimatedStartTime = new Date(Date.now() + Math.max(1, estimatedMinutes) * 60000);
+    } else if (transaction_status === 'expire' || transaction_status === 'deny' || transaction_status === 'cancel') {
+      queue.paymentStatus = 'expired';
+    }
+
+    await queue.save();
+
+    return res.status(200).json({ message: 'OK' });
+  } catch (err) {
+    next(err);
+  }
+}

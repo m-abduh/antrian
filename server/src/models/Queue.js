@@ -1,0 +1,61 @@
+import mongoose from 'mongoose';
+
+const queueSchema = new mongoose.Schema({
+  merchantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Merchant',
+    required: true,
+    index: true,
+  },
+  serviceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Service',
+    required: true,
+  },
+  queueNumber: {
+    type: String,
+    required: true,
+  },
+  customerName: {
+    type: String,
+    required: [true, 'Nama pelanggan wajib diisi'],
+    trim: true,
+    maxlength: [100, 'Nama maksimal 100 karakter'],
+  },
+  customerPhone: {
+    type: String,
+    trim: true,
+    default: '',
+    match: [/^\+?[0-9]{10,15}$/, 'Format nomor telepon tidak valid'],
+  },
+  status: {
+    type: String,
+    enum: {
+      values: ['waiting', 'called', 'serving', 'done', 'skipped'],
+      message: 'Status antrean tidak valid',
+    },
+    default: 'waiting',
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'expired'],
+    default: 'pending',
+  },
+  midtransOrderId: { type: String, default: '' },
+  midtransTransactionId: { type: String, default: '' },
+  rating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: null,
+  },
+  estimatedStartTime: { type: Date, default: null },
+  startedAt: { type: Date, default: null },
+  finishedAt: { type: Date, default: null },
+  createdAt: { type: Date, default: Date.now },
+});
+
+queueSchema.index({ merchantId: 1, status: 1, createdAt: -1 });
+queueSchema.index({ midtransOrderId: 1 });
+
+export default mongoose.model('Queue', queueSchema);

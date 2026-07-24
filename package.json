@@ -1,0 +1,17 @@
+{
+  "name": "antriin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n server,client,admin -c blue,green,yellow \"cd server && npm run dev\" \"cd client && npm run dev\" \"cd admin && npm run dev -- -p 3001\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev:admin": "cd admin && npm run dev -- -p 3001",
+    "build": "cd client && npm run build && cd ../admin && npm run build",
+    "test": "cd server && npm test",
+    "lint": "cd client && npm run lint && cd ../admin && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

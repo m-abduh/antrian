@@ -50,6 +50,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ account }) {
+      if (account?.provider === 'google' && account.id_token) {
+        const acct = account as any;
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: account.id_token }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            acct.adminToken = data.data.token;
+            acct.adminId = data.data.admin.id;
+            acct.adminMerchantId = data.data.admin.merchantId;
+            acct.adminRole = data.data.admin.role;
+          } else {
+            acct.adminError = data.error;
+          }
+        } catch {
+          acct.adminError = 'Gagal terhubung ke server';
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, account }) {
       if (user) {
         const u = user as any;
@@ -59,20 +83,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = u.accessToken;
       }
       if (account?.provider === 'google') {
-        console.log('[auth] Google account:', { provider: account.provider, id_token: account.id_token ? 'present' : 'missing', type: account.type });
-        if (account.id_token) {
-          token.googleIdToken = account.id_token;
+        delete token.adminError;
+        const acct = account as any;
+        if (acct.adminToken) {
+          token.accessToken = acct.adminToken;
+          token.id = acct.adminId;
+          token.merchantId = acct.adminMerchantId;
+          token.role = acct.adminRole;
+        }
+        if (acct.adminError) {
+          token.adminError = acct.adminError;
         }
       }
       return token;
     },
     async session({ session, token }) {
-      console.log('[auth] Session token keys:', Object.keys(token));
       session.user.id = token.id as string;
       (session.user as any).merchantId = token.merchantId as string;
       (session.user as any).role = token.role as string;
       (session as any).accessToken = token.accessToken as string;
-      (session as any).googleIdToken = token.googleIdToken as string | undefined;
+      (session as any).adminError = token.adminError as string | undefined;
       return session;
     },
   },

@@ -44,28 +44,14 @@ export default function LoginPage() {
       }
       const sessionRes = await fetch('/api/auth/session');
       const session = await sessionRes.json();
-      const idToken = (session as any)?.googleIdToken;
-      if (!idToken) {
-        setLoginError('Gagal mendapatkan token Google');
+      const token = (session as any)?.accessToken;
+      const googleError = (session as any)?.adminError;
+      if (!token) {
+        setLoginError(googleError || 'Akun Google tidak terdaftar sebagai admin');
         return;
       }
-      const expressRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: idToken }),
-      });
-      const expressData = await expressRes.json();
-      if (!expressData.success) {
-        setLoginError(expressData.error || 'Gagal login');
-        return;
-      }
-      setAccessToken(expressData.data.token);
-      const si = await signIn('credentials', { token: expressData.data.token, redirect: false });
-      if (si?.error) {
-        setLoginError('Gagal sync session');
-        return;
-      }
-      router.push(expressData.data.admin.merchantId ? '/dashboard' : '/merchant/setup');
+      setAccessToken(token);
+      router.push((session as any)?.user?.merchantId ? '/dashboard' : '/merchant/setup');
     } catch {
       setLoginError('Gagal login dengan Google');
     } finally {

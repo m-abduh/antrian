@@ -17,8 +17,14 @@ export const adminApi = {
   startServing: (id: string) =>
     api.patch(`/admin/queues/${id}/start`).then(handleResponse),
 
-  getStats: () =>
-    api.get('/admin/stats').then(handleResponse) as Promise<Stats>,
+  getStats: (date?: string) =>
+    api.get('/admin/stats', { params: { date } }).then(handleResponse) as Promise<Stats>,
+
+  subscribePush: (subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+    api.post('/notifications/subscribe', subscription).then(handleResponse),
+
+  unsubscribePush: (endpoint: string) =>
+    api.post('/notifications/unsubscribe', { endpoint }).then(handleResponse),
 
   getServices: () =>
     api.get('/admin/services').then(handleResponse) as Promise<Service[]>,

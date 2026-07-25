@@ -51,6 +51,9 @@ export interface Stats {
   done: number;
   skipped: number;
   waitingNow: number;
+  avgWaitTime: number;
+  peakHours: { hour: string; count: number }[];
+  servicesBreakdown: { name: string; count: number }[];
   date: string;
 }
 

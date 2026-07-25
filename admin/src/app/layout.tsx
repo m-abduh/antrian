@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Antriin - Admin Dashboard',
   description: 'Dashboard manajemen antrian',
+  manifest: '/manifest.json',
+  other: {
+    'theme-color': '#3b82f6',
+  },
 };
 
 export default function RootLayout({

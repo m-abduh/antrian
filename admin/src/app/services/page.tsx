@@ -29,6 +29,7 @@ export default function ServicesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [serviceError, setServiceError] = useState('');
 
   const {
     register, handleSubmit, reset, setValue, formState: { errors },
@@ -54,17 +55,27 @@ export default function ServicesPage() {
   };
 
   const onSubmit = async (data: ServiceForm) => {
-    if (editId) {
-      await updateService.mutateAsync({ id: editId, data });
-    } else {
-      await createService.mutateAsync(data);
+    setServiceError('');
+    try {
+      if (editId) {
+        await updateService.mutateAsync({ id: editId, data });
+      } else {
+        await createService.mutateAsync(data);
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      setServiceError(err.message || 'Gagal menyimpan layanan');
     }
-    setModalOpen(false);
   };
 
   const handleDelete = async (id: string) => {
-    await deleteService.mutateAsync(id);
-    setDeleteConfirm(null);
+    setServiceError('');
+    try {
+      await deleteService.mutateAsync(id);
+      setDeleteConfirm(null);
+    } catch (err: any) {
+      setServiceError(err.message || 'Gagal menghapus layanan');
+    }
   };
 
   if (!isAuthenticated) return null;
@@ -95,6 +106,13 @@ export default function ServicesPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-6">
+        {serviceError && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700 flex-1">{serviceError}</p>
+            <button onClick={() => setServiceError('')}><X className="w-4 h-4 text-red-400" /></button>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />

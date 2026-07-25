@@ -19,8 +19,8 @@ export function useQueues(params?: { date?: string; status?: string }) {
   return useQuery<Queue[]>({
     queryKey: queueKeys.list(params),
     queryFn: () => adminApi.getQueues(params),
-    refetchInterval: 5000,
-    staleTime: 0,
+    refetchInterval: 15000,
+    staleTime: 5000,
   });
 }
 
@@ -47,11 +47,11 @@ export function useStartServing() {
   });
 }
 
-export function useStats() {
+export function useStats(date?: string) {
   return useQuery<Stats>({
-    queryKey: statsKeys.all,
-    queryFn: () => adminApi.getStats(),
-    refetchInterval: 10000,
+    queryKey: [...statsKeys.all, date],
+    queryFn: () => adminApi.getStats(date),
+    refetchInterval: date === new Date().toISOString().split('T')[0] ? 30000 : Infinity,
   });
 }
 

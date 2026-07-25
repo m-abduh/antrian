@@ -7,7 +7,7 @@
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "dev:admin": "cd admin && npm run dev -- -p 3001",
-    "build": "cd client && npm run build && cd ../admin && npm run build",
+    "build": "cd server && npm install && cd ../client && npm install && npm run build && cd ../admin && npm install && npm run build",
     "test": "cd server && npm test",
     "lint": "cd client && npm run lint && cd ../admin && npm run lint"
   },

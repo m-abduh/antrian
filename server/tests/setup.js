@@ -77,7 +77,7 @@ export function generateToken(adminId, merchantId, role = 'admin') {
   );
 }
 
-export function getApp() {
+export async function getApp() {
   const app = (await import('../src/index.js')).default;
   return app;
 }

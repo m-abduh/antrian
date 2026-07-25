@@ -1,9 +1,33 @@
 import Admin from '../models/Admin.js';
 import Queue from '../models/Queue.js';
 import Service from '../models/Service.js';
+import Merchant from '../models/Merchant.js';
+import PushSubscription from '../models/PushSubscription.js';
 import jwt from 'jsonwebtoken';
+import webpush from 'web-push';
 import env from '../config/env.js';
 import { success, error } from '../utils/response.js';
+
+webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
+
+async function notifyCustomer(queue) {
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return;
+  const subs = await PushSubscription.find({ merchantId: queue.merchantId, subscriptionType: 'customer' });
+  if (subs.length === 0) return;
+  const merchant = await Merchant.findById(queue.merchantId).select('slug');
+  const payload = JSON.stringify({
+    title: 'Nomor antrian Anda dipanggil!',
+    body: `Nomor ${queue.queueNumber} - Silakan menuju ke loket`,
+    url: `/${merchant?.slug || ''}/queue/${queue._id}`,
+  });
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
+    } catch (err) {
+      if (err.statusCode === 410) await PushSubscription.findByIdAndDelete(sub._id);
+    }
+  }
+}
 
 export async function login(req, res, next) {
   try {
@@ -97,6 +121,7 @@ export async function updateQueueStatus(req, res, next) {
           return error(res, `Antrean sudah ${queue.status}`, 400);
         }
         queue.status = 'called';
+        notifyCustomer(queue).catch(() => {});
         break;
       case 'skip':
         if (!['waiting', 'called'].includes(queue.status)) {
@@ -146,40 +171,70 @@ export async function startServing(req, res, next) {
 
 export async function getStats(req, res, next) {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateParam = req.query.date;
+    const start = dateParam ? new Date(dateParam) : new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
 
-    const total = await Queue.countDocuments({
-      merchantId: req.admin.merchantId,
-      createdAt: { $gte: today, $lt: tomorrow },
-    });
+    const merchantId = req.admin.merchantId;
 
-    const done = await Queue.countDocuments({
-      merchantId: req.admin.merchantId,
-      status: 'done',
-      createdAt: { $gte: today, $lt: tomorrow },
-    });
-
-    const skipped = await Queue.countDocuments({
-      merchantId: req.admin.merchantId,
-      status: 'skipped',
-      createdAt: { $gte: today, $lt: tomorrow },
-    });
-
+    const total = await Queue.countDocuments({ merchantId, createdAt: { $gte: start, $lt: end } });
+    const done = await Queue.countDocuments({ merchantId, status: 'done', createdAt: { $gte: start, $lt: end } });
+    const skipped = await Queue.countDocuments({ merchantId, status: 'skipped', createdAt: { $gte: start, $lt: end } });
     const waitingNow = await Queue.countDocuments({
-      merchantId: req.admin.merchantId,
+      merchantId,
       status: { $in: ['waiting', 'called'] },
       paymentStatus: 'paid',
     });
+
+    const doneQueues = await Queue.find({ merchantId, status: 'done', createdAt: { $gte: start, $lt: end } })
+      .select('startedAt finishedAt createdAt')
+      .lean();
+
+    let avgWaitTime = 0;
+    if (doneQueues.length > 0) {
+      const totalWait = doneQueues.reduce((sum, q) => {
+        if (q.startedAt && q.createdAt) {
+          return sum + (new Date(q.startedAt).getTime() - new Date(q.createdAt).getTime());
+        }
+        return sum;
+      }, 0);
+      avgWaitTime = Math.round(totalWait / doneQueues.length / 60000);
+    }
+
+    const peakHours = [];
+    for (let h = 7; h <= 21; h++) {
+      const hourStart = new Date(start);
+      hourStart.setHours(h, 0, 0, 0);
+      const hourEnd = new Date(hourStart);
+      hourEnd.setHours(h + 1, 0, 0, 0);
+
+      const count = await Queue.countDocuments({
+        merchantId,
+        createdAt: { $gte: hourStart, $lt: hourEnd },
+      });
+      if (count > 0) peakHours.push({ hour: `${h}:00`, count });
+    }
+
+    const servicesBreakdown = await Queue.aggregate([
+      { $match: { merchantId: merchantId, createdAt: { $gte: start, $lt: end } } },
+      { $group: { _id: '$serviceId', count: { $sum: 1 } } },
+      { $lookup: { from: 'services', localField: '_id', foreignField: '_id', as: 'service' } },
+      { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+      { $project: { _id: 0, name: { $ifNull: ['$service.name', 'Unknown'] }, count: 1 } },
+      { $sort: { count: -1 } },
+    ]);
 
     return success(res, {
       total,
       done,
       skipped,
       waitingNow,
-      date: today.toISOString().split('T')[0],
+      avgWaitTime,
+      peakHours: peakHours.slice(0, 5),
+      servicesBreakdown,
+      date: start.toISOString().split('T')[0],
     });
   } catch (err) {
     next(err);
@@ -228,10 +283,23 @@ export async function updateService(req, res, next) {
     }
 
     const update = {};
-    if (name !== undefined) update.name = name.trim();
-    if (description !== undefined) update.description = description;
-    if (duration !== undefined) update.duration = duration;
-    if (price !== undefined) update.price = price;
+    if (name !== undefined) {
+      if (!name.trim()) return error(res, 'Nama layanan wajib diisi');
+      if (name.trim().length > 100) return error(res, 'Nama maksimal 100 karakter');
+      update.name = name.trim();
+    }
+    if (description !== undefined) {
+      if (description.length > 500) return error(res, 'Deskripsi maksimal 500 karakter');
+      update.description = description;
+    }
+    if (duration !== undefined) {
+      if (duration < 1 || duration > 480) return error(res, 'Durasi harus antara 1-480 menit');
+      update.duration = duration;
+    }
+    if (price !== undefined) {
+      if (price < 0) return error(res, 'Harga tidak boleh negatif');
+      update.price = price;
+    }
     if (isActive !== undefined) update.isActive = isActive;
 
     const updated = await Service.findByIdAndUpdate(id, update, { new: true, runValidators: true });

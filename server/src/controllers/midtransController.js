@@ -10,26 +10,26 @@ export async function handleNotification(req, res, next) {
 
     const queue = await Queue.findOne({ midtransOrderId: order_id });
     if (!queue) {
-      return res.status(404).json({ error: 'Order not found' });
+      return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
     const merchant = await Merchant.findById(queue.merchantId);
     if (!merchant) {
-      return res.status(404).json({ error: 'Merchant not found' });
+      return res.status(404).json({ success: false, error: 'Merchant not found' });
     }
 
-    const serverKey = (merchant.midtrans && merchant.midtrans.serverKey)
-      ? merchant.midtrans.serverKey
-      : null;
+    if (!merchant.midtrans || !merchant.midtrans.serverKey) {
+      return res.status(500).json({ success: false, error: 'Merchant Midtrans not configured' });
+    }
 
-    const result = verifyNotification(req.body, serverKey);
+    const result = verifyNotification(req.body, merchant.midtrans.serverKey);
 
     if (!result.valid) {
-      return res.status(400).json({ error: 'Invalid signature' });
+      return res.status(400).json({ success: false, error: 'Invalid signature' });
     }
 
     if (queue.paymentStatus === 'paid') {
-      return res.status(200).json({ message: 'Already processed' });
+      return res.status(200).json({ success: true, message: 'Already processed' });
     }
 
     if (transaction_status === 'settlement' || transaction_status === 'capture') {

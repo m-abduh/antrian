@@ -4,10 +4,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useClientStore } from '@/lib/store/clientStore';
-import { motion } from 'framer-motion';
-import { CreditCard, User, Phone, Loader2, ArrowLeft, AlertCircle, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CreditCard, User, Phone, Loader2, ArrowLeft, AlertCircle, Clock, X } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+
+function loadMidtransSnap(clientKey: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if ((window as any).snap) return resolve();
+    const script = document.createElement('script');
+    script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+    script.setAttribute('data-client-key', clientKey);
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Gagal memuat payment gateway'));
+    document.body.appendChild(script);
+  });
+}
 
 export default function OrderPage() {
   const params = useParams();
@@ -15,6 +27,7 @@ export default function OrderPage() {
   const slug = params.slug as string;
   const { selectedMerchant, selectedService, setQueue } = useClientStore();
   const createQueue = useCreateQueue(slug);
+  const [error, setError] = useState('');
 
   const {
     register,
@@ -38,20 +51,36 @@ export default function OrderPage() {
     }
   }, [selectedMerchant, selectedService, router, slug]);
 
-  const onSubmit = async (data: { customerName: string; customerPhone: string; serviceId: string }) => {
+  const onSubmit = useCallback(async (data: { customerName: string; customerPhone: string; serviceId: string }) => {
+    setError('');
     try {
       const result = await createQueue.mutateAsync(data);
       setQueue(result.queue as never);
-      if (result.paymentRequired && result.snapToken) {
-        const snapUrl = process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL || 'https://app.sandbox.midtrans.com/snap/v3/redirection';
-        router.push(`${snapUrl}/${result.snapToken}`);
+
+      if (result.paymentRequired && result.snapToken && selectedMerchant) {
+        const clientKey = selectedMerchant.midtrans?.clientKey
+          || process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
+          || '';
+
+        await loadMidtransSnap(clientKey);
+
+        (window as any).snap.pay(result.snapToken, {
+          onSuccess: () => router.push(`/${slug}/queue/${result.queue.id}`),
+          onPending: () => router.push(`/${slug}/queue/${result.queue.id}`),
+          onError: () => setError('Pembayaran gagal. Silakan coba lagi.'),
+          onClose: () => {
+            if (!document.cookie.includes('midtrans_done')) {
+              setError('Pembayaran belum selesai. Silakan selesaikan pembayaran.');
+            }
+          },
+        });
       } else {
         router.push(`/${slug}/queue/${result.queue.id}`);
       }
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.');
     }
-  };
+  }, [createQueue, slug, setQueue, router, selectedMerchant]);
 
   if (!selectedMerchant || !selectedService) {
     return (
@@ -98,6 +127,23 @@ export default function OrderPage() {
                 </div>
               </div>
             </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-start gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700 flex-1">{error}</p>
+                  <button onClick={() => setError('')} className="text-red-400 hover:text-red-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <input type="hidden" {...register('serviceId')} />

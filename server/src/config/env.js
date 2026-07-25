@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+const DEFAULT_SECRETS = ['your-secret-key-min-16-chars'];
+
 const required = ['MONGODB_URI', 'JWT_SECRET', 'MIDTRANS_SERVER_KEY', 'MIDTRANS_CLIENT_KEY'];
 
 for (const key of required) {
@@ -11,6 +13,15 @@ for (const key of required) {
 
 if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 16) {
   throw new Error('JWT_SECRET must be at least 16 characters long');
+}
+
+if (process.env.NODE_ENV === 'production') {
+  if (DEFAULT_SECRETS.includes(process.env.JWT_SECRET || '')) {
+    console.warn('WARNING: Using default JWT_SECRET in production! Change it immediately.');
+  }
+  if (process.env.CORS_ORIGIN === '*') {
+    console.warn('WARNING: CORS_ORIGIN is set to "*" in production! Restrict it to specific origins.');
+  }
 }
 
 const env = {

@@ -7,6 +7,10 @@ import { CreditCard, Clock, MapPin, Phone, CheckCircle, ArrowRight } from 'lucid
 import { useMerchant, useServices } from '@/lib/hooks/useMerchant';
 import { useClientStore } from '@/lib/store/clientStore';
 
+function Skeleton({ className }: { className: string }) {
+  return <div className={`bg-gray-200 rounded-2xl animate-pulse ${className}`} />;
+}
+
 export default function MerchantPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -16,8 +20,14 @@ export default function MerchantPage() {
 
   if (merchantLoading || servicesLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-16 w-3/4" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
       </div>
     );
   }

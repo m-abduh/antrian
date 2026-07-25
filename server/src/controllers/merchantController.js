@@ -1,6 +1,7 @@
 import Merchant from '../models/Merchant.js';
 import Service from '../models/Service.js';
 import Queue from '../models/Queue.js';
+import PushSubscription from '../models/PushSubscription.js';
 import { generateQueueNumber, calculateEstimatedTime } from '../utils/queueNumber.js';
 import { createTransaction } from '../utils/midtrans.js';
 import { success, error } from '../utils/response.js';
@@ -50,6 +51,7 @@ export async function createQueue(req, res, next) {
     if (customerName.trim().length > 100) {
       return error(res, 'Nama maksimal 100 karakter');
     }
+    const sanitizedName = customerName.trim().replace(/<[^>]*>/g, '');
     if (customerPhone && !/^\+?[0-9]{10,15}$/.test(customerPhone)) {
       return error(res, 'Format nomor telepon tidak valid');
     }
@@ -89,7 +91,7 @@ export async function createQueue(req, res, next) {
       merchantId: merchant._id,
       serviceId: service._id,
       queueNumber,
-      customerName: customerName.trim(),
+      customerName: sanitizedName,
       customerPhone: customerPhone || '',
       status: isPaidService ? 'pending_payment' : 'waiting',
       paymentStatus: isPaidService ? 'pending' : 'paid',
@@ -143,6 +145,69 @@ export async function getLiveQueue(req, res, next) {
       waiting,
       doneToday,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function submitRating(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { rating } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return error(res, 'Rating harus antara 1-5');
+    }
+
+    const queue = await Queue.findOne({ _id: id, status: 'done' });
+    if (!queue) {
+      return error(res, 'Antrean tidak ditemukan atau belum selesai', 404);
+    }
+    if (queue.rating) {
+      return error(res, 'Sudah memberikan rating', 400);
+    }
+
+    queue.rating = Math.round(rating);
+    await queue.save();
+
+    return success(res, { message: 'Terima kasih atas penilaiannya!', rating: queue.rating });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function subscribePush(req, res, next) {
+  try {
+    const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true });
+    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+
+    const { endpoint, keys } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return error(res, 'Invalid subscription data');
+    }
+
+    await PushSubscription.findOneAndUpdate(
+      { merchantId: merchant._id, endpoint },
+      { merchantId: merchant._id, subscriptionType: 'customer', endpoint, keys, userAgent: req.headers['user-agent'] || '' },
+      { upsert: true, new: true },
+    );
+
+    return success(res, { message: 'Subscription saved' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function unsubscribePush(req, res, next) {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) return error(res, 'Endpoint required');
+
+    const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true });
+    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+
+    await PushSubscription.findOneAndDelete({ merchantId: merchant._id, endpoint });
+    return success(res, { message: 'Subscription removed' });
   } catch (err) {
     next(err);
   }

@@ -6,10 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Clock, CheckCircle2, SkipForward, LogOut, Loader2,
   Phone, Search, X, LayoutDashboard,
-  Settings, BarChart3,
+  Settings, BarChart3, AlertCircle, Bell,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats } from '@/lib/hooks/useAdmin';
+import { useNotification } from '@/lib/hooks/useNotification';
+import { ErrorAlert } from '@/components/ErrorAlert';
 const statusColors: Record<string, string> = {
   pending_payment: 'bg-yellow-100 text-yellow-800',
   waiting: 'bg-blue-100 text-blue-800',
@@ -33,8 +35,15 @@ export default function DashboardPage() {
   const { admin, isAuthenticated, logout } = useAuthStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [actionError, setActionError] = useState('');
   const updateStatus = useUpdateQueueStatus();
   const startServing = useStartServing();
+  const { permission, subscribe } = useNotification();
+
+  const handleMutation = async (fn: () => Promise<any>) => {
+    setActionError('');
+    try { await fn(); } catch (err: any) { setActionError(err.message || 'Gagal memperbarui status'); }
+  };
   const { data: queues, isLoading } = useQueues({ status: statusFilter || undefined });
   const { data: stats } = useStats();
 
@@ -80,6 +89,20 @@ export default function DashboardPage() {
                 Statistik
               </button>
               <button
+                onClick={subscribe}
+                disabled={permission === 'denied'}
+                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
+                  permission === 'granted'
+                    ? 'text-green-600 hover:bg-green-50'
+                    : permission === 'denied'
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50'
+                }`}
+                title={permission === 'granted' ? 'Notifikasi aktif' : permission === 'denied' ? 'Notifikasi diblokir' : 'Aktifkan notifikasi'}
+              >
+                <Bell className="w-4 h-4" />
+              </button>
+              <button
                 onClick={logout}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
               >
@@ -91,6 +114,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="max-w-5xl mx-auto px-4 pb-4">
+          <ErrorAlert message={actionError} onClose={() => setActionError('')} />
           <div className="grid grid-cols-4 gap-3">
             {[
               { label: 'Total', value: stats?.total ?? 0, color: 'bg-blue-500', icon: Users },
@@ -193,37 +217,41 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {q.status === 'waiting' && (
                         <button
-                          onClick={() => updateStatus.mutate({ id: q._id, action: 'call' })}
+                          onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'call' }))}
                           disabled={updateStatus.isPending}
-                          className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-xl hover:bg-green-600 disabled:opacity-50 transition-colors"
+                          className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-xl hover:bg-green-600 disabled:opacity-50 transition-colors flex items-center gap-1"
                         >
+                          {updateStatus.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Panggil
                         </button>
                       )}
                       {q.status === 'called' && (
                         <button
-                          onClick={() => startServing.mutate(q._id)}
+                          onClick={() => handleMutation(() => startServing.mutateAsync(q._id))}
                           disabled={startServing.isPending}
-                          className="px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-xl hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                          className="px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-xl hover:bg-purple-600 disabled:opacity-50 transition-colors flex items-center gap-1"
                         >
+                          {startServing.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Mulai
                         </button>
                       )}
                       {q.status === 'serving' && (
                         <button
-                          onClick={() => updateStatus.mutate({ id: q._id, action: 'done' })}
+                          onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'done' }))}
                           disabled={updateStatus.isPending}
-                          className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                          className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center gap-1"
                         >
+                          {updateStatus.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Selesai
                         </button>
                       )}
                       {(q.status === 'waiting' || q.status === 'called') && (
                         <button
-                          onClick={() => updateStatus.mutate({ id: q._id, action: 'skip' })}
+                          onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'skip' }))}
                           disabled={updateStatus.isPending}
-                          className="px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-xl hover:bg-red-200 transition-colors"
+                          className="px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-xl hover:bg-red-200 transition-colors flex items-center gap-1"
                         >
+                          {updateStatus.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Lewati
                         </button>
                       )}

@@ -9,6 +9,7 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 import merchantRoutes from './routes/merchant.js';
 import adminRoutes from './routes/admin.js';
 import midtransRoutes from './routes/midtrans.js';
+import notificationRoutes from './routes/notification.js';
 import { cleanupExpiredQueues } from './cron/cleanupQueue.js';
 
 const app = express();
@@ -55,6 +56,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/midtrans', midtransRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

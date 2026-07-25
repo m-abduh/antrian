@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { getMerchant, getServices, createQueue, getLiveQueue, submitRating, subscribePush, unsubscribePush } from '../controllers/merchantController.js';
 
 const router = Router();
@@ -7,7 +7,7 @@ const router = Router();
 const queueRateLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
-  keyGenerator: (req) => req.ip + '-' + (req.body?.phone || ''),
+  keyGenerator: (req) => ipKeyGenerator(req) + '-' + (req.body?.phone || ''),
   message: { error: 'Terlalu banyak membuat antrian. Silakan coba lagi nanti.' },
 });
 

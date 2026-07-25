@@ -1,10 +1,10 @@
-import NextAuth from 'next-auth';
-import Google from 'next-auth/providers/google';
-import Credentials from 'next-auth/providers/credentials';
+import { AuthOptions } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const authOptions: AuthOptions = {
   providers: [
-    Credentials({
+    CredentialsProvider({
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -12,6 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token: { label: 'Token', type: 'text' },
       },
       async authorize(credentials) {
+        if (!credentials) return null;
         if (credentials.token) {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`, {
             headers: { Authorization: `Bearer ${credentials.token}` },
@@ -44,7 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } as any;
       },
     }),
-    Google({
+    GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -74,4 +75,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: 'jwt',
   },
-});
+};

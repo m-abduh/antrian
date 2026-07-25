@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, getCsrfToken } from 'next-auth/react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
 
@@ -14,6 +14,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (window.opener && window.location.search.includes('google_callback=1')) {
+      window.close();
+    }
+  }, []);
 
   const {
     register,
@@ -37,24 +43,32 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setLoginError('');
     try {
-      const result = await signIn('google', { redirect: false });
-      if (result?.error) {
-        setLoginError('Gagal login dengan Google');
+      const csrfToken = await getCsrfToken();
+      const res = await fetch('/api/auth/signin/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          csrfToken: csrfToken ?? '',
+          callbackUrl: window.location.origin + '/login?google_callback=1',
+          json: 'true',
+        }),
+      });
+      const data = await res.json();
+      if (!data.url) {
+        setLoginError('Gagal mendapatkan URL Google');
         return;
       }
-      if (result?.url) {
-        const popup = window.open(result.url, 'google-auth', 'width=500,height=600');
-        if (!popup) {
-          setLoginError('Popup diblokir. Izinkan popup untuk Google login.');
-          setGoogleLoading(false);
-          return;
-        }
-        await new Promise<void>((resolve) => {
-          const timer = setInterval(() => {
-            if (popup.closed) { clearInterval(timer); resolve(); }
-          }, 500);
-        });
+      const popup = window.open(data.url, 'google-auth', 'width=500,height=600');
+      if (!popup) {
+        setLoginError('Popup diblokir. Izinkan popup untuk Google login.');
+        setGoogleLoading(false);
+        return;
       }
+      await new Promise<void>((resolve) => {
+        const timer = setInterval(() => {
+          if (popup.closed) { clearInterval(timer); resolve(); }
+        }, 500);
+      });
       const sessionRes = await fetch('/api/auth/session');
       const session = await sessionRes.json();
       const userEmail = session?.user?.email;

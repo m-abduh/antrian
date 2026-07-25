@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: {
+    useTypeScriptCli: true,
+  },
   turbopack: {
     root: process.cwd(),
   },

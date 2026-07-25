@@ -10,7 +10,7 @@ import { nanoid } from 'nanoid';
 export async function getMerchant(req, res, next) {
   try {
     const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true })
-      .select('-midtrans.serverKey -midtrans.clientKey');
+      .select('-midtrans.serverKey');
     if (!merchant) {
       return error(res, 'Merchant tidak ditemukan', 404);
     }

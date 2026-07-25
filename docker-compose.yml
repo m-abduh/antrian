@@ -31,13 +31,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.client
+      args:
+        NEXT_PUBLIC_API_URL: ${CLIENT_API_URL:-http://localhost:4000/api}
+        NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: ${MIDTRANS_CLIENT_KEY}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     restart: unless-stopped
     depends_on:
       - server
-    environment:
-      - NEXT_PUBLIC_API_URL=http://server:4000/api
-      - NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=${MIDTRANS_CLIENT_KEY}
-      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
     ports:
       - "3000:3000"
 
@@ -45,12 +45,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.admin
+      args:
+        NEXT_PUBLIC_API_URL: ${ADMIN_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     restart: unless-stopped
     depends_on:
       - server
-    environment:
-      - NEXT_PUBLIC_API_URL=http://server:4000
-      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
     ports:
       - "3001:3001"
 

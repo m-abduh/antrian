@@ -50,7 +50,7 @@ export default function LoginPage() {
         return;
       }
       setAccessToken(token);
-      router.push('/dashboard');
+      router.push((session as any)?.user?.merchantId ? '/dashboard' : '/merchant/setup');
     } catch {
       setLoginError('Gagal login dengan Google');
     } finally {

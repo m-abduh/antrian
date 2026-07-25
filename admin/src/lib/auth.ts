@@ -43,12 +43,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = u.accessToken;
       }
       if (account?.provider === 'google') {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
+        const api = process.env.NEXT_PUBLIC_API_URL;
+        let res = await fetch(`${api}/api/admin/auth/google`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ credential: account.id_token }),
         });
-        const data = await res.json();
+        let data = await res.json();
+        if (!data.success) {
+          res = await fetch(`${api}/api/admin/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: account.id_token, mode: 'register' }),
+          });
+          data = await res.json();
+        }
         if (data.success) {
           token.id = data.data.admin.id;
           token.merchantId = data.data.admin.merchantId;

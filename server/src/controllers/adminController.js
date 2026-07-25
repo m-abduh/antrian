@@ -175,6 +175,40 @@ export async function googleAuth(req, res, next) {
   }
 }
 
+export async function googleEmailLogin(req, res, next) {
+  try {
+    const { email } = req.body;
+    if (!email) return error(res, 'Email wajib diisi');
+
+    const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+    if (!admin) return error(res, 'Email Google belum terdaftar. Silakan daftar di halaman register.', 401);
+    if (admin.role !== 'admin') return error(res, 'Akun ini bukan admin', 403);
+
+    const token = jwt.sign(
+      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
+    );
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    };
+
+    res.cookie('token', token, cookieOptions);
+
+    return success(res, {
+      admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role, merchantId: admin.merchantId },
+      token,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getMe(req, res) {
   return success(res, {
     admin: {

@@ -42,16 +42,43 @@ export default function LoginPage() {
         setLoginError('Gagal login dengan Google');
         return;
       }
+      if (result?.url) {
+        const popup = window.open(result.url, 'google-auth', 'width=500,height=600');
+        if (!popup) {
+          setLoginError('Popup diblokir. Izinkan popup untuk Google login.');
+          setGoogleLoading(false);
+          return;
+        }
+        await new Promise<void>((resolve) => {
+          const timer = setInterval(() => {
+            if (popup.closed) { clearInterval(timer); resolve(); }
+          }, 500);
+        });
+      }
       const sessionRes = await fetch('/api/auth/session');
       const session = await sessionRes.json();
-      const token = (session as any)?.accessToken;
-      const googleError = (session as any)?.adminError;
-      if (!token) {
-        setLoginError(googleError || 'Akun Google tidak terdaftar sebagai admin');
+      const userEmail = session?.user?.email;
+      if (!userEmail) {
+        setLoginError('Gagal mendapatkan email dari Google');
         return;
       }
-      setAccessToken(token);
-      router.push((session as any)?.user?.merchantId ? '/dashboard' : '/merchant/setup');
+      const expressRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      const expressData = await expressRes.json();
+      if (!expressData.success) {
+        setLoginError(expressData.error || 'Gagal login');
+        return;
+      }
+      setAccessToken(expressData.data.token);
+      const si = await signIn('credentials', { token: expressData.data.token, redirect: false });
+      if (si?.error) {
+        setLoginError('Gagal sync session');
+        return;
+      }
+      router.push(expressData.data.admin.merchantId ? '/dashboard' : '/merchant/setup');
     } catch {
       setLoginError('Gagal login dengan Google');
     } finally {

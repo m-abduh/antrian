@@ -4,6 +4,7 @@ import {
   login,
   register,
   googleAuth,
+  googleEmailLogin,
   logout,
   getMe,
   setupMerchant,
@@ -22,6 +23,7 @@ const router = Router();
 router.post('/login', login);
 router.post('/register', register);
 router.post('/auth/google', googleAuth);
+router.post('/auth/google-email', googleEmailLogin);
 router.post('/logout', logout);
 
 router.use(authenticate);

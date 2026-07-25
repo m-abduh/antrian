@@ -38,9 +38,8 @@ const serviceSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-serviceSchema.pre('save', function (next) {
+serviceSchema.pre('save', function () {
   this.updatedAt = new Date();
-  next();
 });
 
 serviceSchema.index({ merchantId: 1, isActive: 1 });

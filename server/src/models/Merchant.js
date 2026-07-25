@@ -40,9 +40,8 @@ const merchantSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-merchantSchema.pre('save', function (next) {
+merchantSchema.pre('save', function () {
   this.updatedAt = new Date();
-  next();
 });
 
 export default mongoose.model('Merchant', merchantSchema);

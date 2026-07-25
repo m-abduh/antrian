@@ -1,39 +1,34 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SessionProvider, useSession } from 'next-auth/react';
 import { ReactNode, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/authStore';
+import { setAccessToken } from '@/lib/auth-token';
 
-function AuthHydrate({ children }: { children: ReactNode }) {
-  const [hydrated] = useState(() => {
-    useAuthStore.getState().hydrate();
-    return true;
-  });
+function TokenSync({ children }: { children: ReactNode }) {
+  const { data: session } = useSession();
 
-  if (!hydrated) return null;
+  useEffect(() => {
+    setAccessToken((session as any)?.accessToken ?? null);
+  }, [session]);
+
   return <>{children}</>;
 }
 
 function AuthListener({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const logout = useAuthStore((s) => s.logout);
-  const token = useAuthStore((s) => s.token);
 
   useEffect(() => {
     const handler = () => {
-      logout();
+      import('next-auth/react').then(({ signOut }) => {
+        signOut({ redirect: false });
+      });
       router.push('/login');
     };
     window.addEventListener('auth:unauthorized', handler);
     return () => window.removeEventListener('auth:unauthorized', handler);
-  }, [logout, router]);
-
-  useEffect(() => {
-    if (token && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
-    }
-  }, [token]);
+  }, [router]);
 
   return <>{children}</>;
 }
@@ -52,10 +47,12 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthHydrate>
-        <AuthListener>{children}</AuthListener>
-      </AuthHydrate>
-    </QueryClientProvider>
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <TokenSync>
+          <AuthListener>{children}</AuthListener>
+        </TokenSync>
+      </QueryClientProvider>
+    </SessionProvider>
   );
 }

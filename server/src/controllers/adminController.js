@@ -5,6 +5,7 @@ import Merchant from '../models/Merchant.js';
 import PushSubscription from '../models/PushSubscription.js';
 import jwt from 'jsonwebtoken';
 import webpush from 'web-push';
+import { OAuth2Client } from 'google-auth-library';
 import env from '../config/env.js';
 import { success, error } from '../utils/response.js';
 
@@ -54,7 +55,7 @@ export async function login(req, res, next) {
     }
 
     const token = jwt.sign(
-      { id: admin._id, merchantId: admin.merchantId, role: admin.role },
+      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
       env.JWT_SECRET,
       { expiresIn: env.JWT_EXPIRES_IN }
     );
@@ -77,10 +78,123 @@ export async function login(req, res, next) {
         role: admin.role,
         merchantId: admin.merchantId,
       },
+      token,
     });
   } catch (err) {
     next(err);
   }
+}
+
+export async function register(req, res, next) {
+  try {
+    const { name, email, password, merchantName, merchantSlug } = req.body;
+
+    if (!name || !name.trim()) return error(res, 'Nama wajib diisi');
+    if (!email || !email.trim()) return error(res, 'Email wajib diisi');
+    if (!password || password.length < 8) return error(res, 'Password minimal 8 karakter');
+    if (!merchantName || !merchantName.trim()) return error(res, 'Nama merchant wajib diisi');
+    if (!merchantSlug || !merchantSlug.trim()) return error(res, 'Slug merchant wajib diisi');
+
+    const existingAdmin = await Admin.findOne({ email: email.toLowerCase().trim() });
+    if (existingAdmin) return error(res, 'Email sudah terdaftar');
+
+    const slug = merchantSlug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+    let merchant = await Merchant.findOne({ slug });
+    if (!merchant) {
+      merchant = await Merchant.create({
+        name: merchantName.trim(),
+        slug,
+        isActive: true,
+      });
+    }
+
+    const admin = await Admin.create({
+      merchantId: merchant._id,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      role: 'admin',
+    });
+
+    const token = jwt.sign(
+      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
+    );
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    };
+
+    res.cookie('token', token, cookieOptions);
+
+    return success(res, {
+      admin: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        merchantId: admin.merchantId,
+      },
+      token,
+    }, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function googleAuth(req, res, next) {
+  try {
+    const { credential } = req.body;
+    if (!credential) return error(res, 'Google credential required');
+
+    const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({ idToken: credential, audience: env.GOOGLE_CLIENT_ID });
+    const payload = ticket.getPayload();
+    if (!payload?.email) return error(res, 'Email tidak ditemukan di akun Google');
+
+    const admin = await Admin.findOne({ email: payload.email.toLowerCase().trim() }).select('+password');
+    if (!admin) return error(res, 'Akun admin tidak ditemukan', 401);
+
+    const token = jwt.sign(
+      { id: admin._id, merchantId: admin.merchantId, role: admin.role },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
+    );
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    };
+
+    res.cookie('token', token, cookieOptions);
+
+    return success(res, {
+      admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role, merchantId: admin.merchantId },
+      token,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMe(req, res) {
+  return success(res, {
+    admin: {
+      id: req.admin.id,
+      name: req.admin.name,
+      email: req.admin.email,
+      role: req.admin.role,
+      merchantId: req.admin.merchantId,
+    },
+  });
 }
 
 export async function logout(req, res) {

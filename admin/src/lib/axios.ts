@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessToken } from './auth-token';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -10,6 +11,14 @@ const api = axios.create({
   baseURL: `${API_URL}/api`,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 const handleResponse = (r: any) => r.data;

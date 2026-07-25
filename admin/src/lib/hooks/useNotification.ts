@@ -32,7 +32,7 @@ export function useNotification() {
     const registration = await navigator.serviceWorker.ready;
     const existing = await registration.pushManager.getSubscription();
     if (existing) {
-      await adminApi.subscribePush(existing.toJSON());
+      await adminApi.subscribePush(existing.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } });
       return existing;
     }
 
@@ -41,7 +41,7 @@ export function useNotification() {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
 
-    await adminApi.subscribePush(sub.toJSON());
+    await adminApi.subscribePush(sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } });
     return sub;
   };
 

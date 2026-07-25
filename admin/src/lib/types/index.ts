@@ -43,6 +43,7 @@ export interface Admin {
 
 export interface LoginResponse {
   admin: Admin;
+  token?: string;
 }
 
 export interface Stats {

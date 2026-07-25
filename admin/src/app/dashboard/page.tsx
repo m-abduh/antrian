@@ -2,13 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Clock, CheckCircle2, SkipForward, LogOut, Loader2,
   Phone, Search, X, LayoutDashboard,
   Settings, BarChart3, AlertCircle, Bell,
 } from 'lucide-react';
-import { useAuthStore } from '@/lib/store/authStore';
 import { adminApi } from '@/lib/api/admin';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats } from '@/lib/hooks/useAdmin';
 import { useNotification } from '@/lib/hooks/useNotification';
@@ -33,7 +33,7 @@ const statusLabels: Record<string, string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { admin, isAuthenticated, logout } = useAuthStore();
+  const { data: session, status } = useSession();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [actionError, setActionError] = useState('');
@@ -49,12 +49,12 @@ export default function DashboardPage() {
   const { data: stats } = useStats();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (status === 'unauthenticated') {
       router.replace('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [status, router]);
 
-  if (!isAuthenticated || !admin) return null;
+  if (status !== 'authenticated' || !session?.user) return null;
 
   const filtered = queues?.filter((q) =>
     q.customerName.toLowerCase().includes(search.toLowerCase())
@@ -71,7 +71,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
-                <p className="text-xs text-gray-500">{admin.name}</p>
+                <p className="text-xs text-gray-500">{session?.user?.name || 'Admin'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -104,10 +104,7 @@ export default function DashboardPage() {
                 <Bell className="w-4 h-4" />
               </button>
               <button
-                onClick={async () => {
-                  await adminApi.logout().catch(() => {});
-                  logout();
-                }}
+                onClick={() => signOut({ redirect: false }).then(() => router.push('/login'))}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
               >
                 <LogOut className="w-4 h-4" />

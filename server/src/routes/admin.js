@@ -2,7 +2,10 @@ import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth.js';
 import {
   login,
+  register,
+  googleAuth,
   logout,
+  getMe,
   getQueues,
   updateQueueStatus,
   startServing,
@@ -16,10 +19,13 @@ import {
 const router = Router();
 
 router.post('/login', login);
+router.post('/register', register);
+router.post('/auth/google', googleAuth);
 router.post('/logout', logout);
 
 router.use(authenticate);
 
+router.get('/me', getMe);
 router.get('/queues', getQueues);
 router.patch('/queues/:id/status', updateQueueStatus);
 router.patch('/queues/:id/start', startServing);

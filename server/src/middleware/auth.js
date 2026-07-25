@@ -27,6 +27,7 @@ export async function authenticate(req, res, next) {
     req.admin = {
       id: admin._id,
       merchantId: admin.merchantId,
+      name: admin.name,
       email: admin.email,
       role: admin.role,
     };

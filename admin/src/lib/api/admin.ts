@@ -8,6 +8,12 @@ export const adminApi = {
   login: (email: string, password: string) =>
     api.post('/admin/login', { email, password }).then(handleResponse) as Promise<LoginResponse>,
 
+  register: (data: { name: string; email: string; password: string; merchantName: string; merchantSlug: string }) =>
+    api.post('/admin/register', data).then(handleResponse) as Promise<LoginResponse>,
+
+  getMe: () =>
+    api.get('/admin/me').then(handleResponse) as Promise<LoginResponse>,
+
   logout: () =>
     api.post('/admin/logout').then(handleResponse) as Promise<{ message: string }>,
 

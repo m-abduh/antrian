@@ -7,22 +7,22 @@ import {
   LayoutDashboard, ArrowLeft, Users, CheckCircle2, Clock, SkipForward,
   Loader2, TrendingUp, Calendar, Clock8,
 } from 'lucide-react';
-import { useAuthStore } from '@/lib/store/authStore';
+import { useSession } from 'next-auth/react';
 import { useStats } from '@/lib/hooks/useAdmin';
 import { ErrorAlert } from '@/components/ErrorAlert';
 
 export default function StatsPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { status } = useSession();
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
   const { data: stats, isLoading, error } = useStats(selectedDate);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated, router]);
+    if (status === 'unauthenticated') router.replace('/login');
+  }, [status, router]);
 
-  if (!isAuthenticated) return null;
+  if (status !== 'authenticated') return null;
 
   const cards = [
     { label: 'Total Antrian', value: stats?.total ?? 0, icon: Users, color: 'bg-blue-500', bg: 'bg-blue-50' },

@@ -59,28 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = u.accessToken;
       }
       if (account?.provider === 'google') {
-        delete token.googleAuthError;
-        try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ credential: account.id_token }),
-          });
-          const data = await res.json();
-          if (data.success) {
-            token.id = data.data.admin.id;
-            token.merchantId = data.data.admin.merchantId;
-            token.role = data.data.admin.role;
-            token.name = data.data.admin.name;
-            token.email = data.data.admin.email;
-            token.accessToken = data.data.token;
-          } else {
-            token.googleAuthError = data.error;
-          }
-        } catch (e) {
-          token.googleAuthError = 'Gagal terhubung ke server';
-          console.error('[auth] Google callback fetch failed:', e);
-        }
+        token.googleIdToken = account.id_token;
       }
       return token;
     },
@@ -89,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       (session.user as any).merchantId = token.merchantId as string;
       (session.user as any).role = token.role as string;
       (session as any).accessToken = token.accessToken as string;
-      (session as any).googleAuthError = token.googleAuthError as string | undefined;
+      (session as any).googleIdToken = token.googleIdToken as string | undefined;
       return session;
     },
   },

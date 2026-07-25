@@ -60,22 +60,22 @@ export async function triggerNotification(req, res, next) {
 
     const sent = results.filter((r) => r.status === 'fulfilled').length;
     const failed = results.filter((r) => r.status === 'rejected').length;
+    let expiredRemoved = 0;
 
     if (failed > 0) {
-      const failedSubs = subscriptions.filter((_, i) => results[i].status === 'rejected');
-      const expiredEndpoints = failedSubs
-        .filter((_, i) => {
-          const result = results[subscriptions.indexOf(failedSubs[i])];
-          return result.status === 'rejected' && result.reason?.statusCode === 410;
-        })
-        .map((s) => s._id);
-
+      const expiredEndpoints = [];
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].status === 'rejected' && results[i].reason?.statusCode === 410) {
+          expiredEndpoints.push(subscriptions[i]._id);
+        }
+      }
       if (expiredEndpoints.length > 0) {
         await PushSubscription.deleteMany({ _id: { $in: expiredEndpoints } });
+        expiredRemoved = expiredEndpoints.length;
       }
     }
 
-    return success(res, { sent, failed, expiredRemoved: expiredEndpoints?.length || 0 });
+    return success(res, { sent, failed, expiredRemoved });
   } catch (err) {
     next(err);
   }

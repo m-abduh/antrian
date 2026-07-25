@@ -153,14 +153,17 @@ export async function getLiveQueue(req, res, next) {
 
 export async function submitRating(req, res, next) {
   try {
-    const { id } = req.params;
+    const { slug, id } = req.params;
     const { rating } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
       return error(res, 'Rating harus antara 1-5');
     }
 
-    const queue = await Queue.findOne({ _id: id, status: 'done' });
+    const merchant = await Merchant.findOne({ slug, isActive: true }).select('_id');
+    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+
+    const queue = await Queue.findOne({ _id: id, merchantId: merchant._id, status: 'done' });
     if (!queue) {
       return error(res, 'Antrean tidak ditemukan atau belum selesai', 404);
     }

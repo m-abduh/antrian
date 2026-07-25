@@ -1,4 +1,5 @@
 import Queue from '../models/Queue.js';
+import logger from '../config/logger.js';
 
 export async function cleanupExpiredQueues() {
   const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
@@ -15,6 +16,6 @@ export async function cleanupExpiredQueues() {
   );
 
   if (result.modifiedCount > 0) {
-    console.log(`[Cron] Cleaned up ${result.modifiedCount} expired queues`);
+    logger.info(`[Cron] Cleaned up ${result.modifiedCount} expired queues`);
   }
 }

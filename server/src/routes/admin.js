@@ -6,6 +6,7 @@ import {
   googleAuth,
   logout,
   getMe,
+  setupMerchant,
   getQueues,
   updateQueueStatus,
   startServing,
@@ -26,6 +27,7 @@ router.post('/logout', logout);
 router.use(authenticate);
 
 router.get('/me', getMe);
+router.post('/merchant/setup', setupMerchant);
 router.get('/queues', getQueues);
 router.patch('/queues/:id/status', updateQueueStatus);
 router.patch('/queues/:id/start', startServing);

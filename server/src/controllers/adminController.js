@@ -87,33 +87,20 @@ export async function login(req, res, next) {
 
 export async function register(req, res, next) {
   try {
-    const { name, email, password, merchantName, merchantSlug } = req.body;
+    const { name, email, password } = req.body;
 
     if (!name || !name.trim()) return error(res, 'Nama wajib diisi');
     if (!email || !email.trim()) return error(res, 'Email wajib diisi');
     if (!password || password.length < 8) return error(res, 'Password minimal 8 karakter');
-    if (!merchantName || !merchantName.trim()) return error(res, 'Nama merchant wajib diisi');
-    if (!merchantSlug || !merchantSlug.trim()) return error(res, 'Slug merchant wajib diisi');
 
     const existingAdmin = await Admin.findOne({ email: email.toLowerCase().trim() });
     if (existingAdmin) return error(res, 'Email sudah terdaftar');
 
-    const slug = merchantSlug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
-    let merchant = await Merchant.findOne({ slug });
-    if (!merchant) {
-      merchant = await Merchant.create({
-        name: merchantName.trim(),
-        slug,
-        isActive: true,
-      });
-    }
-
     const admin = await Admin.create({
-      merchantId: merchant._id,
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password,
-      role: 'admin',
+  name: name.trim(),
+  email: email.toLowerCase().trim(),
+  password,
+  role: 'admin',
     });
 
     const token = jwt.sign(
@@ -149,7 +136,7 @@ export async function register(req, res, next) {
 
 export async function googleAuth(req, res, next) {
   try {
-    const { credential } = req.body;
+    const { credential, mode = 'login' } = req.body;
     if (!credential) return error(res, 'Google credential required');
 
     const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
@@ -157,11 +144,31 @@ export async function googleAuth(req, res, next) {
     const payload = ticket.getPayload();
     if (!payload?.email) return error(res, 'Email tidak ditemukan di akun Google');
 
-    const admin = await Admin.findOne({ email: payload.email.toLowerCase().trim() }).select('+password');
+    const email = payload.email.toLowerCase().trim();
+    let admin = await Admin.findOne({ email }).select('+password');
+
+    if (!admin && mode === 'register') {
+      const name = payload.name || payload.email?.split('@')[0] || 'Admin';
+      const slug = (name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'merchant-' + Date.now()).slice(0, 50);
+
+      let merchant = await Merchant.findOne({ slug });
+      if (!merchant) {
+        merchant = await Merchant.create({ name, slug, isActive: true });
+      }
+
+      admin = await Admin.create({
+        merchantId: merchant._id,
+        name,
+        email,
+        password: Math.random().toString(36).slice(-12),
+        role: 'admin',
+      });
+    }
+
     if (!admin) return error(res, 'Akun admin tidak ditemukan', 401);
 
     const token = jwt.sign(
-      { id: admin._id, merchantId: admin.merchantId, role: admin.role },
+      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
       env.JWT_SECRET,
       { expiresIn: env.JWT_EXPIRES_IN }
     );
@@ -195,6 +202,38 @@ export async function getMe(req, res) {
       merchantId: req.admin.merchantId,
     },
   });
+}
+
+export async function setupMerchant(req, res, next) {
+  try {
+    const { name, slug } = req.body;
+    if (!name || !name.trim()) return error(res, 'Nama merchant wajib diisi');
+    if (!slug || !slug.trim()) return error(res, 'Slug merchant wajib diisi');
+
+    const cleanSlug = slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+    if (!cleanSlug) return error(res, 'Slug tidak valid');
+
+    const existing = await Merchant.findOne({ slug: cleanSlug });
+    if (existing) return error(res, 'Slug sudah digunakan');
+
+    const merchant = await Merchant.create({
+      name: name.trim(),
+      slug: cleanSlug,
+      isActive: true,
+    });
+
+    await Admin.findByIdAndUpdate(req.admin.id, { merchantId: merchant._id });
+
+    const token = jwt.sign(
+      { id: req.admin.id, merchantId: merchant._id, role: req.admin.role, name: req.admin.name, email: req.admin.email },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
+    );
+
+    return success(res, { merchant, token });
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function logout(req, res) {

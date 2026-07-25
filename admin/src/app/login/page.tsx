@@ -27,7 +27,7 @@ export default function LoginPage() {
       const result = await adminApi.login(data.email, data.password);
       setAccessToken(result.token ?? null);
       signIn('credentials', { email: data.email, password: data.password, redirect: false }).catch(() => {});
-      router.push('/dashboard');
+      router.push(result.admin?.merchantId ? '/dashboard' : '/merchant/setup');
     } catch (err: unknown) {
       setLoginError(err instanceof Error ? err.message : 'Email atau password salah');
     }

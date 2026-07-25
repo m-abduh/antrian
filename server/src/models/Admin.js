@@ -5,7 +5,7 @@ const adminSchema = new mongoose.Schema({
   merchantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Merchant',
-    required: true,
+    default: null,
     index: true,
   },
   name: {

@@ -38,7 +38,7 @@ export interface Admin {
   name: string;
   email: string;
   role: string;
-  merchantId: string;
+  merchantId: string | null;
 }
 
 export interface LoginResponse {

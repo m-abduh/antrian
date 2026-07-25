@@ -54,6 +54,12 @@ export default function DashboardPage() {
     }
   }, [status, router]);
 
+  useEffect(() => {
+    if (status === 'authenticated' && !(session?.user as any)?.merchantId) {
+      router.replace('/merchant/setup');
+    }
+  }, [status, session, router]);
+
   if (status !== 'authenticated' || !session?.user) return null;
 
   const filtered = queues?.filter((q) =>

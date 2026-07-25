@@ -8,8 +8,11 @@ export const adminApi = {
   login: (email: string, password: string) =>
     api.post('/admin/login', { email, password }).then(handleResponse) as Promise<LoginResponse>,
 
-  register: (data: { name: string; email: string; password: string; merchantName: string; merchantSlug: string }) =>
+  register: (data: { name: string; email: string; password: string }) =>
     api.post('/admin/register', data).then(handleResponse) as Promise<LoginResponse>,
+
+  setupMerchant: (data: { name: string; slug: string }) =>
+    api.post('/admin/merchant/setup', data).then(handleResponse) as Promise<{ merchant: { _id: string; name: string; slug: string }; token?: string }>,
 
   getMe: () =>
     api.get('/admin/me').then(handleResponse) as Promise<LoginResponse>,

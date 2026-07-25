@@ -59,11 +59,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = u.accessToken;
       }
       if (account?.provider === 'google') {
-        token.googleIdToken = account.id_token;
+        console.log('[auth] Google account:', { provider: account.provider, id_token: account.id_token ? 'present' : 'missing', type: account.type });
+        if (account.id_token) {
+          token.googleIdToken = account.id_token;
+        }
       }
       return token;
     },
     async session({ session, token }) {
+      console.log('[auth] Session token keys:', Object.keys(token));
       session.user.id = token.id as string;
       (session.user as any).merchantId = token.merchantId as string;
       (session.user as any).role = token.role as string;

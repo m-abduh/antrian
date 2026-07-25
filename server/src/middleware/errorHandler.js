@@ -1,5 +1,12 @@
+import logger from '../config/logger.js';
+
 export function errorHandler(err, req, res, _next) {
-  console.error('Unhandled error:', err);
+  logger.error('Unhandled error', {
+    error: err.message,
+    stack: err.stack,
+    method: req.method,
+    url: req.originalUrl,
+  });
 
   if (err.name === 'ValidationError') {
     const messages = Object.values(err.errors).map((e) => e.message);
@@ -28,5 +35,6 @@ export function errorHandler(err, req, res, _next) {
 }
 
 export function notFound(req, res) {
+  logger.warn('Route not found', { method: req.method, url: req.originalUrl });
   res.status(404).json({ success: false, error: `Route ${req.originalUrl} tidak ditemukan` });
 }

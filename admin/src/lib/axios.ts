@@ -9,17 +9,10 @@ if (!API_URL) {
 const api = axios.create({
   baseURL: `${API_URL}/api`,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('admin_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
+const handleResponse = (r: any) => r.data;
 
 api.interceptors.response.use(
   (response) => {
@@ -31,8 +24,6 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('admin_token');
-      localStorage.removeItem('admin_user');
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
     const message = error.response?.data?.error || error.message || 'Terjadi kesalahan';

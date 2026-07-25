@@ -1,0 +1,19 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY server/package*.json ./
+RUN npm ci --only=production
+
+FROM base AS runner
+RUN addgroup --system --gid 1001 app && adduser --system --uid 1001 app
+COPY --from=deps /app/node_modules ./node_modules
+COPY server/ .
+
+RUN mkdir -p logs && chown -R app:app logs
+
+USER app
+EXPOSE 4000
+
+ENV NODE_ENV=production
+CMD ["node", "src/index.js"]

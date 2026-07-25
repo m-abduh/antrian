@@ -57,8 +57,17 @@ export async function login(req, res, next) {
       { expiresIn: env.JWT_EXPIRES_IN }
     );
 
+    const cookieOptions = {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    };
+
+    res.cookie('token', token, cookieOptions);
+
     return success(res, {
-      token,
       admin: {
         id: admin._id,
         name: admin.name,
@@ -70,6 +79,11 @@ export async function login(req, res, next) {
   } catch (err) {
     next(err);
   }
+}
+
+export async function logout(req, res) {
+  res.clearCookie('token', { path: '/' });
+  return success(res, { message: 'Logout berhasil' });
 }
 
 export async function getQueues(req, res, next) {

@@ -28,20 +28,11 @@ function removeLocalStorage(key: string) {
   }
 }
 
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
-}
-
 interface AuthState {
   token: string | null;
   admin: Admin | null;
   isAuthenticated: boolean;
-  login: (token: string, admin: Admin) => void;
+  login: (admin: Admin) => void;
   logout: () => void;
   hydrate: () => void;
 }
@@ -50,30 +41,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   admin: null,
   isAuthenticated: false,
-  login: (token, admin) => {
-    setLocalStorage('admin_token', token);
+  login: (admin) => {
     setLocalStorage('admin_user', JSON.stringify(admin));
-    set({ token, admin, isAuthenticated: true });
+    set({ token: 'cookie', admin, isAuthenticated: true });
   },
   logout: () => {
-    removeLocalStorage('admin_token');
     removeLocalStorage('admin_user');
     set({ token: null, admin: null, isAuthenticated: false });
   },
   hydrate: () => {
-    const token = getLocalStorage('admin_token');
     const adminStr = getLocalStorage('admin_user');
-    if (token && adminStr) {
+    if (adminStr) {
       try {
-        if (isTokenExpired(token)) {
-          removeLocalStorage('admin_token');
-          removeLocalStorage('admin_user');
-          return;
-        }
         const admin = JSON.parse(adminStr);
-        set({ token, admin, isAuthenticated: true });
+        set({ token: 'cookie', admin, isAuthenticated: true });
       } catch {
-        removeLocalStorage('admin_token');
         removeLocalStorage('admin_user');
       }
     }

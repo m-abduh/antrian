@@ -24,7 +24,7 @@ export default function LoginPage() {
     setLoginError('');
     try {
       const result = await adminApi.login(data.email, data.password);
-      loginStore(result.token, result.admin);
+      loginStore(result.admin);
       router.push('/dashboard');
     } catch (err: unknown) {
       setLoginError(err instanceof Error ? err.message : 'Email atau password salah');

@@ -8,6 +8,9 @@ export const adminApi = {
   login: (email: string, password: string) =>
     api.post('/admin/login', { email, password }).then(handleResponse) as Promise<LoginResponse>,
 
+  logout: () =>
+    api.post('/admin/logout').then(handleResponse) as Promise<{ message: string }>,
+
   getQueues: (params?: { date?: string; status?: string }) =>
     api.get('/admin/queues', { params }).then(handleResponse) as Promise<Queue[]>,
 

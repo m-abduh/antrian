@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth.js';
 import {
   login,
+  logout,
   getQueues,
   updateQueueStatus,
   startServing,
@@ -15,6 +16,7 @@ import {
 const router = Router();
 
 router.post('/login', login);
+router.post('/logout', logout);
 
 router.use(authenticate);
 

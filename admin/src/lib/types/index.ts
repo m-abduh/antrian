@@ -42,7 +42,6 @@ export interface Admin {
 }
 
 export interface LoginResponse {
-  token: string;
   admin: Admin;
 }
 

@@ -1,0 +1,59 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "127.0.0.1:27017:27017"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - server/.env
+    ports:
+      - "4000:4000"
+    volumes:
+      - server_logs:/app/logs
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      - NEXT_PUBLIC_API_URL=http://server:4000/api
+      - NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=${MIDTRANS_CLIENT_KEY}
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+    ports:
+      - "3000:3000"
+
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      - NEXT_PUBLIC_API_URL=http://server:4000
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+    ports:
+      - "3001:3001"
+
+volumes:
+  mongo_data:
+  server_logs:

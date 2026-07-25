@@ -9,6 +9,7 @@ import {
   Settings, BarChart3, AlertCircle, Bell,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
+import { adminApi } from '@/lib/api/admin';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats } from '@/lib/hooks/useAdmin';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -103,7 +104,10 @@ export default function DashboardPage() {
                 <Bell className="w-4 h-4" />
               </button>
               <button
-                onClick={logout}
+                onClick={async () => {
+                  await adminApi.logout().catch(() => {});
+                  logout();
+                }}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
               >
                 <LogOut className="w-4 h-4" />

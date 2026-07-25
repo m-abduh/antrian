@@ -99,7 +99,7 @@ For production, set `COMPOSE_FILE` vars or pass via `.env`:
 
 ```bash
 CLIENT_API_URL=https://api.antriin.com \
-ADMIN_API_URL=https://admin.antriin.com \
+ADMIN_API_URL=https://api.antriin.com \
 MIDTRANS_CLIENT_KEY=... \
 VAPID_PUBLIC_KEY=... \
 docker compose up -d

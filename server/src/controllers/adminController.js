@@ -136,7 +136,7 @@ export async function register(req, res, next) {
 
 export async function googleAuth(req, res, next) {
   try {
-    const { credential, mode = 'login' } = req.body;
+    const { credential } = req.body;
     if (!credential) return error(res, 'Google credential required');
 
     const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
@@ -147,25 +147,15 @@ export async function googleAuth(req, res, next) {
     const email = payload.email.toLowerCase().trim();
     let admin = await Admin.findOne({ email }).select('+password');
 
-    if (!admin && mode === 'register') {
+    if (!admin) {
       const name = payload.name || payload.email?.split('@')[0] || 'Admin';
-      const slug = (name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'merchant-' + Date.now()).slice(0, 50);
-
-      let merchant = await Merchant.findOne({ slug });
-      if (!merchant) {
-        merchant = await Merchant.create({ name, slug, isActive: true });
-      }
-
       admin = await Admin.create({
-        merchantId: merchant._id,
         name,
         email,
         password: Math.random().toString(36).slice(-12),
         role: 'admin',
       });
     }
-
-    if (!admin) return error(res, 'Akun admin tidak ditemukan', 401);
 
     const token = jwt.sign(
       { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },

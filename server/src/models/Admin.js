@@ -37,11 +37,10 @@ const adminSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-adminSchema.pre('save', async function (next) {
+adminSchema.pre('save', async function () {
   this.updatedAt = new Date();
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 adminSchema.methods.comparePassword = async function (candidatePassword) {

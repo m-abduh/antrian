@@ -48,6 +48,4 @@ adminSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-adminSchema.index({ email: 1 });
-
 export default mongoose.model('Admin', adminSchema);

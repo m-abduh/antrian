@@ -45,6 +45,4 @@ merchantSchema.pre('save', function (next) {
   next();
 });
 
-merchantSchema.index({ slug: 1 });
-
 export default mongoose.model('Merchant', merchantSchema);

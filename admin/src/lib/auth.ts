@@ -1,4 +1,5 @@
 import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -43,15 +44,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } as any;
       },
     }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         const u = user as any;
         token.id = u.id;
         token.merchantId = u.merchantId;
         token.role = u.role;
         token.accessToken = u.accessToken;
+      }
+      if (account?.provider === 'google') {
+        delete token.googleAuthError;
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: account.id_token }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            token.id = data.data.admin.id;
+            token.merchantId = data.data.admin.merchantId;
+            token.role = data.data.admin.role;
+            token.name = data.data.admin.name;
+            token.email = data.data.admin.email;
+            token.accessToken = data.data.token;
+          } else {
+            token.googleAuthError = data.error;
+          }
+        } catch (e) {
+          token.googleAuthError = 'Gagal terhubung ke server';
+          console.error('[auth] Google callback fetch failed:', e);
+        }
       }
       return token;
     },
@@ -60,6 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       (session.user as any).merchantId = token.merchantId as string;
       (session.user as any).role = token.role as string;
       (session as any).accessToken = token.accessToken as string;
+      (session as any).googleAuthError = token.googleAuthError as string | undefined;
       return session;
     },
   },

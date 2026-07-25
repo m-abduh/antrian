@@ -4,33 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (config: {
-            client_id: string;
-            scope: string;
-            callback: (response: { access_token?: string; error?: string }) => void;
-          }) => { requestAccessToken: () => void };
-        };
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential?: string }) => void;
-          }) => void;
-          prompt: () => void;
-        };
-      };
-    };
-  }
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,52 +21,6 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<{ email: string; password: string }>();
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.google?.accounts?.id) {
-      initGsi();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = initGsi;
-    document.head.appendChild(script);
-    return () => { document.head.removeChild(script); };
-  }, []);
-
-  function initGsi() {
-    if (!window.google?.accounts?.id) return;
-    window.google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      callback: async (response: { credential?: string }) => {
-        setGoogleLoading(true);
-        if (!response.credential) {
-          setLoginError('Gagal otentikasi dengan Google');
-          setGoogleLoading(false);
-          return;
-        }
-        try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ credential: response.credential }),
-          });
-          const data = await res.json();
-          if (!data.success) throw new Error(data.error || 'Gagal login');
-          setAccessToken(data.data.token);
-          const signInResult = await signIn('credentials', { token: data.data.token, redirect: false });
-          if (signInResult?.error) throw new Error(signInResult.error);
-          router.push(data.data.admin.merchantId ? '/dashboard' : '/merchant/setup');
-        } catch (err: unknown) {
-          setLoginError(err instanceof Error ? err.message : 'Gagal login dengan Google');
-        } finally {
-          setGoogleLoading(false);
-        }
-      },
-    });
-  }
-
   const onSubmit = async (data: { email: string; password: string }) => {
     setLoginError('');
     try {
@@ -102,12 +33,29 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogle = () => {
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
     setLoginError('');
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      setLoginError('Google Identity Services belum siap');
+    try {
+      const result = await signIn('google', { redirect: false });
+      if (result?.error) {
+        setLoginError('Gagal login dengan Google');
+        return;
+      }
+      const sessionRes = await fetch('/api/auth/session');
+      const session = await sessionRes.json();
+      const token = (session as any)?.accessToken;
+      const googleError = (session as any)?.googleAuthError;
+      if (!token) {
+        setLoginError(googleError || 'Akun Google tidak terdaftar sebagai admin');
+        return;
+      }
+      setAccessToken(token);
+      router.push((session as any)?.user?.merchantId ? '/dashboard' : '/merchant/setup');
+    } catch {
+      setLoginError('Gagal login dengan Google');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 

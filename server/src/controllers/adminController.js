@@ -145,17 +145,10 @@ export async function googleAuth(req, res, next) {
     if (!payload?.email) return error(res, 'Email tidak ditemukan di akun Google');
 
     const email = payload.email.toLowerCase().trim();
-    let admin = await Admin.findOne({ email }).select('+password');
+    const admin = await Admin.findOne({ email }).select('+password');
 
-    if (!admin) {
-      const name = payload.name || payload.email?.split('@')[0] || 'Admin';
-      admin = await Admin.create({
-        name,
-        email,
-        password: Math.random().toString(36).slice(-12),
-        role: 'admin',
-      });
-    }
+    if (!admin) return error(res, 'Email Google belum terdaftar. Silakan daftar di halaman register.', 401);
+    if (admin.role !== 'admin') return error(res, 'Akun ini bukan admin', 403);
 
     const token = jwt.sign(
       { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },

@@ -1,5 +1,5 @@
 import api from '../axios';
-import type { Queue, Service, LoginResponse, Stats } from '../types';
+import type { Queue, Service, LoginResponse, Stats, Merchant } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleResponse = (r: any) => r.data;
@@ -10,6 +10,12 @@ export const adminApi = {
 
   register: (data: { name: string; email: string; password: string }) =>
     api.post('/admin/register', data).then(handleResponse) as Promise<LoginResponse>,
+
+  getMerchant: () =>
+    api.get('/admin/merchant').then(handleResponse) as Promise<Merchant>,
+
+  updateMerchant: (data: { name?: string; address?: string; phone?: string; midtrans?: { serverKey?: string; clientKey?: string } }) =>
+    api.put('/admin/merchant', data).then(handleResponse) as Promise<Merchant>,
 
   setupMerchant: (data: { name: string; slug: string }) =>
     api.post('/admin/merchant/setup', data).then(handleResponse) as Promise<{ merchant: { _id: string; name: string; slug: string }; token?: string }>,

@@ -82,18 +82,18 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => router.push('/services')}
+                onClick={() => router.push('/settings')}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
               >
                 <Settings className="w-4 h-4" />
-                Layanan
+                Pengaturan
               </button>
               <button
-                onClick={() => router.push('/stats')}
+                onClick={() => router.push('/services')}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
               >
-                <BarChart3 className="w-4 h-4" />
-                Statistik
+                <LayoutDashboard className="w-4 h-4" />
+                Layanan
               </button>
               <button
                 onClick={subscribe}

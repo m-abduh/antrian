@@ -221,6 +221,48 @@ export async function getMe(req, res) {
   });
 }
 
+export async function getMerchant(req, res, next) {
+  try {
+    const merchant = await Merchant.findById(req.admin.merchantId);
+    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+    return success(res, merchant);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateMerchant(req, res, next) {
+  try {
+    const { name, address, phone, midtrans } = req.body;
+    const update = {};
+
+    if (name !== undefined) {
+      if (!name.trim()) return error(res, 'Nama merchant wajib diisi');
+      if (name.trim().length > 100) return error(res, 'Nama maksimal 100 karakter');
+      update.name = name.trim();
+    }
+    if (address !== undefined) {
+      if (address.length > 500) return error(res, 'Alamat maksimal 500 karakter');
+      update.address = address;
+    }
+    if (phone !== undefined) {
+      if (phone && !/^\+?[0-9]{10,15}$/.test(phone)) return error(res, 'Format nomor telepon tidak valid');
+      update.phone = phone;
+    }
+    if (midtrans !== undefined) {
+      update.midtrans = {};
+      if (midtrans.serverKey !== undefined) update['midtrans.serverKey'] = midtrans.serverKey;
+      if (midtrans.clientKey !== undefined) update['midtrans.clientKey'] = midtrans.clientKey;
+    }
+
+    const merchant = await Merchant.findByIdAndUpdate(req.admin.merchantId, update, { new: true, runValidators: true });
+    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+    return success(res, merchant);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function setupMerchant(req, res, next) {
   try {
     const { name, slug } = req.body;

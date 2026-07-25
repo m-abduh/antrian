@@ -33,6 +33,21 @@ export interface Service {
   updatedAt: string;
 }
 
+export interface Merchant {
+  _id: string;
+  name: string;
+  slug: string;
+  address: string;
+  phone: string;
+  isActive: boolean;
+  midtrans: {
+    serverKey: string;
+    clientKey: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Admin {
   id: string;
   name: string;

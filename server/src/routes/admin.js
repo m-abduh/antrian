@@ -7,6 +7,8 @@ import {
   googleEmailLogin,
   logout,
   getMe,
+  getMerchant,
+  updateMerchant,
   setupMerchant,
   getQueues,
   updateQueueStatus,
@@ -29,6 +31,8 @@ router.post('/logout', logout);
 router.use(authenticate);
 
 router.get('/me', getMe);
+router.get('/merchant', getMerchant);
+router.put('/merchant', updateMerchant);
 router.post('/merchant/setup', setupMerchant);
 router.get('/queues', getQueues);
 router.patch('/queues/:id/status', updateQueueStatus);

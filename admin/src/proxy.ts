@@ -6,8 +6,8 @@ export async function proxy(req: NextRequest) {
   const isProtected =
     req.nextUrl.pathname.startsWith('/dashboard') ||
     req.nextUrl.pathname.startsWith('/services') ||
-    req.nextUrl.pathname.startsWith('/stats') ||
-    req.nextUrl.pathname.startsWith('/merchant');
+    req.nextUrl.pathname.startsWith('/merchant') ||
+    req.nextUrl.pathname.startsWith('/settings');
 
   if (isProtected && !token) {
     const signInUrl = new URL('/login', req.nextUrl);

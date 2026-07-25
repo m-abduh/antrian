@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import Script from 'next/script';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
 
@@ -46,6 +45,20 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterForm>();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.google?.accounts) {
+      setGsiReady(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => setGsiReady(true);
+    document.head.appendChild(script);
+    return () => { document.head.removeChild(script); };
+  }, []);
 
   useEffect(() => {
     if (!gsiReady || !window.google?.accounts) return;
@@ -105,11 +118,6 @@ export default function RegisterPage() {
 
   return (
     <>
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onLoad={() => setGsiReady(true)}
-      />
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

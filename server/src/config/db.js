@@ -37,4 +37,8 @@ export async function disconnectDB() {
   isConnected = false;
 }
 
+export function isDBConnected() {
+  return isConnected;
+}
+
 export default { connectDB, disconnectDB };

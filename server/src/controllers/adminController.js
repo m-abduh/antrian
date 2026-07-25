@@ -24,7 +24,11 @@ async function notifyCustomer(queue) {
     try {
       await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
     } catch (err) {
-      if (err.statusCode === 410) await PushSubscription.findByIdAndDelete(sub._id);
+      if (err.statusCode === 410) {
+        await PushSubscription.findByIdAndDelete(sub._id);
+      } else {
+        console.error(`[Push] Failed to send to ${sub.endpoint.substring(0, 50)}...:`, err.message);
+      }
     }
   }
 }

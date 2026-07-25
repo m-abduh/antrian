@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cron from 'node-cron';
-import { connectDB } from './config/db.js';
+import { connectDB, isDBConnected } from './config/db.js';
 import env from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import merchantRoutes from './routes/merchant.js';
@@ -46,11 +46,27 @@ const webhookLimiter = rateLimit({
 
 app.use('/api/midtrans', webhookLimiter);
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+});
+
+app.use('/api/admin/login', loginLimiter);
+
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false }));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const dbOk = isDBConnected();
+  res.json({
+    status: dbOk ? 'ok' : 'degraded',
+    db: dbOk ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.use('/api/merchant', merchantRoutes);

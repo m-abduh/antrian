@@ -12,6 +12,6 @@
     "lint": "cd client && npm run lint && cd ../admin && npm run lint"
   },
   "devDependencies": {
-    "concurrently": "^9.2.4"
+    "concurrently": "^10.0.4"
   }
 }

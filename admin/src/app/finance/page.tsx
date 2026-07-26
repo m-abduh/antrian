@@ -53,7 +53,7 @@ export default function FinancePage() {
     }
   };
 
-  const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+  const formatRp = (n: number | null | undefined) => `Rp ${(n || 0).toLocaleString('id-ID')}`;
 
   return (
     <div className="min-h-screen bg-gray-50">

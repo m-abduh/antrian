@@ -47,10 +47,13 @@ export default function CartPage() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<{ customerName: string; customerPhone: string }>({
     defaultValues: { customerName: '', customerPhone: '' },
   });
+
+  const [customerName, customerPhone] = watch(['customerName', 'customerPhone']);
 
   useEffect(() => {
     const saved = loadCustomerData();
@@ -269,7 +272,7 @@ export default function CartPage() {
 
             <motion.button
               type="submit"
-              disabled={createQueue.isPending}
+              disabled={createQueue.isPending || !customerName?.trim()}
               whileTap={{ scale: 0.98 }}
               className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-sm text-sm"
             >

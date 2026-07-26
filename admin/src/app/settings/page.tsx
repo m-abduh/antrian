@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Loader2, ArrowLeft, Store, MapPin, Phone, Key, Eye, EyeOff, ShieldCheck, QrCode, Download, Building2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Store, MapPin, Phone, QrCode, Download, Building2 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { adminApi } from '@/lib/api/admin';
 import type { Merchant } from '@/lib/types';
@@ -17,8 +17,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showServerKey, setShowServerKey] = useState(false);
-  const [showClientKey, setShowClientKey] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
 
   const merchantUrl = merchant
@@ -44,8 +42,6 @@ export default function SettingsPage() {
     name: '',
     address: '',
     phone: '',
-    serverKey: '',
-    clientKey: '',
     bankName: '',
     bankAccount: '',
     bankHolder: '',
@@ -64,8 +60,6 @@ export default function SettingsPage() {
           name: m.name,
           address: m.address || '',
           phone: m.phone || '',
-          serverKey: m.midtrans?.serverKey || '',
-          clientKey: m.midtrans?.clientKey || '',
           bankName: m.bank?.name || '',
           bankAccount: m.bank?.account || '',
           bankHolder: m.bank?.holder || '',
@@ -89,10 +83,6 @@ export default function SettingsPage() {
           name: form.bankName || undefined,
           account: form.bankAccount || undefined,
           holder: form.bankHolder || undefined,
-        },
-        midtrans: {
-          serverKey: form.serverKey || undefined,
-          clientKey: form.clientKey || undefined,
         },
       });
       setMerchant(updated);
@@ -304,63 +294,6 @@ export default function SettingsPage() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="NAMA SESUAI REKENING"
                 />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-blue-500" />
-                Midtrans Payment
-              </h2>
-
-              <p className="text-xs text-gray-500">
-                Biarkan kosong jika masih menggunakan key global.
-              </p>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Server Key
-                </label>
-                <div className="relative">
-                  <input
-                    type={showServerKey ? 'text' : 'password'}
-                    value={form.serverKey}
-                    onChange={(e) => setForm({ ...form, serverKey: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 pr-11 font-mono text-sm"
-                    placeholder="SB-Mid-server-..."
-                    autoComplete="off"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowServerKey(!showServerKey)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showServerKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Client Key
-                </label>
-                <div className="relative">
-                  <input
-                    type={showClientKey ? 'text' : 'password'}
-                    value={form.clientKey}
-                    onChange={(e) => setForm({ ...form, clientKey: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 pr-11 font-mono text-sm"
-                    placeholder="SB-Mid-client-..."
-                    autoComplete="off"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowClientKey(!showClientKey)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showClientKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
               </div>
             </div>
 

@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useCartStore } from '@/lib/store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   User, Phone, Loader2, ArrowLeft, AlertCircle,
   X, Trash2, Waves, ShoppingCart, Plus, Minus,
@@ -17,20 +17,20 @@ import { saveActiveQueue } from '@/lib/activeQueue';
 
 const CUSTOMER_STORAGE_KEY = 'antriin-customer';
 
-function loadCustomerData(): { name: string; phone: string } {
-  if (typeof window === 'undefined') return { name: '', phone: '' };
+function loadCustomerData(): { customerName: string; customerPhone: string } {
+  if (typeof window === 'undefined') return { customerName: '', customerPhone: '' };
   try {
     const raw = localStorage.getItem(CUSTOMER_STORAGE_KEY);
-    if (!raw) return { name: '', phone: '' };
+    if (!raw) return { customerName: '', customerPhone: '' };
     return JSON.parse(raw);
   } catch {
-    return { name: '', phone: '' };
+    return { customerName: '', customerPhone: '' };
   }
 }
 
-function saveCustomerData(name: string, phone: string) {
+function saveCustomerData(customerName: string, customerPhone: string) {
   try {
-    localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify({ name, phone }));
+    localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify({ customerName, customerPhone }));
   } catch { /* noop */ }
 }
 
@@ -46,10 +46,16 @@ export default function CartPage() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<{ customerName: string; customerPhone: string }>({
-    defaultValues: loadCustomerData(),
+    defaultValues: { customerName: '', customerPhone: '' },
   });
+
+  useEffect(() => {
+    const saved = loadCustomerData();
+    if (saved.customerName) reset(saved);
+  }, [reset]);
 
   const onSubmit = useCallback(async (data: { customerName: string; customerPhone: string }) => {
     if (items.length === 0) return;

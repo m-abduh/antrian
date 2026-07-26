@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import { getMerchant, getServices, createQueue, getLiveQueue, submitRating, subscribePush, unsubscribePush } from '../controllers/merchantController.js';
+import { getMerchant, getServices, createQueue, getQueue, getLiveQueue, submitRating, subscribePush, unsubscribePush } from '../controllers/merchantController.js';
 
 const router = Router();
 
@@ -15,6 +15,7 @@ router.get('/:slug', getMerchant);
 router.get('/:slug/services', getServices);
 router.post('/:slug/queue', queueRateLimiter, createQueue);
 router.get('/:slug/queue/live', getLiveQueue);
+router.get('/:slug/queue/:id', getQueue);
 router.post('/:slug/queue/:id/rating', submitRating);
 router.post('/:slug/subscribe', subscribePush);
 router.post('/:slug/unsubscribe', unsubscribePush);

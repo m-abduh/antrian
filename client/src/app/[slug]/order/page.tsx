@@ -7,7 +7,7 @@ import { useClientStore } from '@/lib/store/clientStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Phone, Loader2, ArrowLeft, AlertCircle, Clock, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function OrderPage() {
   const params = useParams();
@@ -33,8 +33,13 @@ export default function OrderPage() {
     },
   });
 
+  useEffect(() => {
+    if (!selectedMerchant || !selectedService) {
+      router.replace(`/${slug}`);
+    }
+  }, [selectedMerchant, selectedService, router, slug]);
+
   if (!selectedMerchant || !selectedService) {
-    router.push(`/${slug}`);
     return null;
   }
 

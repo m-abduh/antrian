@@ -19,4 +19,7 @@ export const merchantApi = {
 
   getLiveQueue: (slug: string) =>
     api.get(`/merchant/${slug}/queue/live`).then(handleResponse) as Promise<LiveQueueResponse>,
+
+  getQueue: (slug: string, id: string) =>
+    api.get(`/merchant/${slug}/queue/${id}`).then(handleResponse) as Promise<Queue>,
 };

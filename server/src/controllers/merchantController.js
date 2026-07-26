@@ -95,6 +95,22 @@ export async function createQueue(req, res, next) {
   }
 }
 
+export async function getQueue(req, res, next) {
+  try {
+    const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true });
+    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+
+    const queue = await Queue.findOne({ _id: req.params.id, merchantId: merchant._id })
+      .populate('serviceId', 'name duration price');
+
+    if (!queue) return error(res, 'Antrean tidak ditemukan', 404);
+
+    return success(res, queue);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getLiveQueue(req, res, next) {
   try {
     const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true });

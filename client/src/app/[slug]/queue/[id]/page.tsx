@@ -4,10 +4,13 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useLiveQueue } from '@/lib/hooks/useMerchant';
 import { useClientStore } from '@/lib/store/clientStore';
 import { useNotification } from '@/lib/hooks/useNotification';
+import { merchantApi } from '@/lib/api/merchant';
 import api from '@/lib/axios';
+import type { Queue } from '@/lib/types';
 import {
   Clock, CheckCircle2, Loader2, Users, ArrowLeft,
   AlertTriangle, ChevronRight, PartyPopper, Star,
@@ -31,7 +34,13 @@ export default function QueueTrackingPage() {
   const slug = params.slug as string;
   const queueId = params.id as string;
   const { currentQueue, setQueue } = useClientStore();
-  const { data: liveData, isLoading } = useLiveQueue(slug);
+  const { data: liveData, isLoading: liveLoading } = useLiveQueue(slug);
+  const { data: fetchedQueue, isLoading: queueLoading } = useQuery<Queue>({
+    queryKey: ['queue', slug, queueId],
+    queryFn: () => merchantApi.getQueue(slug, queueId),
+    enabled: !currentQueue,
+    refetchInterval: 15000,
+  });
   const [called, setCalled] = useState(false);
   const [rating, setRating] = useState(0);
   const [ratingSent, setRatingSent] = useState(false);
@@ -42,7 +51,7 @@ export default function QueueTrackingPage() {
   const myQueue = liveData?.waiting?.find((q) => q._id === queueId)
     || (liveData?.current?._id === queueId ? liveData.current : null);
 
-  const queue = currentQueue || myQueue;
+  const queue = currentQueue || myQueue || fetchedQueue;
   const statusInfo = queue ? statusConfig[queue.status] : statusConfig.waiting;
 
   const myPosition = liveData?.waiting?.findIndex((q) => q._id === queueId) ?? -1;
@@ -76,6 +85,8 @@ export default function QueueTrackingPage() {
   const progressPercent = totalInLine > 0
     ? Math.round(((totalInLine - positionInLine) / totalInLine) * 100)
     : queue?.status === 'serving' || queue?.status === 'done' ? 100 : 0;
+
+  const isLoading = liveLoading || (queueLoading && !currentQueue);
 
   if (isLoading && !queue) {
     return (

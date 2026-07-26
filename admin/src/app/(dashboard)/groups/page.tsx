@@ -5,9 +5,9 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, Pencil, Trash2, X, Loader2, FolderKanban,
-  AlertCircle, Waves, GripVertical,
-} from 'lucide-react';
+  IconPlus, IconPencil, IconTrash, IconX, IconLoader2, IconLayoutKanban,
+  IconAlertCircle, IconWavesElectricity, IconGripVertical,
+} from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
 import { useServices } from '@/lib/hooks/useAdmin';
 import type { Group } from '@/lib/types';
@@ -108,7 +108,7 @@ export default function GroupsPage() {
                 onClick={() => router.push('/dashboard')}
                 className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
               >
-                <FolderKanban className="w-5 h-5 text-white" />
+                <IconLayoutKanban className="w-5 h-5 text-white" />
               </button>
               <div>
                 <h1 className="text-lg font-bold text-foreground">Grup</h1>
@@ -119,7 +119,7 @@ export default function GroupsPage() {
               onClick={openCreate}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
-              <Plus className="w-4 h-4" />
+              <IconPlus className="w-4 h-4" />
               Buat Grup
             </button>
           </div>
@@ -129,25 +129,25 @@ export default function GroupsPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {error && (
           <div className="mb-4 flex items-center gap-2 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <IconAlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
           </div>
         )}
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : groups.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <FolderKanban className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <IconLayoutKanban className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada grup</h3>
             <p className="text-muted-foreground mb-6">Kelompokkan layanan agar pelanggan mudah memilih</p>
             <button
               onClick={openCreate}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
-              <Plus className="w-4 h-4" />
+              <IconPlus className="w-4 h-4" />
               Buat Grup
             </button>
           </motion.div>
@@ -165,7 +165,7 @@ export default function GroupsPage() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <GripVertical className="w-4 h-4 text-muted-foreground/40" />
+                      <IconGripVertical className="w-4 h-4 text-muted-foreground/40" />
                       <h3 className="font-semibold text-foreground">{g.name}</h3>
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         {g.serviceIds.length} layanan
@@ -176,13 +176,13 @@ export default function GroupsPage() {
                         onClick={() => openEdit(g)}
                         className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <IconPencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setDeleteId(g._id)}
                         className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <IconTrash className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -238,7 +238,7 @@ export default function GroupsPage() {
                 {editGroup ? 'Edit Grup' : 'Buat Grup'}
               </h2>
               <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
-                <X className="w-5 h-5" />
+                <IconX className="w-5 h-5" />
               </button>
             </div>
 
@@ -296,7 +296,7 @@ export default function GroupsPage() {
                   disabled={saving || !formName.trim()}
                   className="flex-1 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-sm"
                 >
-                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {saving && <IconLoader2 className="w-4 h-4 animate-spin" />}
                   Simpan
                 </button>
               </div>

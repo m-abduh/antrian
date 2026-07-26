@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, ArrowRight, QrCode, Clock, Smartphone, Shield, Loader2 } from 'lucide-react';
+import { IconSearch, IconArrowRight, IconQrcode, IconClock, IconDeviceMobile, IconShield, IconLoader2 } from '@tabler/icons-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const features = [
-  { icon: QrCode, title: 'Scan QR', desc: 'Scan QR code merchant langsung masuk antrian' },
-  { icon: Clock, title: 'Real-time', desc: 'Pantau antrian secara langsung dari HP' },
-  { icon: Smartphone, title: 'Mobile Friendly', desc: 'Bisa diakses dari mana aja, kapan aja' },
-  { icon: Shield, title: 'Aman', desc: 'Data terenkripsi dan privasi terjaga' },
+  { icon: IconQrcode, title: 'Scan QR', desc: 'Scan QR code merchant langsung masuk antrian' },
+  { icon: IconClock, title: 'Real-time', desc: 'Pantau antrian secara langsung dari HP' },
+  { icon: IconDeviceMobile, title: 'Mobile Friendly', desc: 'Bisa diakses dari mana aja, kapan aja' },
+  { icon: IconShield, title: 'Aman', desc: 'Data terenkripsi dan privasi terjaga' },
 ];
 
 export default function LandingPage() {
@@ -32,7 +32,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
-              <Clock className="w-5 h-5 text-white" />
+              <IconClock className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-xl text-foreground">Antriin</span>
           </div>
@@ -56,7 +56,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
           >
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Clock className="w-4 h-4" />
+              <IconClock className="w-4 h-4" />
               Antre Online Tanpa Ribet
             </span>
           </motion.div>
@@ -93,7 +93,7 @@ export default function LandingPage() {
             </label>
             <div className="flex gap-2 md:gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+                <IconSearch className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                 <input
                   id="merchant-search"
                   type="text"
@@ -111,9 +111,9 @@ export default function LandingPage() {
                 className="px-5 md:px-6 py-3 md:py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-all shadow-sm"
               >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <IconLoader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <ArrowRight className="w-4 h-4" />
+                  <IconArrowRight className="w-4 h-4" />
                 )}
               </motion.button>
             </div>

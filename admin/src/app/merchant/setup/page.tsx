@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { Loader2, Store, ArrowRight, Waves } from 'lucide-react';
+import { IconLoader2, IconBuildingStore, IconArrowRight, IconWavesElectricity } from '@tabler/icons-react';
 import { useState } from 'react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
@@ -50,7 +50,7 @@ export default function MerchantSetupPage() {
       <header className="border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Waves className="w-5 h-5 text-primary" />
+            <IconWavesElectricity className="w-5 h-5 text-primary" />
             <span className="font-bold text-xl text-foreground">Antriin</span>
           </div>
           <ThemeToggle />
@@ -66,7 +66,7 @@ export default function MerchantSetupPage() {
           <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
             <div className="text-center mb-8">
               <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Store className="w-7 h-7 text-primary" />
+                <IconBuildingStore className="w-7 h-7 text-primary" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">Buat Merchant</h1>
               <p className="text-muted-foreground mt-1 text-sm">Siapkan toko atau bisnis kamu</p>
@@ -128,13 +128,13 @@ export default function MerchantSetupPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <IconLoader2 className="w-5 h-5 animate-spin" />
                     Menyimpan...
                   </>
                 ) : (
                   <>
                     Lanjut ke Dashboard
-                    <ArrowRight className="w-5 h-5" />
+                    <IconArrowRight className="w-5 h-5" />
                   </>
                 )}
               </motion.button>

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { Loader2, LogIn, Eye, EyeOff, Waves } from 'lucide-react';
+import { IconLoader2, IconLogin, IconEye, IconEyeOff, IconWavesElectricity } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { signIn, getCsrfToken } from 'next-auth/react';
 import { adminApi } from '@/lib/api/admin';
@@ -106,7 +106,7 @@ export default function LoginPage() {
       <header className="border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Waves className="w-5 h-5 text-primary" />
+            <IconWavesElectricity className="w-5 h-5 text-primary" />
             <span className="font-bold text-xl text-foreground">Antriin</span>
           </div>
           <ThemeToggle />
@@ -122,7 +122,7 @@ export default function LoginPage() {
           <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
             <div className="text-center mb-8">
               <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <LogIn className="w-7 h-7 text-primary" />
+                <IconLogin className="w-7 h-7 text-primary" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">Masuk</h1>
               <p className="text-muted-foreground mt-1 text-sm">Dashboard admin Antriin</p>
@@ -164,7 +164,7 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <IconEyeOff className="w-5 h-5" /> : <IconEye className="w-5 h-5" />}
                   </button>
                 </div>
                 {errors.password && (
@@ -190,12 +190,12 @@ export default function LoginPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <IconLoader2 className="w-5 h-5 animate-spin" />
                     Memproses...
                   </>
                 ) : (
                   <>
-                    <LogIn className="w-5 h-5" />
+                    <IconLogin className="w-5 h-5" />
                     Masuk
                   </>
                 )}
@@ -227,7 +227,7 @@ export default function LoginPage() {
               className="w-full py-3 border border-border text-foreground font-semibold rounded-xl hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-colors"
             >
               {googleLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <IconLoader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
                   <svg className="w-5 h-5" viewBox="0 0 24 24">

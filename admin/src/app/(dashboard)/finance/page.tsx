@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {
-  Loader2, Users, CheckCircle2, Clock, SkipForward, Waves,
-} from 'lucide-react';
+  IconLoader2, IconUsers, IconCircleCheck, IconClock, IconPlayerSkipForward, IconWavesElectricity,
+} from '@tabler/icons-react';
 import { useStats } from '@/lib/hooks/useAdmin';
 
 export default function FinancePage() {
@@ -21,10 +21,10 @@ export default function FinancePage() {
   if (status !== 'authenticated') return null;
 
   const statCards = [
-    { label: 'Total Antrian', value: stats?.total ?? 0, icon: Users, color: 'bg-blue-500' },
-    { label: 'Selesai', value: stats?.done ?? 0, icon: CheckCircle2, color: 'bg-green-500' },
-    { label: 'Menunggu', value: stats?.waitingNow ?? 0, icon: Clock, color: 'bg-yellow-500' },
-    { label: 'Dilewati', value: stats?.skipped ?? 0, icon: SkipForward, color: 'bg-red-500' },
+    { label: 'Total Antrian', value: stats?.total ?? 0, icon: IconUsers, color: 'bg-blue-500' },
+    { label: 'Selesai', value: stats?.done ?? 0, icon: IconCircleCheck, color: 'bg-green-500' },
+    { label: 'Menunggu', value: stats?.waitingNow ?? 0, icon: IconClock, color: 'bg-yellow-500' },
+    { label: 'Dilewati', value: stats?.skipped ?? 0, icon: IconPlayerSkipForward, color: 'bg-red-500' },
   ];
 
   return (
@@ -37,7 +37,7 @@ export default function FinancePage() {
                 onClick={() => router.push('/dashboard')}
                 className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
               >
-                <Waves className="w-5 h-5 text-white" />
+                <IconWavesElectricity className="w-5 h-5 text-white" />
               </button>
               <div>
                 <h1 className="text-lg font-bold text-foreground">Rekap Antrian</h1>
@@ -51,7 +51,7 @@ export default function FinancePage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : stats ? (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>

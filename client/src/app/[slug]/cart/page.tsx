@@ -7,9 +7,9 @@ import { useCartStore } from '@/lib/store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useEffect } from 'react';
 import {
-  User, Phone, Loader2, ArrowLeft, AlertCircle,
-  X, Trash2, Waves, ShoppingCart, Plus, Minus,
-} from 'lucide-react';
+  IconUser, IconPhone, IconLoader2, IconArrowLeft, IconAlertCircle,
+  IconX, IconTrash, IconWavesElectricity, IconShoppingCart, IconPlus, IconMinus,
+} from '@tabler/icons-react';
 import Link from 'next/link';
 import { useMerchant } from '@/lib/hooks/useMerchant';
 import { imageUrl } from '@/lib/imageUrl';
@@ -86,17 +86,17 @@ export default function CartPage() {
         <header className="bg-card border-b border-border">
           <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
             <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-5 h-5" />
+              <IconArrowLeft className="w-5 h-5" />
               <span className="font-medium text-sm">Kembali</span>
             </Link>
             <div className="flex items-center gap-2">
-              <Waves className="w-5 h-5 text-primary" />
+              <IconWavesElectricity className="w-5 h-5 text-primary" />
               <span className="font-bold text-sm text-foreground">Antriin</span>
             </div>
           </div>
         </header>
         <main className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-20 text-center">
-          <ShoppingCart className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+          <IconShoppingCart className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-foreground mb-2">Keranjang Kosong</h2>
           <p className="text-sm text-muted-foreground mb-6">Pilih layanan dulu yuk</p>
           <Link
@@ -115,11 +115,11 @@ export default function CartPage() {
       <header className="bg-card border-b border-border">
         <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+            <IconArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Waves className="w-5 h-5 text-primary" />
+            <IconWavesElectricity className="w-5 h-5 text-primary" />
             <span className="font-bold text-sm text-foreground">Antriin</span>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function CartPage() {
                   </div>
                 ) : (
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <ShoppingCart className="w-5 h-5 text-primary" />
+                    <IconShoppingCart className="w-5 h-5 text-primary" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -161,20 +161,20 @@ export default function CartPage() {
                       onClick={() => updateQuantity(item._id, item.quantity - 1)}
                       className="w-7 h-7 rounded-lg bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-center"
                     >
-                      <Minus className="w-3 h-3" />
+                      <IconMinus className="w-3 h-3" />
                     </button>
                     <span className="w-5 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
                     <button
                       onClick={() => addItem({ _id: item._id, name: item.name, price: item.price, image: item.image || '', merchantId: '', description: '', isActive: true, createdAt: '', updatedAt: '' })}
                       className="w-7 h-7 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center"
                     >
-                      <Plus className="w-3 h-3" />
+                      <IconPlus className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => removeItem(item._id)}
                       className="ml-1 p-1.5 text-muted-foreground hover:text-red-500 rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <IconTrash className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export default function CartPage() {
                 exit={{ opacity: 0, y: -8 }}
                 className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-2"
               >
-                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <IconAlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-red-600 dark:text-red-400 flex-1">{error}</p>
               </motion.div>
             )}
@@ -234,7 +234,7 @@ export default function CartPage() {
                 Nama Lengkap <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <IconUser className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   {...register('customerName', {
                     required: 'Nama wajib diisi',
@@ -252,7 +252,7 @@ export default function CartPage() {
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Nomor Telepon</label>
               <div className="relative">
-                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <IconPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   {...register('customerPhone', {
                     pattern: {
@@ -277,7 +277,7 @@ export default function CartPage() {
               className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-sm text-sm"
             >
               {createQueue.isPending ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Memproses...</>
+                <><IconLoader2 className="w-4 h-4 animate-spin" /> Memproses...</>
               ) : (
                 'Dapatkan Antrian'
               )}

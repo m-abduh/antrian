@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Loader2, Store, MapPin, Phone, QrCode, Download, Upload, Waves, Plus, X, Link2, Image } from 'lucide-react';
+import { IconLoader2, IconBuildingStore, IconMapPin, IconPhone, IconQrcode, IconDownload, IconUpload, IconWavesElectricity, IconPlus, IconX, IconLink, IconPhoto } from '@tabler/icons-react';
 import QRCode from 'qrcode';
 import { adminApi } from '@/lib/api/admin';
 import { imageUrl } from '@/lib/imageUrl';
@@ -110,7 +110,7 @@ export default function SettingsPage() {
                 onClick={() => router.push('/dashboard')}
                 className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
               >
-                <Store className="w-5 h-5 text-white" />
+                <IconBuildingStore className="w-5 h-5 text-white" />
               </button>
               <div>
                 <h1 className="text-lg font-bold text-foreground">Pengaturan</h1>
@@ -124,11 +124,11 @@ export default function SettingsPage() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : !merchant ? (
           <div className="text-center py-20">
-            <Store className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <IconBuildingStore className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-1">Merchant tidak ditemukan</h3>
             <p className="text-muted-foreground">Silakan setup merchant terlebih dahulu</p>
           </div>
@@ -154,7 +154,7 @@ export default function SettingsPage() {
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Store className="w-4 h-4 text-primary" />
+                <IconBuildingStore className="w-4 h-4 text-primary" />
                 Informasi Merchant
               </h2>
 
@@ -183,7 +183,7 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
                   <span className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                    <IconMapPin className="w-3.5 h-3.5 text-muted-foreground" />
                     Alamat
                   </span>
                 </label>
@@ -198,7 +198,7 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
                   <span className="flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                    <IconPhone className="w-3.5 h-3.5 text-muted-foreground" />
                     No. Telepon
                   </span>
                 </label>
@@ -223,7 +223,7 @@ export default function SettingsPage() {
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Upload className="w-4 h-4 text-primary" />
+                <IconUpload className="w-4 h-4 text-primary" />
                 Foto Merchant
               </h2>
 
@@ -234,7 +234,7 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                    <Store className="w-8 h-8 text-muted-foreground/50" />
+                    <IconBuildingStore className="w-8 h-8 text-muted-foreground/50" />
                   </div>
                 )}
                 <button
@@ -261,7 +261,7 @@ export default function SettingsPage() {
                   disabled={uploading}
                   className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors text-sm"
                 >
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploading ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <IconUpload className="w-4 h-4" />}
                   {uploading ? 'Mengupload...' : 'Ganti Foto'}
                 </button>
               </div>
@@ -269,7 +269,7 @@ export default function SettingsPage() {
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Image className="w-4 h-4 text-primary" />
+                <IconPhoto className="w-4 h-4 text-primary" />
                 Banner Merchant
               </h2>
 
@@ -280,7 +280,7 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <div className="w-full max-w-sm aspect-[3/1] rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                    <Image className="w-8 h-8 text-muted-foreground/50" />
+                    <IconPhoto className="w-8 h-8 text-muted-foreground/50" />
                   </div>
                 )}
                 <button
@@ -307,15 +307,15 @@ export default function SettingsPage() {
                   disabled={uploading}
                   className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors text-sm"
                 >
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {uploading ? 'Mengupload...' : form.banner ? 'Ganti Banner' : 'Upload Banner'}
+                  {uploading ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <IconUpload className="w-4 h-4" />}
+                  {uploading ? 'Mengupload...' : form.banner ? 'Ganti Banner' : 'IconUpload Banner'}
                 </button>
               </div>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-primary" />
+                <IconQrcode className="w-4 h-4 text-primary" />
                 QR Code Merchant
               </h2>
 
@@ -329,7 +329,7 @@ export default function SettingsPage() {
                     <img src={qrDataUrl} alt="QR Code" className="w-48 h-48" />
                   ) : (
                     <div className="w-48 h-48 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                      <IconLoader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                     </div>
                   )}
                 </div>
@@ -342,15 +342,15 @@ export default function SettingsPage() {
                   disabled={!qrDataUrl}
                   className="flex items-center gap-2 px-4 py-2 bg-foreground text-background text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 transition-all"
                 >
-                  <Download className="w-4 h-4" />
-                  Download QR Code
+                  <IconDownload className="w-4 h-4" />
+                  IconDownload QR Code
                 </button>
               </div>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-primary" />
+                <IconLink className="w-4 h-4 text-primary" />
                 Social Media <span className="text-xs font-normal text-muted-foreground">(maks. 3)</span>
               </h2>
 
@@ -389,7 +389,7 @@ export default function SettingsPage() {
                       }}
                       className="w-9 h-9 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-center flex-shrink-0"
                     >
-                      <X className="w-4 h-4" />
+                      <IconX className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -405,7 +405,7 @@ export default function SettingsPage() {
                   }}
                   className="flex items-center gap-2 px-4 py-2 border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 rounded-xl text-sm transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
+                  <IconPlus className="w-4 h-4" />
                   Tambah Social Media
                 </button>
               )}
@@ -425,7 +425,7 @@ export default function SettingsPage() {
                 className="px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-sm"
               >
                 {saving ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+                  <><IconLoader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
                 ) : (
                   'Simpan'
                 )}

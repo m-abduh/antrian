@@ -3,7 +3,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState, useEffect } from 'react';
-import { CreditCard, MapPin, Phone, ShoppingCart, Store, Waves, Plus, Minus, Sparkles, Bell, Check, ArrowRight } from 'lucide-react';
+import { IconCreditCard, IconMapPin, IconPhone, IconShoppingCart, IconBuildingStore, IconWavesElectricity, IconPlus, IconMinus, IconSparkles, IconBell, IconCheck, IconArrowRight } from '@tabler/icons-react';
 import { useMerchant, useServices, useGroups } from '@/lib/hooks/useMerchant';
 import { useCartStore } from '@/lib/store/cartStore';
 import { imageUrl } from '@/lib/imageUrl';
@@ -90,7 +90,7 @@ export default function MerchantPage() {
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-            <Store className="w-8 h-8 text-muted-foreground/40" />
+            <IconBuildingStore className="w-8 h-8 text-muted-foreground/40" />
           </div>
           <h1 className="text-xl font-bold text-foreground mb-2">Merchant tidak ditemukan</h1>
           <p className="text-muted-foreground text-sm">QR Code mungkin tidak valid atau merchant tidak aktif</p>
@@ -118,7 +118,7 @@ export default function MerchantPage() {
       >
         {qty > 0 && (
           <div className="absolute top-2.5 left-2.5 z-10 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
-            <Check className="w-3 h-3" strokeWidth={3} />
+            <IconCheck className="w-3 h-3" strokeWidth={3} />
           </div>
         )}
         {service.image && (
@@ -133,7 +133,7 @@ export default function MerchantPage() {
         <div className={`flex items-center gap-3 ${service.image ? 'p-3.5' : 'p-4'}`}>
           {!service.image && (
             <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-primary/15 to-primary/5 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-5 h-5 text-primary" />
+              <IconCreditCard className="w-5 h-5 text-primary" />
             </div>
           )}
           <div className="flex-1 min-w-0">
@@ -151,14 +151,14 @@ export default function MerchantPage() {
                 onClick={() => updateQuantity(service._id, qty - 1)}
                 className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-card text-foreground hover:text-primary transition-colors flex items-center justify-center shadow-sm"
               >
-                <Minus className="w-3 h-3" />
+                <IconMinus className="w-3 h-3" />
               </button>
               <span className="w-5 text-center text-sm font-bold text-foreground font-mono tabular-nums">{qty}</span>
               <button
                 onClick={() => addItem(service)}
                 className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-sm"
               >
-                <Plus className="w-3 h-3" />
+                <IconPlus className="w-3 h-3" />
               </button>
             </div>
           ) : (
@@ -166,7 +166,7 @@ export default function MerchantPage() {
               onClick={() => addItem(service)}
               className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center flex-shrink-0"
             >
-              <Plus className="w-4 h-4" />
+              <IconPlus className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -180,7 +180,7 @@ export default function MerchantPage() {
   const EmptyServices = () => (
     <div className="bg-card border border-dashed border-border rounded-3xl p-8 md:p-12 text-center">
       <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-        <CreditCard className="w-7 h-7 text-muted-foreground/30" />
+        <IconCreditCard className="w-7 h-7 text-muted-foreground/30" />
       </div>
       <h3 className="text-base md:text-lg font-semibold text-foreground mb-1.5">Belum Ada Layanan</h3>
       <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
@@ -209,7 +209,7 @@ export default function MerchantPage() {
                   </div>
                 ) : (
                   <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center ring-4 ring-background shadow-md">
-                    <Store className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+                    <IconBuildingStore className="w-8 h-8 md:w-10 md:h-10 text-primary" />
                   </div>
                 )}
               </div>
@@ -225,13 +225,13 @@ export default function MerchantPage() {
                   <div className="flex flex-wrap items-center gap-2 mt-3">
                     {merchant.address && (
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-full px-2.5 py-1">
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        <IconMapPin className="w-3 h-3 flex-shrink-0" />
                         {merchant.address}
                       </span>
                     )}
                     {merchant.phone && (
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-full px-2.5 py-1">
-                        <Phone className="w-3 h-3 flex-shrink-0" />
+                        <IconPhone className="w-3 h-3 flex-shrink-0" />
                         {merchant.phone}
                       </span>
                     )}
@@ -263,7 +263,7 @@ export default function MerchantPage() {
                 <Link href={`/${slug}/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-primary/[0.05] border border-primary/20 rounded-2xl overflow-hidden hover:bg-primary/[0.08] transition-colors">
                   <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
                     <div className="relative w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-                      <Bell className="w-4 h-4 text-primary" />
+                      <IconBell className="w-4 h-4 text-primary" />
                       <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
                       <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary" />
                     </div>
@@ -279,7 +279,7 @@ export default function MerchantPage() {
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">No.</p>
                       <p className="font-mono text-lg font-bold text-primary tabular-nums leading-none">{activeQ.number}</p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                    <IconArrowRight className="w-4 h-4 text-primary/60 flex-shrink-0" />
                   </div>
                 </Link>
               </motion.div>
@@ -343,16 +343,16 @@ export default function MerchantPage() {
           {/* Cara Pakai — alur langkah bernomor */}
           <div className="relative bg-gradient-to-br from-primary/[0.05] to-transparent border border-primary/10 rounded-2xl p-5 md:p-6">
             <h4 className="font-semibold text-sm md:text-base text-foreground mb-5 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
+              <IconSparkles className="w-4 h-4 text-primary" />
               Cara Pakai
             </h4>
             <div className="relative grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-5">
               <div className="hidden md:block absolute top-[18px] left-[12.5%] right-[12.5%] border-t border-dashed border-primary/25 -z-0" />
               {[
-                { icon: Plus, label: 'Pilih Layanan', desc: 'Tap + pada layanan yang diinginkan' },
-                { icon: ShoppingCart, label: 'Buka Keranjang', desc: 'Tap ikon keranjang di bawah' },
-                { icon: Waves, label: 'Ambil Antrian', desc: 'Isi data diri & submit' },
-                { icon: MapPin, label: 'Pantau Real-time', desc: 'Lihat posisi antrianmu' },
+                { icon: IconPlus, label: 'Pilih Layanan', desc: 'Tap + pada layanan yang diinginkan' },
+                { icon: IconShoppingCart, label: 'Buka Keranjang', desc: 'Tap ikon keranjang di bawah' },
+                { icon: IconWavesElectricity, label: 'Ambil Antrian', desc: 'Isi data diri & submit' },
+                { icon: IconMapPin, label: 'Pantau Real-time', desc: 'Lihat posisi antrianmu' },
               ].map(({ icon: Icon, label, desc }, i) => (
                 <div key={i} className="relative text-center">
                   <div className="relative w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-2 text-xs font-bold font-mono shadow-sm">
@@ -382,7 +382,7 @@ export default function MerchantPage() {
             <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto flex items-center justify-between gap-3 bg-card/95 backdrop-blur-lg border border-border rounded-2xl shadow-xl p-3 md:p-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                  <IconShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">
@@ -399,7 +399,7 @@ export default function MerchantPage() {
                 className="px-6 py-2.5 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm text-sm flex items-center gap-2 flex-shrink-0"
               >
                 Pesan
-                <ShoppingCart className="w-4 h-4" />
+                <IconShoppingCart className="w-4 h-4" />
               </Link>
             </div>
           </motion.div>

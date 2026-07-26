@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, BarChart3, Settings, LogOut, Waves, Menu, X, FolderKanban } from 'lucide-react';
+import { IconLayoutDashboard, IconChartBar, IconSettings, IconLogout, IconWavesElectricity, IconMenu, IconX, IconLayoutKanban } from '@tabler/icons-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Layanan', icon: BarChart3, href: '/services' },
-  { label: 'Grup', icon: FolderKanban, href: '/groups' },
-  { label: 'Pengaturan', icon: Settings, href: '/settings' },
+  { label: 'Dashboard', icon: IconLayoutDashboard, href: '/dashboard' },
+  { label: 'Layanan', icon: IconChartBar, href: '/services' },
+  { label: 'Grup', icon: IconLayoutKanban, href: '/groups' },
+  { label: 'Pengaturan', icon: IconSettings, href: '/settings' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -42,12 +42,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
-              <Waves className="w-5 h-5 text-white" />
+              <IconWavesElectricity className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-lg text-foreground">Antriin</span>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
-            <X className="w-5 h-5" />
+            <IconX className="w-5 h-5" />
           </button>
         </div>
         <nav className="space-y-1">
@@ -75,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onClick={() => signOut({ redirect: false }).then(() => router.push('/login'))}
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
+            <IconLogout className="w-4 h-4" />
             Keluar
           </button>
         </div>
@@ -84,7 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex-col p-6 z-30">
         <div className="flex items-center gap-2.5 mb-8">
           <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
-            <Waves className="w-5 h-5 text-white" />
+            <IconWavesElectricity className="w-5 h-5 text-white" />
           </div>
           <div>
             <span className="font-bold text-foreground">Antriin</span>
@@ -116,7 +116,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onClick={() => signOut({ redirect: false }).then(() => router.push('/login'))}
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
+            <IconLogout className="w-4 h-4" />
             Keluar
           </button>
         </div>
@@ -129,7 +129,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className="p-2.5 rounded-xl bg-card border border-border shadow-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label="Buka menu"
           >
-            <Menu className="w-5 h-5" />
+            <IconMenu className="w-5 h-5" />
           </button>
         </div>
         {children}

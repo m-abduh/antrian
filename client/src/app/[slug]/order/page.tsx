@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useClientStore } from '@/lib/store/clientStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Loader2, ArrowLeft, AlertCircle, X, Waves } from 'lucide-react';
+import { IconUser, IconPhone, IconLoader2, IconArrowLeft, IconAlertCircle, IconX, IconWavesElectricity } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 import { saveActiveQueue } from '@/lib/activeQueue';
@@ -65,11 +65,11 @@ export default function OrderPage() {
       <header className="bg-card border-b border-border">
         <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+            <IconArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Waves className="w-5 h-5 text-primary" />
+            <IconWavesElectricity className="w-5 h-5 text-primary" />
             <span className="font-bold text-sm text-foreground">Antriin</span>
           </div>
         </div>
@@ -102,10 +102,10 @@ export default function OrderPage() {
                   exit={{ opacity: 0, y: -8 }}
                   className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 md:p-4 mb-4 md:mb-5 flex items-start gap-2 md:gap-3"
                 >
-                  <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <IconAlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs md:text-sm text-red-600 dark:text-red-400 flex-1">{error}</p>
                   <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 transition-colors">
-                    <X className="w-4 h-4" />
+                    <IconX className="w-4 h-4" />
                   </button>
                 </motion.div>
               )}
@@ -119,7 +119,7 @@ export default function OrderPage() {
                   Nama Lengkap <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+                  <IconUser className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                   <input
                     id="customerName"
                     {...register('customerName', {
@@ -133,7 +133,7 @@ export default function OrderPage() {
                 </div>
                 {errors.customerName && (
                   <p className="mt-1.5 text-xs md:text-sm text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    <IconAlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     {errors.customerName.message}
                   </p>
                 )}
@@ -144,7 +144,7 @@ export default function OrderPage() {
                   Nomor Telepon
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+                  <IconPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                   <input
                     id="customerPhone"
                     {...register('customerPhone', {
@@ -160,7 +160,7 @@ export default function OrderPage() {
                 </div>
                 {errors.customerPhone && (
                   <p className="mt-1.5 text-xs md:text-sm text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    <IconAlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     {errors.customerPhone.message}
                   </p>
                 )}
@@ -174,7 +174,7 @@ export default function OrderPage() {
               >
                 {createQueue.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                    <IconLoader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
                     Memproses...
                   </>
                 ) : (

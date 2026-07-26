@@ -14,17 +14,17 @@ import api from '@/lib/axios';
 import type { Queue } from '@/lib/types';
 import { clearActiveQueue } from '@/lib/activeQueue';
 import {
-  Clock, CheckCircle2, Loader2, Users, ArrowLeft,
-  AlertTriangle, ChevronRight, PartyPopper, Star,
-  Bell, Timer, Waves,
-} from 'lucide-react';
+  IconClock, IconCircleCheck, IconLoader2, IconUsers, IconArrowLeft,
+  IconAlertTriangle, IconChevronRight, IconTrophy, IconStar,
+  IconBell, IconAlarm, IconWavesElectricity,
+} from '@tabler/icons-react';
 
 const statusConfig = {
-  waiting: { label: 'Menunggu', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800', icon: Clock },
-  called: { label: 'Dipanggil!', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: Bell },
-  serving: { label: 'Sedang Dilayani', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/50 border-purple-200 dark:border-purple-800', icon: Users },
-  done: { label: 'Selesai', color: 'text-green-700 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: PartyPopper },
-  skipped: { label: 'Dilewati', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800', icon: AlertTriangle },
+  waiting: { label: 'Menunggu', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800', icon: IconClock },
+  called: { label: 'Dipanggil!', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: IconBell },
+  serving: { label: 'Sedang Dilayani', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/50 border-purple-200 dark:border-purple-800', icon: IconUsers },
+  done: { label: 'Selesai', color: 'text-green-700 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: IconTrophy },
+  skipped: { label: 'Dilewati', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800', icon: IconAlertTriangle },
 };
 
 function Skeleton({ className }: { className: string }) {
@@ -137,7 +137,7 @@ export default function QueueTrackingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center max-w-sm">
-          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
+          <IconLoader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-foreground mb-2">Memuat antrian...</h2>
           <p className="text-sm text-muted-foreground">Mohon tunggu sebentar</p>
         </div>
@@ -157,7 +157,7 @@ export default function QueueTrackingPage() {
             exit={{ y: -80, opacity: 0 }}
             className="fixed top-0 left-0 right-0 z-50 bg-green-500 text-white p-4 md:p-5 text-center shadow-lg"
           >
-            <Bell className="w-6 h-6 md:w-8 md:h-8 mx-auto mb-1 animate-bounce" />
+            <IconBell className="w-6 h-6 md:w-8 md:h-8 mx-auto mb-1 animate-bounce" />
             <p className="text-lg md:text-xl font-bold">Anda Dipanggil!</p>
             <p className="text-xs md:text-sm opacity-90">Silakan menuju ke lokasi</p>
           </motion.div>
@@ -167,11 +167,11 @@ export default function QueueTrackingPage() {
       <header className="bg-card border-b border-border">
         <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+            <IconArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Waves className="w-5 h-5 text-primary" />
+            <IconWavesElectricity className="w-5 h-5 text-primary" />
             <span className="font-bold text-sm text-foreground">Antriin</span>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function QueueTrackingPage() {
               transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
             >
               {queue.status === 'waiting' ? (
-                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <IconLoader2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
               ) : (
                 <StatusIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
               )}
@@ -223,9 +223,9 @@ export default function QueueTrackingPage() {
               }`}
             >
               {notifLoading ? (
-                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                <IconLoader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
               ) : (
-                <Bell className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <IconBell className="w-3.5 h-3.5 md:w-4 md:h-4" />
               )}
               {permission === 'granted' ? 'Notifikasi aktif' : permission === 'denied' ? 'Notifikasi diblokir' : 'Aktifkan notifikasi'}
             </motion.button>
@@ -238,7 +238,7 @@ export default function QueueTrackingPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3 md:gap-4">
                   <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+                    <IconUsers className="w-6 h-6 md:w-7 md:h-7 text-primary" />
                   </div>
                   <div>
                     <p className="text-2xl md:text-3xl font-bold text-foreground">{positionInLine}</p>
@@ -267,7 +267,7 @@ export default function QueueTrackingPage() {
 
         {queue.status === 'serving' && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-5 md:p-6 mb-5 md:mb-6 text-center">
-            <Users className="w-8 h-8 md:w-10 md:h-10 text-purple-500 dark:text-purple-400 mx-auto mb-2" />
+            <IconUsers className="w-8 h-8 md:w-10 md:h-10 text-purple-500 dark:text-purple-400 mx-auto mb-2" />
             <h3 className="text-base md:text-lg font-bold text-foreground">Sedang Dilayani</h3>
             <p className="text-xs md:text-sm text-muted-foreground mt-1">Mohon bersiap jika dipanggil</p>
           </motion.div>
@@ -279,7 +279,7 @@ export default function QueueTrackingPage() {
           {liveData?.current ? (
             <div className="bg-card border border-border rounded-2xl p-4 md:p-5 border-l-4 border-l-green-500 flex items-center gap-3 md:gap-4 shadow-sm">
               <div className="w-9 h-9 md:w-10 md:h-10 bg-green-500/10 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
+                <IconCircleCheck className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
               </div>
               <div>
                 <p className="font-semibold text-sm md:text-base text-foreground">{liveData.current.queueNumber}</p>
@@ -324,7 +324,7 @@ export default function QueueTrackingPage() {
                           <p className="text-xs md:text-sm text-muted-foreground truncate">{q.services.map((s: any) => s.name).join(', ')}</p>
                         )}
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <IconChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     </motion.div>
                   );
                 })}
@@ -335,7 +335,7 @@ export default function QueueTrackingPage() {
 
         {queue.status === 'done' && !ratingSent && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-5 md:p-6 mb-5 md:mb-6 text-center shadow-sm">
-            <PartyPopper className="w-8 h-8 md:w-10 md:h-10 text-green-500 mx-auto mb-2" />
+            <IconTrophy className="w-8 h-8 md:w-10 md:h-10 text-green-500 mx-auto mb-2" />
             <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Selesai!</h3>
             <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Bagaimana pelayanan kami?</p>
             <div className="flex justify-center gap-1.5 md:gap-2">
@@ -348,19 +348,19 @@ export default function QueueTrackingPage() {
                   disabled={ratingLoading}
                   className="focus:outline-none"
                 >
-                  <Star
+                  <IconStar
                     className={`w-7 h-7 md:w-8 md:h-8 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`}
                   />
                 </motion.button>
               ))}
             </div>
-            {ratingLoading && <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto mt-2 md:mt-3" />}
+            {ratingLoading && <IconLoader2 className="w-5 h-5 animate-spin text-primary mx-auto mt-2 md:mt-3" />}
           </motion.div>
         )}
 
         {ratingSent && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 md:p-5 text-center mb-5 md:mb-6">
-            <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8 text-green-500 mx-auto mb-1" />
+            <IconCircleCheck className="w-6 h-6 md:w-8 md:h-8 text-green-500 mx-auto mb-1" />
             <p className="text-sm md:text-base text-green-600 dark:text-green-400 font-medium">Terima kasih atas penilaiannya!</p>
           </motion.div>
         )}

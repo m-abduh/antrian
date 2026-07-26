@@ -6,9 +6,9 @@ import { useForm } from 'react-hook-form';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, Pencil, Trash2, X, Loader2, CreditCard,
-  LayoutDashboard, AlertCircle, Waves, Upload,
-} from 'lucide-react';
+  IconPlus, IconPencil, IconTrash, IconX, IconLoader2, IconCreditCard,
+  IconLayoutDashboard, IconAlertCircle, IconWavesElectricity, IconUpload,
+} from '@tabler/icons-react';
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '@/lib/hooks/useAdmin';
 import { adminApi } from '@/lib/api/admin';
 import { imageUrl } from '@/lib/imageUrl';
@@ -102,7 +102,7 @@ export default function ServicesPage() {
                 onClick={() => router.push('/dashboard')}
                 className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
               >
-                <LayoutDashboard className="w-5 h-5 text-white" />
+                <IconLayoutDashboard className="w-5 h-5 text-white" />
               </button>
               <div>
                 <h1 className="text-lg font-bold text-foreground">Layanan</h1>
@@ -114,7 +114,7 @@ export default function ServicesPage() {
                 onClick={openCreate}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
               >
-                <Plus className="w-4 h-4" />
+                <IconPlus className="w-4 h-4" />
                 Tambah Layanan
               </button>
             </div>
@@ -125,14 +125,14 @@ export default function ServicesPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {serviceError && (
           <div className="mb-4 flex items-center gap-2 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <IconAlertCircle className="w-4 h-4 flex-shrink-0" />
             {serviceError}
           </div>
         )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : !services || services.length === 0 ? (
           <motion.div
@@ -140,14 +140,14 @@ export default function ServicesPage() {
             animate={{ opacity: 1 }}
             className="text-center py-20"
           >
-            <Waves className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <IconWavesElectricity className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada layanan</h3>
             <p className="text-muted-foreground mb-6">Tambahkan layanan pertama Anda</p>
             <button
               onClick={openCreate}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
-              <Plus className="w-4 h-4" />
+              <IconPlus className="w-4 h-4" />
               Tambah Layanan
             </button>
           </motion.div>
@@ -166,20 +166,20 @@ export default function ServicesPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                      <CreditCard className="w-6 h-6 text-primary" />
+                      <IconCreditCard className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEdit(s)}
                         className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <IconPencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(s._id)}
                         className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <IconTrash className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -215,7 +215,7 @@ export default function ServicesPage() {
                           disabled={deleteService.isPending}
                           className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 transition-all"
                         >
-                          {deleteService.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Hapus'}
+                          {deleteService.isPending ? <IconLoader2 className="w-4 h-4 animate-spin" /> : 'Hapus'}
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(null)}
@@ -245,7 +245,7 @@ export default function ServicesPage() {
                 {editId ? 'Edit Layanan' : 'Tambah Layanan'}
               </h2>
               <button onClick={() => { setModalOpen(false); reset(); }} className="text-muted-foreground hover:text-foreground transition-colors">
-                <X className="w-5 h-5" />
+                <IconX className="w-5 h-5" />
               </button>
             </div>
 
@@ -287,7 +287,7 @@ export default function ServicesPage() {
                     disabled={uploading}
                     className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors text-sm"
                   >
-                    {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {uploading ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <IconUpload className="w-4 h-4" />}
                     {uploading ? 'Mengupload...' : 'Pilih Gambar'}
                   </button>
                   <input type="hidden" {...register('image')} />
@@ -331,7 +331,7 @@ export default function ServicesPage() {
                   disabled={createService.isPending || updateService.isPending}
                   className="flex-1 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-sm"
                 >
-                  {(createService.isPending || updateService.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {(createService.isPending || updateService.isPending) && <IconLoader2 className="w-4 h-4 animate-spin" />}
                   Simpan
                 </button>
               </div>

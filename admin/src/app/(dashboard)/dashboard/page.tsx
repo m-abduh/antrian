@@ -5,9 +5,9 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, Clock, CheckCircle2, SkipForward, Loader2,
-  Phone, Search, X, AlertCircle, Bell, BarChart3,
-} from 'lucide-react';
+  IconUsers, IconClock, IconCircleCheck, IconPlayerSkipForward, IconLoader2,
+  IconPhone, IconSearch, IconX, IconAlertCircle, IconBell, IconChartBar,
+} from '@tabler/icons-react';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -77,10 +77,10 @@ export default function DashboardPage() {
   ) ?? [];
 
   const statCards = [
-    { label: 'Total Hari Ini', value: stats?.total ?? 0, icon: Users, color: 'bg-blue-500' },
-    { label: 'Selesai', value: stats?.done ?? 0, icon: CheckCircle2, color: 'bg-green-500' },
-    { label: 'Menunggu', value: stats?.waitingNow ?? 0, icon: Clock, color: 'bg-yellow-500' },
-    { label: 'Dilewati', value: stats?.skipped ?? 0, icon: SkipForward, color: 'bg-red-500' },
+    { label: 'Total Hari Ini', value: stats?.total ?? 0, icon: IconUsers, color: 'bg-blue-500' },
+    { label: 'Selesai', value: stats?.done ?? 0, icon: IconCircleCheck, color: 'bg-green-500' },
+    { label: 'Menunggu', value: stats?.waitingNow ?? 0, icon: IconClock, color: 'bg-yellow-500' },
+    { label: 'Dilewati', value: stats?.skipped ?? 0, icon: IconPlayerSkipForward, color: 'bg-red-500' },
   ];
 
   return (
@@ -98,7 +98,7 @@ export default function DashboardPage() {
                   onClick={() => router.push('/finance')}
                   className="hidden sm:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
                 >
-                  <BarChart3 className="w-4 h-4" />
+                  <IconChartBar className="w-4 h-4" />
                   Statistik
                 </button>
                 <button
@@ -113,7 +113,7 @@ export default function DashboardPage() {
                   }`}
                   title={permission === 'granted' ? 'Notifikasi aktif' : 'Aktifkan notifikasi'}
                 >
-                  <Bell className="w-4 h-4" />
+                  <IconBell className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -144,7 +144,7 @@ export default function DashboardPage() {
               />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  <X className="w-4 h-4" />
+                  <IconX className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -166,7 +166,7 @@ export default function DashboardPage() {
         <AnimatePresence mode="popLayout">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : filtered.length === 0 ? (
             <motion.div
@@ -174,7 +174,7 @@ export default function DashboardPage() {
               animate={{ opacity: 1 }}
               className="text-center py-20"
             >
-              <Users className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <IconUsers className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-1">Tidak ada antrian</h3>
               <p className="text-muted-foreground">Belum ada antrian untuk hari ini</p>
             </motion.div>
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                         {q.customerPhone && (
                           <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
+                            <IconPhone className="w-3 h-3" />
                             {q.customerPhone}
                           </span>
                         )}
@@ -220,7 +220,7 @@ export default function DashboardPage() {
                           disabled={updateStatus.isPending}
                           className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-xl disabled:opacity-50 hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
                         >
-                          {updateStatus.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {updateStatus.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Panggil
                         </button>
                       )}
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                           disabled={startServing.isPending}
                           className="px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-xl disabled:opacity-50 hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
                         >
-                          {startServing.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {startServing.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Mulai
                         </button>
                       )}
@@ -240,7 +240,7 @@ export default function DashboardPage() {
                           disabled={updateStatus.isPending}
                           className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-xl disabled:opacity-50 hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
                         >
-                          {updateStatus.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {updateStatus.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Selesai
                         </button>
                       )}
@@ -250,7 +250,7 @@ export default function DashboardPage() {
                           disabled={updateStatus.isPending}
                           className="px-4 py-2 bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium rounded-xl hover:bg-red-500/20 transition-all flex items-center gap-1.5"
                         >
-                          {updateStatus.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {updateStatus.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                           Lewati
                         </button>
                       )}

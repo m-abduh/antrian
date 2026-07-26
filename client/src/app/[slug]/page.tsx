@@ -118,27 +118,6 @@ export default function MerchantPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="bg-card border-b border-border">
-        <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Waves className="w-5 h-5 text-primary" />
-            <span className="font-bold text-foreground text-sm md:text-base">Antriin</span>
-          </div>
-          <Link
-            href={`/${slug}/cart`}
-            className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label="Lihat keranjang"
-          >
-            <ShoppingCart className="w-5 h-5" />
-            {itemCount() > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-                {itemCount()}
-              </span>
-            )}
-          </Link>
-        </div>
-      </header>
-
       <main className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">

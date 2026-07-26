@@ -125,7 +125,7 @@ describe('POST /api/merchant/:slug/queue', () => {
 
     const res = await request(app)
       .post('/api/merchant/test/queue')
-      .send({ serviceId: service._id.toString(), customerName: 'Budi' });
+      .send({ serviceIds: [service._id.toString()], customerName: 'Budi' });
 
     expect(res.status).toBe(201);
     expect(res.body.data.queue.queueNumber).toBe('A001');
@@ -140,7 +140,7 @@ describe('POST /api/merchant/:slug/queue', () => {
 
     const res = await request(app)
       .post('/api/merchant/test/queue')
-      .send({ serviceId: service._id.toString(), customerName: 'Budi' });
+      .send({ serviceIds: [service._id.toString()], customerName: 'Budi' });
 
     expect(res.status).toBe(201);
     expect(res.body.data.queue.queueNumber).toBe('A001');
@@ -155,7 +155,7 @@ describe('POST /api/merchant/:slug/queue', () => {
 
     const res = await request(app)
       .post('/api/merchant/test/queue')
-      .send({ serviceId: service._id.toString(), customerName: '' });
+      .send({ serviceIds: [service._id.toString()], customerName: '' });
 
     expect(res.status).toBe(400);
   });
@@ -166,7 +166,7 @@ describe('POST /api/merchant/:slug/queue', () => {
 
     const res = await request(app)
       .post('/api/merchant/test/queue')
-      .send({ serviceId: fakeId, customerName: 'Budi' });
+      .send({ serviceIds: [fakeId], customerName: 'Budi' });
 
     expect(res.status).toBe(404);
   });
@@ -180,7 +180,7 @@ describe('POST /api/merchant/:slug/queue', () => {
     const res = await request(app)
       .post('/api/merchant/test/queue')
       .send({
-        serviceId: service._id.toString(),
+        serviceIds: [service._id.toString()],
         customerName: 'Budi',
         customerPhone: 'abc',
       });
@@ -198,21 +198,21 @@ describe('GET /api/merchant/:slug/queue/live', () => {
 
     await Queue.create({
       merchantId: merchant._id,
-      serviceId: service._id,
+      services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }],
       queueNumber: 'A001',
       customerName: 'Budi',
       status: 'serving',
     });
     await Queue.create({
       merchantId: merchant._id,
-      serviceId: service._id,
+      services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }],
       queueNumber: 'A002',
       customerName: 'Ani',
       status: 'waiting',
     });
     await Queue.create({
       merchantId: merchant._id,
-      serviceId: service._id,
+      services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }],
       queueNumber: 'A003',
       customerName: 'Citra',
       status: 'waiting',

@@ -14,7 +14,7 @@ export const adminApi = {
   getMerchant: () =>
     api.get('/admin/merchant').then(handleResponse) as Promise<Merchant>,
 
-  updateMerchant: (data: { name?: string; address?: string; phone?: string; bank?: { name?: string; account?: string; holder?: string } }) =>
+  updateMerchant: (data: { name?: string; address?: string; phone?: string; image?: string; bank?: { name?: string; account?: string; holder?: string } }) =>
     api.put('/admin/merchant', data).then(handleResponse) as Promise<Merchant>,
 
   setupMerchant: (data: { name: string; slug: string }) =>
@@ -47,7 +47,7 @@ export const adminApi = {
   getServices: () =>
     api.get('/admin/services').then(handleResponse) as Promise<Service[]>,
 
-  createService: (data: { name: string; description?: string; duration: number; price: number }) =>
+  createService: (data: { name: string; description?: string; category?: string; image?: string; duration: number; price: number }) =>
     api.post('/admin/services', data).then(handleResponse) as Promise<Service>,
 
   updateService: (id: string, data: Partial<Service>) =>
@@ -55,4 +55,12 @@ export const adminApi = {
 
   deleteService: (id: string) =>
     api.delete(`/admin/services/${id}`).then(handleResponse),
+
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(handleResponse) as Promise<{ url: string }>;
+  },
 };

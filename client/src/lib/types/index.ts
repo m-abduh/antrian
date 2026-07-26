@@ -2,6 +2,7 @@ export interface Merchant {
   _id: string;
   name: string;
   slug: string;
+  image: string;
   address: string;
   phone: string;
   isActive: boolean;
@@ -19,6 +20,8 @@ export interface Service {
   merchantId: string;
   name: string;
   description: string;
+  category: string;
+  image: string;
   duration: number;
   price: number;
   isActive: boolean;
@@ -26,10 +29,18 @@ export interface Service {
   updatedAt: string;
 }
 
+export interface QueueService {
+  serviceId: string;
+  name: string;
+  price: number;
+  duration: number;
+}
+
 export interface Queue {
   _id: string;
   merchantId: string;
-  serviceId: Service;
+  services: QueueService[];
+  note: string;
   queueNumber: string;
   customerName: string;
   customerPhone: string;

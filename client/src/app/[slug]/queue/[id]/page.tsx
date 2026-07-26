@@ -113,7 +113,7 @@ export default function QueueTrackingPage() {
   if (isLoading && !queue) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-lg mx-auto px-4 py-8 space-y-4">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-8 space-y-4">
           <Skeleton className="h-10 w-28" />
           <Skeleton className="h-20 w-40 mx-auto" />
           <Skeleton className="h-44 w-full" />
@@ -155,7 +155,7 @@ export default function QueueTrackingPage() {
       </AnimatePresence>
 
       <header className="bg-card border-b border-border">
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
@@ -167,7 +167,7 @@ export default function QueueTrackingPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-6">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center mb-6 md:mb-8">
           <motion.div
             className={`inline-flex items-center gap-2 px-4 md:px-5 py-1.5 md:py-2 rounded-full border ${statusInfo.bg} ${statusInfo.color} text-xs md:text-sm font-medium mb-4 md:mb-6`}
@@ -310,8 +310,8 @@ export default function QueueTrackingPage() {
                           {q.customerName}
                           {isMe && <span className="text-[10px] md:text-xs ml-1.5 text-primary">(Kamu)</span>}
                         </p>
-                        {q.serviceId && typeof q.serviceId !== 'string' && (
-                          <p className="text-xs md:text-sm text-muted-foreground truncate">{q.serviceId.name}</p>
+                        {q.services?.length > 0 && (
+                          <p className="text-xs md:text-sm text-muted-foreground truncate">{q.services.map((s: any) => s.name).join(', ')}</p>
                         )}
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />

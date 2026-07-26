@@ -13,17 +13,15 @@ const serviceSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Nama maksimal 100 karakter'],
   },
+  image: {
+    type: String,
+    default: '',
+  },
   description: {
     type: String,
     trim: true,
     maxlength: [500, 'Deskripsi maksimal 500 karakter'],
     default: '',
-  },
-  duration: {
-    type: Number,
-    required: [true, 'Durasi wajib diisi'],
-    min: [1, 'Durasi minimal 1 menit'],
-    max: [480, 'Durasi maksimal 480 menit'],
   },
   price: {
     type: Number,

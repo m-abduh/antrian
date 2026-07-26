@@ -8,7 +8,6 @@ import {
   Loader2, Users, CheckCircle2, Clock, SkipForward, Waves,
 } from 'lucide-react';
 import { useStats } from '@/lib/hooks/useAdmin';
-import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function FinancePage() {
   const router = useRouter();
@@ -33,7 +32,7 @@ export default function FinancePage() {
       <header className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pl-10 lg:pl-0">
               <button
                 onClick={() => router.push('/dashboard')}
                 className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
@@ -45,7 +44,6 @@ export default function FinancePage() {
                 <p className="text-xs text-muted-foreground">Statistik hari ini</p>
               </div>
             </div>
-            <ThemeToggle />
           </div>
         </div>
       </header>

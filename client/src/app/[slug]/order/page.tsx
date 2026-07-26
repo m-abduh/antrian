@@ -46,7 +46,11 @@ export default function OrderPage() {
   const onSubmit = useCallback(async (data: { customerName: string; customerPhone: string; serviceId: string }) => {
     setError('');
     try {
-      const result = await createQueue.mutateAsync(data);
+      const result = await createQueue.mutateAsync({
+        serviceIds: [data.serviceId],
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+      });
       setQueue(result.queue as never);
       router.push(`/${slug}/queue/${result.queue.id}`);
     } catch (err) {
@@ -57,7 +61,7 @@ export default function OrderPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border">
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
@@ -69,7 +73,7 @@ export default function OrderPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-sm">
             <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-6 p-3 md:p-4 bg-muted rounded-xl">

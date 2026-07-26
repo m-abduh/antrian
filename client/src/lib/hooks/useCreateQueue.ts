@@ -4,9 +4,10 @@ import type { CreateQueueResponse } from '../types';
 
 export function useCreateQueue(slug: string) {
   return useMutation<CreateQueueResponse, Error, {
-    serviceId: string;
+    serviceIds: string[];
     customerName: string;
     customerPhone: string;
+    note?: string;
   }>({
     mutationFn: (data) => merchantApi.createQueue(slug, data),
   });

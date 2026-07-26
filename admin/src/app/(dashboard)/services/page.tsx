@@ -1,20 +1,23 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Pencil, Trash2, X, Loader2, Clock, CreditCard,
-  LayoutDashboard, AlertCircle, Waves,
+  LayoutDashboard, AlertCircle, Waves, Upload,
 } from 'lucide-react';
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '@/lib/hooks/useAdmin';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { adminApi } from '@/lib/api/admin';
+import { imageUrl } from '@/lib/imageUrl';
 
 interface ServiceForm {
   name: string;
   description: string;
+  category: string;
+  image: string;
   duration: number;
   price: number;
 }
@@ -31,9 +34,16 @@ export default function ServicesPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [serviceError, setServiceError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+
+  const existingCategories = useMemo(() => {
+    if (!services) return [];
+    return [...new Set(services.map((s) => s.category).filter(Boolean))] as string[];
+  }, [services]);
 
   const {
-    register, handleSubmit, reset, setValue, formState: { errors },
+    register, handleSubmit, reset, setValue, watch, formState: { errors },
   } = useForm<ServiceForm>();
 
   useEffect(() => {
@@ -44,14 +54,16 @@ export default function ServicesPage() {
 
   const openCreate = () => {
     setEditId(null);
-    reset({ name: '', description: '', duration: 30, price: 0 });
+    reset({ name: '', description: '', category: '', image: '', duration: 30, price: 0 });
     setModalOpen(true);
   };
 
-  const openEdit = (s: { _id: string; name: string; description?: string; duration: number; price: number }) => {
+  const openEdit = (s: { _id: string; name: string; description?: string; category?: string; image?: string; duration: number; price: number }) => {
     setEditId(s._id);
     setValue('name', s.name);
     setValue('description', s.description || '');
+    setValue('category', s.category || '');
+    setValue('image', s.image || '');
     setValue('duration', s.duration);
     setValue('price', s.price);
     setModalOpen(true);
@@ -60,7 +72,7 @@ export default function ServicesPage() {
   const handleCreate = async (form: ServiceForm) => {
     setServiceError('');
     try {
-      await createService.mutateAsync({ ...form, description: form.description || '' });
+      await createService.mutateAsync({ ...form, description: form.description || '', category: form.category || '', image: form.image || '' });
       setModalOpen(false);
       reset();
     } catch (err: any) {
@@ -95,7 +107,7 @@ export default function ServicesPage() {
       <header className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pl-10 lg:pl-0">
               <button
                 onClick={() => router.push('/dashboard')}
                 className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
@@ -108,7 +120,6 @@ export default function ServicesPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <ThemeToggle />
               <button
                 onClick={openCreate}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
@@ -183,7 +194,15 @@ export default function ServicesPage() {
                     </div>
                   </div>
 
+                  {s.image && (
+                    <div className="w-full h-32 rounded-xl overflow-hidden mb-3 bg-muted">
+                      <img src={imageUrl(s.image)} alt={s.name} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <h4 className="font-semibold text-foreground mb-1">{s.name}</h4>
+                  {s.category && (
+                    <p className="text-xs text-primary font-medium mb-1">{s.category}</p>
+                  )}
                   {s.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{s.description}</p>
                   )}
@@ -258,6 +277,73 @@ export default function ServicesPage() {
                   placeholder="Nama layanan"
                 />
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
+              </div>
+
+              <div className="relative">
+                <label className="block text-sm font-medium text-foreground mb-1">Kategori</label>
+                <input
+                  {...register('category')}
+                  onFocus={() => setShowCategorySuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 150)}
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                  placeholder="Ketik atau pilih kategori yang sudah ada"
+                  autoComplete="off"
+                />
+                {showCategorySuggestions && existingCategories.length > 0 && (
+                  <div className="absolute z-10 top-full mt-1 left-0 right-0 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                    {existingCategories
+                      .filter((cat) => !watch('category') || cat.toLowerCase().includes(watch('category').toLowerCase()))
+                      .map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onMouseDown={() => setValue('category', cat)}
+                          className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Foto Produk</label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = async () => {
+                        const file = input.files?.[0];
+                        if (!file) return;
+                        setUploading(true);
+                        try {
+                          const { url } = await adminApi.uploadImage(file);
+                          setValue('image', url);
+                        } catch {
+                          setServiceError('Gagal upload gambar');
+                        } finally {
+                          setUploading(false);
+                        }
+                      };
+                      input.click();
+                    }}
+                    disabled={uploading}
+                    className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors text-sm"
+                  >
+                    {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {uploading ? 'Mengupload...' : 'Pilih Gambar'}
+                  </button>
+                  <input type="hidden" {...register('image')} />
+                </div>
+                {watch('image') && (
+                  <div className="mt-2 w-24 h-24 rounded-xl overflow-hidden border border-border">
+                    <img src={imageUrl(watch('image'))} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               <div>

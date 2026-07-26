@@ -36,6 +36,7 @@ const env = {
   VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '',
   VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',
   VAPID_SUBJECT: process.env.VAPID_SUBJECT || 'mailto:admin@antriin.com',
+  API_URL: process.env.API_URL || `http://localhost:${process.env.PORT || 4000}`,
 };
 
 export default env;

@@ -233,7 +233,7 @@ export async function getMerchant(req, res, next) {
 
 export async function updateMerchant(req, res, next) {
   try {
-    const { name, address, phone, bank } = req.body;
+    const { name, address, phone, image, bank } = req.body;
     const update = {};
 
     if (name !== undefined) {
@@ -245,6 +245,7 @@ export async function updateMerchant(req, res, next) {
       if (address.length > 500) return error(res, 'Alamat maksimal 500 karakter');
       update.address = address;
     }
+    if (image !== undefined) update.image = image;
     if (phone !== undefined) {
       if (phone && !/^\+?[0-9]{10,15}$/.test(phone)) return error(res, 'Format nomor telepon tidak valid');
       update.phone = phone;
@@ -324,7 +325,6 @@ export async function getQueues(req, res, next) {
     }
 
     const queues = await Queue.find(filter)
-      .populate('serviceId', 'name duration price')
       .sort({ createdAt: -1 });
 
     return success(res, queues);
@@ -372,12 +372,11 @@ export async function updateQueueStatus(req, res, next) {
 
     await queue.save();
 
-    const populated = await Queue.findById(queue._id).populate('serviceId', 'name duration price');
     const io = req.app.get('io');
     if (io) {
       const merchant = await Merchant.findById(queue.merchantId).select('slug');
       if (merchant) {
-        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: populated, action });
+        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue, action });
       }
     }
 
@@ -404,12 +403,11 @@ export async function startServing(req, res, next) {
     queue.startedAt = new Date();
     await queue.save();
 
-    const populated = await Queue.findById(queue._id).populate('serviceId', 'name duration price');
     const io = req.app.get('io');
     if (io) {
       const merchant = await Merchant.findById(queue.merchantId).select('slug');
       if (merchant) {
-        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: populated, action: 'serve' });
+        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue, action: 'serve' });
       }
     }
 
@@ -468,10 +466,9 @@ export async function getStats(req, res, next) {
 
     const servicesBreakdown = await Queue.aggregate([
       { $match: { merchantId: merchantId, createdAt: { $gte: start, $lt: end } } },
-      { $group: { _id: '$serviceId', count: { $sum: 1 } } },
-      { $lookup: { from: 'services', localField: '_id', foreignField: '_id', as: 'service' } },
-      { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
-      { $project: { _id: 0, name: { $ifNull: ['$service.name', 'Unknown'] }, count: 1 } },
+      { $unwind: '$services' },
+      { $group: { _id: '$services.name', count: { $sum: 1 } } },
+      { $project: { _id: 0, name: '$_id', count: 1 } },
       { $sort: { count: -1 } },
     ]);
 
@@ -492,7 +489,7 @@ export async function getStats(req, res, next) {
 
 export async function getServices(req, res, next) {
   try {
-    const services = await Service.find({ merchantId: req.admin.merchantId }).sort('name');
+    const services = await Service.find({ merchantId: req.admin.merchantId }).sort({ category: 1, name: 1 });
     return success(res, services);
   } catch (err) {
     next(err);
@@ -501,7 +498,7 @@ export async function getServices(req, res, next) {
 
 export async function createService(req, res, next) {
   try {
-    const { name, description, duration, price } = req.body;
+    const { name, description, duration, price, category, image } = req.body;
 
     if (!name || !name.trim()) return error(res, 'Nama layanan wajib diisi');
     if (!duration || duration < 1) return error(res, 'Durasi minimal 1 menit');
@@ -511,6 +508,8 @@ export async function createService(req, res, next) {
       merchantId: req.admin.merchantId,
       name: name.trim(),
       description: description || '',
+      category: category || '',
+      image: image || '',
       duration,
       price,
     });
@@ -524,7 +523,7 @@ export async function createService(req, res, next) {
 export async function updateService(req, res, next) {
   try {
     const { id } = req.params;
-    const { name, description, duration, price, isActive } = req.body;
+    const { name, description, duration, price, isActive, category, image } = req.body;
 
     const service = await Service.findOne({ _id: id, merchantId: req.admin.merchantId });
     if (!service) {
@@ -541,6 +540,8 @@ export async function updateService(req, res, next) {
       if (description.length > 500) return error(res, 'Deskripsi maksimal 500 karakter');
       update.description = description;
     }
+    if (category !== undefined) update.category = category;
+    if (image !== undefined) update.image = image;
     if (duration !== undefined) {
       if (duration < 1 || duration > 480) return error(res, 'Durasi harus antara 1-480 menit');
       update.duration = duration;
@@ -567,8 +568,8 @@ export async function deleteService(req, res, next) {
       return error(res, 'Layanan tidak ditemukan', 404);
     }
 
-    await Service.findByIdAndUpdate(id, { isActive: false });
-    return success(res, { message: 'Layanan berhasil dinonaktifkan' });
+    await Service.findByIdAndDelete(id);
+    return success(res, { message: 'Layanan berhasil dihapus' });
   } catch (err) {
     next(err);
   }

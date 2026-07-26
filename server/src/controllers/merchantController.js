@@ -25,8 +25,8 @@ export async function getServices(req, res, next) {
     }
 
     const services = await Service.find({ merchantId: merchant._id, isActive: true })
-      .select('name description duration price')
-      .sort('name');
+      .select('name description duration price category image')
+      .sort({ category: 1, name: 1 });
 
     return success(res, services);
   } catch (err) {
@@ -41,7 +41,11 @@ export async function createQueue(req, res, next) {
       return error(res, 'Merchant tidak ditemukan', 404);
     }
 
-    const { serviceId, customerName, customerPhone } = req.body;
+    const { serviceIds, customerName, customerPhone, note } = req.body;
+
+    if (!serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+      return error(res, 'Pilih minimal 1 layanan');
+    }
 
     if (!customerName || !customerName.trim()) {
       return error(res, 'Nama pelanggan wajib diisi');
@@ -54,10 +58,17 @@ export async function createQueue(req, res, next) {
       return error(res, 'Format nomor telepon tidak valid');
     }
 
-    const service = await Service.findOne({ _id: serviceId, merchantId: merchant._id, isActive: true });
-    if (!service) {
-      return error(res, 'Layanan tidak ditemukan', 404);
+    const services = await Service.find({
+      _id: { $in: serviceIds },
+      merchantId: merchant._id,
+      isActive: true,
+    });
+
+    if (services.length !== serviceIds.length) {
+      return error(res, 'Beberapa layanan tidak ditemukan atau tidak aktif', 404);
     }
+
+    const totalDuration = services.reduce((sum, s) => sum + s.duration, 0);
 
     const queueNumber = await generateQueueNumber(merchant._id);
 
@@ -66,12 +77,18 @@ export async function createQueue(req, res, next) {
       status: { $in: ['waiting', 'called'] },
     });
 
-    const estimatedMinutes = calculateEstimatedTime(queuesAhead, service.duration);
+    const estimatedMinutes = calculateEstimatedTime(queuesAhead, totalDuration);
     const estimatedStartTime = new Date(Date.now() + estimatedMinutes * 60000);
 
     const queue = await Queue.create({
       merchantId: merchant._id,
-      serviceId: service._id,
+      services: services.map(s => ({
+        serviceId: s._id,
+        name: s.name,
+        price: s.price,
+        duration: s.duration,
+      })),
+      note: note || '',
       queueNumber,
       customerName: sanitizedName,
       customerPhone: customerPhone || '',
@@ -81,8 +98,7 @@ export async function createQueue(req, res, next) {
 
     const io = req.app.get('io');
     if (io) {
-      const populated = await Queue.findById(queue._id).populate('serviceId', 'name duration price');
-      io.to(`merchant:${merchant.slug}`).emit('queue:new', { queue: populated });
+      io.to(`merchant:${merchant.slug}`).emit('queue:new', { queue });
     }
 
     return success(res, {
@@ -92,7 +108,7 @@ export async function createQueue(req, res, next) {
         customerName: queue.customerName,
         status: queue.status,
         estimatedStartTime: queue.estimatedStartTime,
-        estimatedMinutes: estimatedMinutes,
+        estimatedMinutes,
         queuesAhead,
       },
     }, 201);
@@ -106,8 +122,7 @@ export async function getQueue(req, res, next) {
     const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true });
     if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
 
-    const queue = await Queue.findOne({ _id: req.params.id, merchantId: merchant._id })
-      .populate('serviceId', 'name duration price');
+    const queue = await Queue.findOne({ _id: req.params.id, merchantId: merchant._id });
 
     if (!queue) return error(res, 'Antrean tidak ditemukan', 404);
 
@@ -124,13 +139,9 @@ export async function getLiveQueue(req, res, next) {
       return error(res, 'Merchant tidak ditemukan', 404);
     }
 
-    const current = await Queue.findOne({ merchantId: merchant._id, status: 'serving' })
-      .populate('serviceId', 'name duration');
-
+    const current = await Queue.findOne({ merchantId: merchant._id, status: 'serving' });
     const waiting = await Queue.find({ merchantId: merchant._id, status: 'waiting' })
-      .sort({ createdAt: 1 })
-      .populate('serviceId', 'name duration');
-
+      .sort({ createdAt: 1 });
     const doneToday = await Queue.countDocuments({
       merchantId: merchant._id,
       status: 'done',

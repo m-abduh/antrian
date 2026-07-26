@@ -1,5 +1,15 @@
 import mongoose from 'mongoose';
 
+const queueServiceSchema = new mongoose.Schema({
+  serviceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Service',
+    required: true,
+  },
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+}, { _id: false });
+
 const queueSchema = new mongoose.Schema({
   merchantId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -7,15 +17,13 @@ const queueSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
-  serviceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Service',
+  services: {
+    type: [queueServiceSchema],
     required: true,
+    validate: [arr => arr.length > 0, 'Minimal 1 layanan'],
   },
-  queueNumber: {
-    type: String,
-    required: true,
-  },
+  note: { type: String, default: '' },
+  queueNumber: { type: String, required: true },
   customerName: {
     type: String,
     required: [true, 'Nama pelanggan wajib diisi'],

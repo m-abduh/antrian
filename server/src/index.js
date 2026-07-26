@@ -8,14 +8,19 @@ import { connectDB, isDBConnected } from './config/db.js';
 import logger from './config/logger.js';
 import env from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import merchantRoutes from './routes/merchant.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notification.js';
+import uploadRoutes from './routes/upload.js';
 import { initSocket } from './socket.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(helmet.xssFilter());
 app.use(helmet.frameguard({ action: 'deny' }));
 app.use(helmet.hidePoweredBy());
@@ -77,6 +82,9 @@ app.get('/api/health', (_req, res) => {
   logger.info('Health check', { status, db: dbOk ? 'connected' : 'disconnected' });
 });
 
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+app.use('/api/upload', uploadRoutes);
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);

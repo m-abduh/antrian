@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Loader2, Store, MapPin, Phone, QrCode, Download, Waves } from 'lucide-react';
+import { Loader2, Store, MapPin, Phone, QrCode, Download, Upload, Waves } from 'lucide-react';
 import QRCode from 'qrcode';
 import { adminApi } from '@/lib/api/admin';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { imageUrl } from '@/lib/imageUrl';
 import type { Merchant } from '@/lib/types';
 
 export default function SettingsPage() {
@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
 
   const merchantUrl = merchant
@@ -43,6 +44,7 @@ export default function SettingsPage() {
     name: '',
     address: '',
     phone: '',
+    image: '',
   });
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export default function SettingsPage() {
           name: m.name,
           address: m.address || '',
           phone: m.phone || '',
+          image: m.image || '',
         });
       })
       .catch(() => setError('Gagal memuat data merchant'))
@@ -74,6 +77,7 @@ export default function SettingsPage() {
         name: form.name,
         address: form.address,
         phone: form.phone,
+        image: form.image,
       });
       setMerchant(updated);
       setSuccess('Pengaturan berhasil disimpan');
@@ -92,7 +96,7 @@ export default function SettingsPage() {
       <header className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pl-10 lg:pl-0">
               <button
                 onClick={() => router.push('/dashboard')}
                 className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
@@ -104,7 +108,6 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">Konfigurasi merchant</p>
               </div>
             </div>
-            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -196,6 +199,52 @@ export default function SettingsPage() {
                   className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                   placeholder="+6281234567890 (opsional)"
                 />
+              </div>
+              </div>
+
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Upload className="w-4 h-4 text-primary" />
+                Foto Merchant
+              </h2>
+
+              <div className="flex items-center gap-4">
+                {form.image ? (
+                  <div className="w-20 h-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                    <img src={imageUrl(form.image)} alt="Merchant" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                    <Store className="w-8 h-8 text-muted-foreground/50" />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = async () => {
+                      const file = input.files?.[0];
+                      if (!file) return;
+                      setUploading(true);
+                      try {
+                        const { url } = await adminApi.uploadImage(file);
+                        setForm({ ...form, image: url });
+                      } catch {
+                        setError('Gagal upload gambar');
+                      } finally {
+                        setUploading(false);
+                      }
+                    };
+                    input.click();
+                  }}
+                  disabled={uploading}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors text-sm"
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploading ? 'Mengupload...' : 'Ganti Foto'}
+                </button>
               </div>
             </div>
 

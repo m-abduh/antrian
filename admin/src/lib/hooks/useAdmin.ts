@@ -64,7 +64,7 @@ export function useServices() {
 export function useCreateService() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; description: string; category: string; image: string; duration: number; price: number }) =>
+    mutationFn: (data: { name: string; description: string; image: string; price: number }) =>
       adminApi.createService(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: serviceKeys.all });

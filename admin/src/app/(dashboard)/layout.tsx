@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, BarChart3, Settings, LogOut, Waves, Menu, X } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Settings, LogOut, Waves, Menu, X, FolderKanban } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { label: 'Layanan', icon: BarChart3, href: '/services' },
+  { label: 'Grup', icon: FolderKanban, href: '/groups' },
   { label: 'Pengaturan', icon: Settings, href: '/settings' },
 ];
 

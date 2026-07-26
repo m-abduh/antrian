@@ -1,5 +1,5 @@
 import api from '../axios';
-import type { Merchant, Queue, Service, CreateQueueResponse, LiveQueueResponse } from '../types';
+import type { Merchant, Queue, Service, CreateQueueResponse, LiveQueueResponse, Group } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleResponse = (r: any) => r.data;
@@ -10,6 +10,9 @@ export const merchantApi = {
 
   getServices: (slug: string) =>
     api.get(`/merchant/${slug}/services`).then(handleResponse) as Promise<Service[]>,
+
+  getGroups: (slug: string) =>
+    api.get(`/merchant/${slug}/groups`).then(handleResponse) as Promise<Group[]>,
 
   createQueue: (slug: string, data: {
     serviceIds: string[];

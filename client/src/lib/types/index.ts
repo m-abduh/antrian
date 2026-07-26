@@ -20,9 +20,7 @@ export interface Service {
   merchantId: string;
   name: string;
   description: string;
-  category: string;
   image: string;
-  duration: number;
   price: number;
   isActive: boolean;
   createdAt: string;
@@ -33,7 +31,16 @@ export interface QueueService {
   serviceId: string;
   name: string;
   price: number;
-  duration: number;
+}
+
+export interface Group {
+  _id: string;
+  merchantId: string;
+  name: string;
+  serviceIds: Service[];
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Queue {

@@ -1,12 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, Pencil, Trash2, X, Loader2, Clock, CreditCard,
+  Plus, Pencil, Trash2, X, Loader2, CreditCard,
   LayoutDashboard, AlertCircle, Waves, Upload,
 } from 'lucide-react';
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '@/lib/hooks/useAdmin';
@@ -16,9 +16,7 @@ import { imageUrl } from '@/lib/imageUrl';
 interface ServiceForm {
   name: string;
   description: string;
-  category: string;
   image: string;
-  duration: number;
   price: number;
 }
 
@@ -35,12 +33,6 @@ export default function ServicesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [serviceError, setServiceError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
-
-  const existingCategories = useMemo(() => {
-    if (!services) return [];
-    return [...new Set(services.map((s) => s.category).filter(Boolean))] as string[];
-  }, [services]);
 
   const {
     register, handleSubmit, reset, setValue, watch, formState: { errors },
@@ -54,17 +46,15 @@ export default function ServicesPage() {
 
   const openCreate = () => {
     setEditId(null);
-    reset({ name: '', description: '', category: '', image: '', duration: 30, price: 0 });
+    reset({ name: '', description: '', image: '', price: 0 });
     setModalOpen(true);
   };
 
-  const openEdit = (s: { _id: string; name: string; description?: string; category?: string; image?: string; duration: number; price: number }) => {
+  const openEdit = (s: { _id: string; name: string; description?: string; image?: string; price: number }) => {
     setEditId(s._id);
     setValue('name', s.name);
     setValue('description', s.description || '');
-    setValue('category', s.category || '');
     setValue('image', s.image || '');
-    setValue('duration', s.duration);
     setValue('price', s.price);
     setModalOpen(true);
   };
@@ -72,7 +62,7 @@ export default function ServicesPage() {
   const handleCreate = async (form: ServiceForm) => {
     setServiceError('');
     try {
-      await createService.mutateAsync({ ...form, description: form.description || '', category: form.category || '', image: form.image || '' });
+      await createService.mutateAsync({ ...form, description: form.description || '', image: form.image || '' });
       setModalOpen(false);
       reset();
     } catch (err: any) {
@@ -200,22 +190,13 @@ export default function ServicesPage() {
                     </div>
                   )}
                   <h4 className="font-semibold text-foreground mb-1">{s.name}</h4>
-                  {s.category && (
-                    <p className="text-xs text-primary font-medium mb-1">{s.category}</p>
-                  )}
                   {s.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{s.description}</p>
                   )}
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-auto">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      {s.duration} menit
+                    <span className="font-medium text-foreground">
+                      {s.price > 0 ? `Rp${s.price.toLocaleString('id-ID')}` : 'Gratis'}
                     </span>
-                    {s.price > 0 && (
-                      <span className="font-medium text-foreground">
-                        Rp{s.price.toLocaleString('id-ID')}
-                      </span>
-                    )}
                     {!s.isActive && (
                       <span className="text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">Nonaktif</span>
                     )}
@@ -279,34 +260,6 @@ export default function ServicesPage() {
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
               </div>
 
-              <div className="relative">
-                <label className="block text-sm font-medium text-foreground mb-1">Kategori</label>
-                <input
-                  {...register('category')}
-                  onFocus={() => setShowCategorySuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 150)}
-                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                  placeholder="Ketik atau pilih kategori yang sudah ada"
-                  autoComplete="off"
-                />
-                {showCategorySuggestions && existingCategories.length > 0 && (
-                  <div className="absolute z-10 top-full mt-1 left-0 right-0 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
-                    {existingCategories
-                      .filter((cat) => !watch('category') || cat.toLowerCase().includes(watch('category').toLowerCase()))
-                      .map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onMouseDown={() => setValue('category', cat)}
-                          className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Foto Produk</label>
                 <div className="flex items-center gap-3">
@@ -355,26 +308,14 @@ export default function ServicesPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Durasi (menit)</label>
-                  <input
-                    type="number"
-                    {...register('duration', { required: true, min: { value: 1, message: 'Minimal 1 menit' } })}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                  />
-                  {errors.duration && <p className="mt-1 text-sm text-red-500">{errors.duration.message}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Harga (Rp)</label>
-                  <input
-                    type="number"
-                    {...register('price', { required: true, min: { value: 0, message: 'Minimal Rp 0' } })}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                  />
-                  {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price.message}</p>}
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Harga (Rp)</label>
+                <input
+                  type="number"
+                  {...register('price', { required: true, min: { value: 0, message: 'Minimal Rp 0' } })}
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                />
+                {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price.message}</p>}
               </div>
 
               <div className="flex gap-3 pt-2">

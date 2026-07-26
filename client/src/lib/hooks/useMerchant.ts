@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { merchantApi } from '../api/merchant';
-import type { Merchant, Service, LiveQueueResponse } from '../types';
+import type { Merchant, Service, LiveQueueResponse, Group } from '../types';
 
 export function useMerchant(slug: string) {
   return useQuery<Merchant>({
@@ -15,6 +15,15 @@ export function useServices(slug: string) {
   return useQuery<Service[]>({
     queryKey: ['services', slug],
     queryFn: () => merchantApi.getServices(slug) as Promise<Service[]>,
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGroups(slug: string) {
+  return useQuery<Group[]>({
+    queryKey: ['groups', slug],
+    queryFn: () => merchantApi.getGroups(slug) as Promise<Group[]>,
     enabled: !!slug,
     staleTime: 5 * 60 * 1000,
   });

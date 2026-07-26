@@ -1,5 +1,5 @@
 import api from '../axios';
-import type { Queue, Service, LoginResponse, Stats, Merchant } from '../types';
+import type { Queue, Service, LoginResponse, Stats, Merchant, Group } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleResponse = (r: any) => r.data;
@@ -47,7 +47,7 @@ export const adminApi = {
   getServices: () =>
     api.get('/admin/services').then(handleResponse) as Promise<Service[]>,
 
-  createService: (data: { name: string; description?: string; category?: string; image?: string; duration: number; price: number }) =>
+  createService: (data: { name: string; description?: string; image?: string; price: number }) =>
     api.post('/admin/services', data).then(handleResponse) as Promise<Service>,
 
   updateService: (id: string, data: Partial<Service>) =>
@@ -55,6 +55,18 @@ export const adminApi = {
 
   deleteService: (id: string) =>
     api.delete(`/admin/services/${id}`).then(handleResponse),
+
+  getGroups: () =>
+    api.get('/admin/groups').then(handleResponse) as Promise<Group[]>,
+
+  createGroup: (data: { name: string; serviceIds?: string[] }) =>
+    api.post('/admin/groups', data).then(handleResponse) as Promise<Group>,
+
+  updateGroup: (id: string, data: { name?: string; serviceIds?: string[]; order?: number }) =>
+    api.put(`/admin/groups/${id}`, data).then(handleResponse) as Promise<Group>,
+
+  deleteGroup: (id: string) =>
+    api.delete(`/admin/groups/${id}`).then(handleResponse) as Promise<{ message: string }>,
 
   uploadImage: (file: File) => {
     const formData = new FormData();

@@ -6,7 +6,6 @@ export interface CartItem {
   _id: string;
   name: string;
   price: number;
-  duration: number;
   quantity: number;
 }
 
@@ -19,7 +18,6 @@ interface CartState {
   clearCart: () => void;
   setNote: (note: string) => void;
   totalPrice: () => number;
-  totalDuration: () => number;
   itemCount: () => number;
 }
 
@@ -43,7 +41,6 @@ export const useCartStore = create<CartState>()(
               _id: service._id,
               name: service.name,
               price: service.price,
-              duration: service.duration,
               quantity: 1,
             }],
           };
@@ -64,7 +61,6 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [], note: '' }),
       setNote: (note) => set({ note }),
       totalPrice: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-      totalDuration: () => get().items.reduce((sum, i) => sum + i.duration * i.quantity, 0),
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
     }),
     { name: 'antriin-cart' },

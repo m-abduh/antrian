@@ -46,7 +46,6 @@ export async function createTestService(merchantId, overrides = {}) {
     merchantId,
     name: 'Potong Rambut',
     description: 'Potong rambut standar',
-    duration: 30,
     price: 50000,
     isActive: true,
     ...overrides,

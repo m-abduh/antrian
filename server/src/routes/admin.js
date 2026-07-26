@@ -19,6 +19,12 @@ import {
   updateService,
   deleteService,
 } from '../controllers/adminController.js';
+import {
+  getGroups,
+  createGroup,
+  updateGroup,
+  deleteGroup,
+} from '../controllers/groupController.js';
 
 const router = Router();
 
@@ -44,5 +50,10 @@ router.get('/services', getServices);
 router.post('/services', createService);
 router.put('/services/:id', updateService);
 router.delete('/services/:id', deleteService);
+
+router.get('/groups', getGroups);
+router.post('/groups', createGroup);
+router.put('/groups/:id', updateGroup);
+router.delete('/groups/:id', deleteGroup);
 
 export default router;

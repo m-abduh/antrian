@@ -64,11 +64,9 @@ describe('Service Model', () => {
     const service = await Service.create({
       merchantId: merchant._id,
       name: 'Potong Rambut',
-      duration: 30,
       price: 50000,
     });
     expect(service.name).toBe('Potong Rambut');
-    expect(service.duration).toBe(30);
     expect(service.price).toBe(50000);
   });
 
@@ -76,26 +74,7 @@ describe('Service Model', () => {
     await expect(Service.create({
       merchantId: merchant._id,
       name: 'Test',
-      duration: 30,
       price: -1000,
-    })).rejects.toThrow();
-  });
-
-  it('should reject duration less than 1', async () => {
-    await expect(Service.create({
-      merchantId: merchant._id,
-      name: 'Test',
-      duration: 0,
-      price: 10000,
-    })).rejects.toThrow();
-  });
-
-  it('should reject duration more than 480', async () => {
-    await expect(Service.create({
-      merchantId: merchant._id,
-      name: 'Test',
-      duration: 500,
-      price: 10000,
     })).rejects.toThrow();
   });
 });

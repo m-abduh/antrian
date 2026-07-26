@@ -91,8 +91,8 @@ describe('GET /api/merchant/:slug', () => {
 describe('GET /api/merchant/:slug/services', () => {
   it('should return services for merchant', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
-    await Service.create({ merchantId: merchant._id, name: 'Service 1', duration: 30, price: 50000 });
-    await Service.create({ merchantId: merchant._id, name: 'Service 2', duration: 60, price: 100000 });
+    await Service.create({ merchantId: merchant._id, name: 'Service 1', price: 50000 });
+    await Service.create({ merchantId: merchant._id, name: 'Service 2', price: 100000 });
 
     const res = await request(app).get('/api/merchant/test/services');
     expect(res.status).toBe(200);
@@ -101,8 +101,8 @@ describe('GET /api/merchant/:slug/services', () => {
 
   it('should return only active services', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
-    await Service.create({ merchantId: merchant._id, name: 'Active', duration: 30, price: 50000 });
-    await Service.create({ merchantId: merchant._id, name: 'Inactive', duration: 30, price: 50000, isActive: false });
+    await Service.create({ merchantId: merchant._id, name: 'Active', price: 50000 });
+    await Service.create({ merchantId: merchant._id, name: 'Inactive', price: 50000, isActive: false });
 
     const res = await request(app).get('/api/merchant/test/services');
     expect(res.status).toBe(200);
@@ -120,7 +120,7 @@ describe('POST /api/merchant/:slug/queue', () => {
   it('should create queue for free service', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
     const service = await Service.create({
-      merchantId: merchant._id, name: 'Free', duration: 15, price: 0,
+      merchantId: merchant._id, name: 'Free', price: 0,
     });
 
     const res = await request(app)
@@ -135,7 +135,7 @@ describe('POST /api/merchant/:slug/queue', () => {
   it('should create queue for paid service', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
     const service = await Service.create({
-      merchantId: merchant._id, name: 'Paid', duration: 30, price: 50000,
+      merchantId: merchant._id, name: 'Paid', price: 50000,
     });
 
     const res = await request(app)
@@ -150,7 +150,7 @@ describe('POST /api/merchant/:slug/queue', () => {
   it('should reject empty customer name', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
     const service = await Service.create({
-      merchantId: merchant._id, name: 'Test', duration: 15, price: 0,
+      merchantId: merchant._id, name: 'Test', price: 0,
     });
 
     const res = await request(app)
@@ -174,7 +174,7 @@ describe('POST /api/merchant/:slug/queue', () => {
   it('should reject invalid phone number', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
     const service = await Service.create({
-      merchantId: merchant._id, name: 'Test', duration: 15, price: 0,
+      merchantId: merchant._id, name: 'Test', price: 0,
     });
 
     const res = await request(app)
@@ -193,26 +193,26 @@ describe('GET /api/merchant/:slug/queue/live', () => {
   it('should return live queue status', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
     const service = await Service.create({
-      merchantId: merchant._id, name: 'Test', duration: 15, price: 0,
+      merchantId: merchant._id, name: 'Test', price: 0,
     });
 
     await Queue.create({
       merchantId: merchant._id,
-      services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }],
+      services: [{ serviceId: service._id, name: service.name, price: service.price }],
       queueNumber: 'A001',
       customerName: 'Budi',
       status: 'serving',
     });
     await Queue.create({
       merchantId: merchant._id,
-      services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }],
+      services: [{ serviceId: service._id, name: service.name, price: service.price }],
       queueNumber: 'A002',
       customerName: 'Ani',
       status: 'waiting',
     });
     await Queue.create({
       merchantId: merchant._id,
-      services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }],
+      services: [{ serviceId: service._id, name: service.name, price: service.price }],
       queueNumber: 'A003',
       customerName: 'Citra',
       status: 'waiting',

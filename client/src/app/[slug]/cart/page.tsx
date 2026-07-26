@@ -7,7 +7,7 @@ import { useCartStore } from '@/lib/store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback } from 'react';
 import {
-  User, Phone, Loader2, ArrowLeft, AlertCircle, Clock,
+  User, Phone, Loader2, ArrowLeft, AlertCircle,
   X, Trash2, Waves, ShoppingCart, Plus, Minus,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -18,7 +18,7 @@ export default function CartPage() {
   const router = useRouter();
   const slug = params.slug as string;
   const { data: merchant } = useMerchant(slug);
-  const { items, note, addItem, updateQuantity, removeItem, clearCart, setNote, totalPrice, totalDuration } = useCartStore();
+  const { items, note, addItem, updateQuantity, removeItem, clearCart, setNote, totalPrice } = useCartStore();
   const createQueue = useCreateQueue(slug);
   const [error, setError] = useState('');
 
@@ -111,12 +111,11 @@ export default function CartPage() {
                 className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3"
               >
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5 text-primary" />
+                  <ShoppingCart className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-foreground truncate">{item.name}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                    <span>{item.duration} menit</span>
+                  <div className="flex items-center text-xs text-muted-foreground mt-0.5">
                     {item.price > 0 && <span>Rp{item.price.toLocaleString('id-ID')}</span>}
                   </div>
                   <div className="flex items-center gap-2 mt-2">
@@ -128,7 +127,7 @@ export default function CartPage() {
                     </button>
                     <span className="w-5 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
                     <button
-                      onClick={() => addItem({ _id: item._id, name: item.name, price: item.price, duration: item.duration, category: '', image: '', merchantId: '', description: '', isActive: true, createdAt: '', updatedAt: '' })}
+                      onClick={() => addItem({ _id: item._id, name: item.name, price: item.price, image: '', merchantId: '', description: '', isActive: true, createdAt: '', updatedAt: '' })}
                       className="w-7 h-7 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center"
                     >
                       <Plus className="w-3 h-3" />
@@ -157,10 +156,6 @@ export default function CartPage() {
               </div>
             ))}
             <div className="border-t border-border pt-2 mt-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total Durasi</span>
-                <span className="font-medium text-foreground">{totalDuration()} menit</span>
-              </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Total Harga</span>
                 <span className="font-semibold text-foreground">

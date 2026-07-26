@@ -125,11 +125,11 @@ describe('Protected Admin Routes', () => {
 
   describe('GET /api/admin/stats', () => {
     it('should return stats for authenticated admin', async () => {
-      const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
+      const service = await Service.create({ merchantId: merchant._id, name: 'Test', price: 0 });
 
-      await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }], queueNumber: 'A001', customerName: 'A', status: 'done' });
-      await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }], queueNumber: 'A002', customerName: 'B', status: 'done' });
-      await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }], queueNumber: 'A003', customerName: 'C', status: 'waiting' });
+      await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price }], queueNumber: 'A001', customerName: 'A', status: 'done' });
+      await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price }], queueNumber: 'A002', customerName: 'B', status: 'done' });
+      await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price }], queueNumber: 'A003', customerName: 'C', status: 'waiting' });
 
       const res = await request(app)
         .get('/api/admin/stats')
@@ -156,8 +156,8 @@ describe('Protected Admin Routes', () => {
 
   describe('PATCH /api/admin/queues/:id/status', () => {
     it('should call next queue', async () => {
-      const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }], queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
+      const service = await Service.create({ merchantId: merchant._id, name: 'Test', price: 0 });
+      const queue = await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price }], queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)
@@ -169,8 +169,8 @@ describe('Protected Admin Routes', () => {
     });
 
     it('should skip a queue', async () => {
-      const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }], queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
+      const service = await Service.create({ merchantId: merchant._id, name: 'Test', price: 0 });
+      const queue = await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price }], queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)
@@ -182,8 +182,8 @@ describe('Protected Admin Routes', () => {
     });
 
     it('should reject invalid action', async () => {
-      const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price, duration: service.duration }], queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
+      const service = await Service.create({ merchantId: merchant._id, name: 'Test', price: 0 });
+      const queue = await Queue.create({ merchantId: merchant._id, services: [{ serviceId: service._id, name: service.name, price: service.price }], queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)
@@ -199,7 +199,7 @@ describe('Protected Admin Routes', () => {
       const res = await request(app)
         .post('/api/admin/services')
         .set('Authorization', `Bearer ${token}`)
-        .send({ name: 'New Service', duration: 30, price: 75000 });
+        .send({ name: 'New Service', price: 75000 });
 
       expect(res.status).toBe(201);
       expect(res.body.data.name).toBe('New Service');
@@ -209,14 +209,14 @@ describe('Protected Admin Routes', () => {
       const res = await request(app)
         .post('/api/admin/services')
         .set('Authorization', `Bearer ${token}`)
-        .send({ name: 'Minimal', duration: 15, price: 25000 });
+        .send({ name: 'Minimal', price: 25000 });
 
       expect(res.status).toBe(201);
     });
 
     it('should list services', async () => {
-      await Service.create({ merchantId: merchant._id, name: 'S1', duration: 30, price: 50000 });
-      await Service.create({ merchantId: merchant._id, name: 'S2', duration: 60, price: 100000 });
+      await Service.create({ merchantId: merchant._id, name: 'S1', price: 50000 });
+      await Service.create({ merchantId: merchant._id, name: 'S2', price: 100000 });
 
       const res = await request(app)
         .get('/api/admin/services')
@@ -227,7 +227,7 @@ describe('Protected Admin Routes', () => {
     });
 
     it('should update a service', async () => {
-      const service = await Service.create({ merchantId: merchant._id, name: 'Old Name', duration: 30, price: 50000 });
+      const service = await Service.create({ merchantId: merchant._id, name: 'Old Name', price: 50000 });
 
       const res = await request(app)
         .put(`/api/admin/services/${service._id}`)
@@ -239,8 +239,8 @@ describe('Protected Admin Routes', () => {
       expect(res.body.data.price).toBe(75000);
     });
 
-    it('should soft-delete a service', async () => {
-      const service = await Service.create({ merchantId: merchant._id, name: 'To Delete', duration: 30, price: 50000 });
+    it('should delete a service', async () => {
+      const service = await Service.create({ merchantId: merchant._id, name: 'To Delete', price: 50000 });
 
       const res = await request(app)
         .delete(`/api/admin/services/${service._id}`)
@@ -249,7 +249,7 @@ describe('Protected Admin Routes', () => {
       expect(res.status).toBe(200);
 
       const deleted = await Service.findById(service._id);
-      expect(deleted.isActive).toBe(false);
+      expect(deleted).toBeNull();
     });
   });
 });

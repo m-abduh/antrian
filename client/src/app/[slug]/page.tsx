@@ -4,8 +4,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
-import { CreditCard, Clock, MapPin, Phone, ShoppingCart, Store, Waves, Plus, Minus } from 'lucide-react';
-import { useMerchant, useServices } from '@/lib/hooks/useMerchant';
+import { CreditCard, MapPin, Phone, ShoppingCart, Store, Waves, Plus, Minus } from 'lucide-react';
+import { useMerchant, useServices, useGroups } from '@/lib/hooks/useMerchant';
 import { useCartStore } from '@/lib/store/cartStore';
 import { imageUrl } from '@/lib/imageUrl';
 import type { Service } from '@/lib/types';
@@ -14,26 +14,21 @@ function Skeleton({ className }: { className: string }) {
   return <div className={`bg-muted rounded-2xl animate-pulse ${className}`} />;
 }
 
-function groupByCategory(services: Service[]): Record<string, Service[]> {
-  const groups: Record<string, Service[]> = {};
-  for (const s of services) {
-    const key = s.category || 'Umum';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(s);
-  }
-  return groups;
-}
-
 export default function MerchantPage() {
   const params = useParams();
   const slug = params.slug as string;
   const { data: merchant, isLoading: merchantLoading } = useMerchant(slug);
   const { data: services, isLoading: servicesLoading } = useServices(slug);
+  const { data: groups } = useGroups(slug);
   const { items, addItem, updateQuantity, totalPrice, itemCount } = useCartStore();
 
   const getQty = (id: string) => items.find((i) => i._id === id)?.quantity || 0;
-  const categoryGroups = useMemo(() => services ? groupByCategory(services) : {}, [services]);
-  const categoryNames = Object.keys(categoryGroups);
+
+  const grouplessServices = useMemo(() => {
+    if (!services || !groups) return services || [];
+    const groupedIds = new Set(groups.flatMap(g => g.serviceIds.map(s => s._id)));
+    return services.filter(s => !groupedIds.has(s._id));
+  }, [services, groups]);
 
   if (merchantLoading || servicesLoading) {
     return (
@@ -62,6 +57,64 @@ export default function MerchantPage() {
       </div>
     );
   }
+
+  const renderService = (service: Service) => {
+    const qty = getQty(service._id);
+    return (
+      <motion.div
+        key={service._id}
+        initial={{ opacity: 0, x: -16 }}
+        animate={{ opacity: 1, x: 0 }}
+        className={`bg-card border rounded-2xl overflow-hidden transition-all ${qty > 0 ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:shadow-md hover:border-primary/30'}`}
+      >
+        {service.image && (
+          <div className="w-full h-28 md:h-32 bg-muted">
+            <img src={imageUrl(service.image)} alt={service.name} className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="flex items-center gap-3 p-4 md:p-5">
+          {!service.image && (
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <CreditCard className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{service.name}</h3>
+            {service.description && (
+              <p className="text-xs md:text-sm text-muted-foreground truncate mt-0.5">{service.description}</p>
+            )}
+            <p className="font-semibold text-foreground text-xs md:text-sm mt-1.5">
+              {service.price > 0 ? `Rp${service.price.toLocaleString('id-ID')}` : 'Gratis'}
+            </p>
+          </div>
+          {qty > 0 ? (
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={() => updateQuantity(service._id, qty - 1)}
+                className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center"
+              >
+                <Minus className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </button>
+              <span className="w-6 text-center text-sm font-semibold text-foreground">{qty}</span>
+              <button
+                onClick={() => addItem(service)}
+                className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => addItem(service)}
+              className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center flex-shrink-0"
+            >
+              <Plus className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -123,76 +176,29 @@ export default function MerchantPage() {
 
           {services && services.length > 0 ? (
             <div className="space-y-6">
-              {categoryNames.map((category) => (
-                <div key={category}>
-                  <h2 className="text-base md:text-lg font-semibold text-foreground mb-3">{category}</h2>
+              {groups && groups.map((group) => (
+                <div key={group._id}>
+                  <h2 className="text-base md:text-lg font-semibold text-foreground mb-3">{group.name}</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {categoryGroups[category].map((service) => {
-                      const qty = getQty(service._id);
-                      return (
-                        <motion.div
-                          key={service._id}
-                          initial={{ opacity: 0, x: -16 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className={`bg-card border rounded-2xl overflow-hidden transition-all ${qty > 0 ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:shadow-md hover:border-primary/30'}`}
-                        >
-                          {service.image && (
-                            <div className="w-full h-28 md:h-32 bg-muted">
-                              <img src={imageUrl(service.image)} alt={service.name} className="w-full h-full object-cover" />
-                            </div>
-                          )}
-                          <div className="flex items-center gap-3 p-4 md:p-5">
-                            {!service.image && (
-                              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <CreditCard className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{service.name}</h3>
-                              {service.description && (
-                                <p className="text-xs md:text-sm text-muted-foreground truncate mt-0.5">{service.description}</p>
-                              )}
-                              <div className="flex items-center gap-3 md:gap-4 mt-1.5 text-xs md:text-sm">
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                                  {service.duration} menit
-                                </span>
-                                <span className="font-semibold text-foreground">
-                                  {service.price > 0 ? `Rp${service.price.toLocaleString('id-ID')}` : 'Gratis'}
-                                </span>
-                              </div>
-                            </div>
-                            {qty > 0 ? (
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <button
-                                  onClick={() => updateQuantity(service._id, qty - 1)}
-                                  className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center"
-                                >
-                                  <Minus className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                </button>
-                                <span className="w-6 text-center text-sm font-semibold text-foreground">{qty}</span>
-                                <button
-                                  onClick={() => addItem(service)}
-                                  className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-sm"
-                                >
-                                  <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => addItem(service)}
-                                className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center flex-shrink-0"
-                              >
-                                <Plus className="w-4 h-4 md:w-5 md:h-5" />
-                              </button>
-                            )}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+                    {group.serviceIds.map(renderService)}
                   </div>
                 </div>
               ))}
+              {grouplessServices.length > 0 && (
+                <div>
+                  <h2 className="text-base md:text-lg font-semibold text-foreground mb-3">Lainnya</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {grouplessServices.map(renderService)}
+                  </div>
+                </div>
+              )}
+              {!groups?.length && !grouplessServices.length && (
+                <div className="bg-card border border-border rounded-2xl p-8 md:p-12 text-center">
+                  <CreditCard className="w-10 h-10 md:w-12 md:h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-base md:text-lg font-medium text-foreground mb-2">Belum Ada Layanan</h3>
+                  <p className="text-muted-foreground text-xs md:text-sm">Silakan hubungi admin untuk menambah layanan</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-card border border-border rounded-2xl p-8 md:p-12 text-center">

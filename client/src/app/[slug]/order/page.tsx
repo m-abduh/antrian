@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useClientStore } from '@/lib/store/clientStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Loader2, ArrowLeft, AlertCircle, Clock, X, Waves } from 'lucide-react';
+import { User, Phone, Loader2, ArrowLeft, AlertCircle, X, Waves } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 
@@ -83,10 +83,6 @@ export default function OrderPage() {
               <div className="flex-1 min-w-0">
                 <h1 className="text-base md:text-lg font-bold text-foreground truncate">{selectedService.name}</h1>
                 <div className="flex items-center gap-2 md:gap-3 mt-1 text-xs md:text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                    {selectedService.duration} menit
-                  </span>
                   <span className="font-semibold text-foreground">
                     {selectedService.price > 0
                       ? `Rp${selectedService.price.toLocaleString('id-ID')}`

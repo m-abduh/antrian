@@ -25,8 +25,8 @@ export async function getServices(req, res, next) {
     }
 
     const services = await Service.find({ merchantId: merchant._id, isActive: true })
-      .select('name description duration price category image')
-      .sort({ category: 1, name: 1 });
+      .select('name description price image')
+      .sort({ name: 1 });
 
     return success(res, services);
   } catch (err) {
@@ -62,13 +62,11 @@ export async function createQueue(req, res, next) {
       _id: { $in: serviceIds },
       merchantId: merchant._id,
       isActive: true,
-    });
+    }).select('name price');
 
     if (services.length !== serviceIds.length) {
       return error(res, 'Beberapa layanan tidak ditemukan atau tidak aktif', 404);
     }
-
-    const totalDuration = services.reduce((sum, s) => sum + s.duration, 0);
 
     const queueNumber = await generateQueueNumber(merchant._id);
 
@@ -77,8 +75,8 @@ export async function createQueue(req, res, next) {
       status: { $in: ['waiting', 'called'] },
     });
 
-    const estimatedMinutes = calculateEstimatedTime(queuesAhead, totalDuration);
-    const estimatedStartTime = new Date(Date.now() + estimatedMinutes * 60000);
+    const estimatedMinutes = calculateEstimatedTime(queuesAhead, 0);
+    const estimatedStartTime = queuesAhead > 0 ? new Date(Date.now() + estimatedMinutes * 60000) : null;
 
     const queue = await Queue.create({
       merchantId: merchant._id,
@@ -86,7 +84,6 @@ export async function createQueue(req, res, next) {
         serviceId: s._id,
         name: s.name,
         price: s.price,
-        duration: s.duration,
       })),
       note: note || '',
       queueNumber,

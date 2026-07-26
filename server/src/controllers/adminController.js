@@ -498,19 +498,16 @@ export async function getServices(req, res, next) {
 
 export async function createService(req, res, next) {
   try {
-    const { name, description, duration, price, category, image } = req.body;
+    const { name, description, price, image } = req.body;
 
     if (!name || !name.trim()) return error(res, 'Nama layanan wajib diisi');
-    if (!duration || duration < 1) return error(res, 'Durasi minimal 1 menit');
     if (price === undefined || price < 0) return error(res, 'Harga tidak valid');
 
     const service = await Service.create({
       merchantId: req.admin.merchantId,
       name: name.trim(),
       description: description || '',
-      category: category || '',
       image: image || '',
-      duration,
       price,
     });
 
@@ -523,7 +520,7 @@ export async function createService(req, res, next) {
 export async function updateService(req, res, next) {
   try {
     const { id } = req.params;
-    const { name, description, duration, price, isActive, category, image } = req.body;
+    const { name, description, price, isActive, image } = req.body;
 
     const service = await Service.findOne({ _id: id, merchantId: req.admin.merchantId });
     if (!service) {
@@ -540,12 +537,7 @@ export async function updateService(req, res, next) {
       if (description.length > 500) return error(res, 'Deskripsi maksimal 500 karakter');
       update.description = description;
     }
-    if (category !== undefined) update.category = category;
     if (image !== undefined) update.image = image;
-    if (duration !== undefined) {
-      if (duration < 1 || duration > 480) return error(res, 'Durasi harus antara 1-480 menit');
-      update.duration = duration;
-    }
     if (price !== undefined) {
       if (price < 0) return error(res, 'Harga tidak boleh negatif');
       update.price = price;

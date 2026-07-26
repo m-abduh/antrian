@@ -325,7 +325,7 @@ export async function getQueues(req, res, next) {
 
     const queues = await Queue.find(filter)
       .populate('serviceId', 'name duration price')
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: -1 });
 
     return success(res, queues);
   } catch (err) {

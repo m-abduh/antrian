@@ -15,19 +15,19 @@ import type { Queue } from '@/lib/types';
 import {
   Clock, CheckCircle2, Loader2, Users, ArrowLeft,
   AlertTriangle, ChevronRight, PartyPopper, Star,
-  Bell, Timer,
+  Bell, Timer, Waves,
 } from 'lucide-react';
 
 const statusConfig = {
-  waiting: { label: 'Menunggu', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-300', icon: Clock },
-  called: { label: 'Dipanggil!', color: 'text-green-600', bg: 'bg-green-50 border-green-300', icon: Bell },
-  serving: { label: 'Sedang Dilayani', color: 'text-purple-600', bg: 'bg-purple-50 border-purple-300', icon: Users },
-  done: { label: 'Selesai', color: 'text-green-700', bg: 'bg-green-50 border-green-300', icon: PartyPopper },
-  skipped: { label: 'Dilewati', color: 'text-red-600', bg: 'bg-red-50 border-red-200', icon: AlertTriangle },
+  waiting: { label: 'Menunggu', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800', icon: Clock },
+  called: { label: 'Dipanggil!', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: Bell },
+  serving: { label: 'Sedang Dilayani', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/50 border-purple-200 dark:border-purple-800', icon: Users },
+  done: { label: 'Selesai', color: 'text-green-700 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: PartyPopper },
+  skipped: { label: 'Dilewati', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800', icon: AlertTriangle },
 };
 
 function Skeleton({ className }: { className: string }) {
-  return <div className={`bg-gray-200 rounded-xl animate-pulse ${className}`} />;
+  return <div className={`bg-muted rounded-xl animate-pulse ${className}`} />;
 }
 
 export default function QueueTrackingPage() {
@@ -112,12 +112,12 @@ export default function QueueTrackingPage() {
 
   if (isLoading && !queue) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-md mx-auto px-4 py-8 space-y-4">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-16 w-48 mx-auto" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-20 w-full" />
+      <div className="min-h-screen bg-background">
+        <div className="max-w-lg mx-auto px-4 py-8 space-y-4">
+          <Skeleton className="h-10 w-28" />
+          <Skeleton className="h-20 w-40 mx-auto" />
+          <Skeleton className="h-44 w-full" />
+          <Skeleton className="h-28 w-full" />
         </div>
       </div>
     );
@@ -125,46 +125,52 @@ export default function QueueTrackingPage() {
 
   if (!queue) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-sm mx-auto px-4">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Memuat antrian...</h2>
-          <p className="text-sm text-gray-500">Mohon tunggu sebentar</p>
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center max-w-sm">
+          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-foreground mb-2">Memuat antrian...</h2>
+          <p className="text-sm text-muted-foreground">Mohon tunggu sebentar</p>
         </div>
       </div>
     );
   }
 
+  const StatusIcon = statusInfo.icon;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <AnimatePresence>
         {called && (
           <motion.div
-            initial={{ y: -100, opacity: 0 }}
+            initial={{ y: -80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-green-500 text-white p-4 text-center shadow-lg"
+            exit={{ y: -80, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-50 bg-green-500 text-white p-4 md:p-5 text-center shadow-lg"
           >
-            <Bell className="w-6 h-6 mx-auto mb-1" />
-            <p className="text-lg font-bold">Anda Dipanggil!</p>
-            <p className="text-sm opacity-90">Silakan menuju ke lokasi</p>
+            <Bell className="w-6 h-6 md:w-8 md:h-8 mx-auto mb-1 animate-bounce" />
+            <p className="text-lg md:text-xl font-bold">Anda Dipanggil!</p>
+            <p className="text-xs md:text-sm opacity-90">Silakan menuju ke lokasi</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="bg-white shadow-sm">
-        <div className="max-w-md mx-auto px-4 py-4 flex items-center">
-          <Link href={`/${slug}`} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+      <header className="bg-card border-b border-border">
+        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Kembali</span>
+            <span className="font-medium text-sm">Kembali</span>
           </Link>
+          <div className="flex items-center gap-2">
+            <Waves className="w-5 h-5 text-primary" />
+            <span className="font-bold text-sm text-foreground">Antriin</span>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <main className="max-w-md mx-auto px-4 py-8">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center mb-8">
+      <main className="max-w-lg mx-auto px-4 py-6">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center mb-6 md:mb-8">
           <motion.div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${statusInfo.bg} ${statusInfo.color} text-sm font-medium mb-4`}
+            className={`inline-flex items-center gap-2 px-4 md:px-5 py-1.5 md:py-2 rounded-full border ${statusInfo.bg} ${statusInfo.color} text-xs md:text-sm font-medium mb-4 md:mb-6`}
             layout
           >
             <motion.div
@@ -172,23 +178,23 @@ export default function QueueTrackingPage() {
               transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
             >
               {queue.status === 'waiting' ? (
-                <Loader2 className="w-4 h-4" />
+                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
               ) : (
-                <statusInfo.icon className="w-4 h-4" />
+                <StatusIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
               )}
             </motion.div>
             {statusInfo.label}
           </motion.div>
 
-          <motion.h1
-            className="text-6xl font-bold text-gray-900 mb-4"
+          <motion.div
+            className="text-6xl md:text-7xl lg:text-8xl font-bold text-foreground mb-3 md:mb-4 tracking-tight"
             initial={{ scale: 0.5 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 10 }}
           >
             {queue.queueNumber}
-          </motion.h1>
-          <p className="text-gray-500">{queue.customerName}</p>
+          </motion.div>
+          <p className="text-sm md:text-base text-muted-foreground">{queue.customerName}</p>
 
           {queue.status === 'waiting' && (
             <motion.button
@@ -198,18 +204,18 @@ export default function QueueTrackingPage() {
                 setNotifLoading(false);
               }}
               disabled={notifLoading || permission === 'denied'}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all mt-4 ${
+              className={`inline-flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-medium transition-all mt-4 md:mt-5 ${
                 permission === 'granted'
-                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
                   : permission === 'denied'
-                  ? 'bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed'
-                  : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                  ? 'bg-muted text-muted-foreground border border-border cursor-not-allowed'
+                  : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20'
               }`}
             >
               {notifLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
               ) : (
-                <Bell className="w-4 h-4" />
+                <Bell className="w-3.5 h-3.5 md:w-4 md:h-4" />
               )}
               {permission === 'granted' ? 'Notifikasi aktif' : permission === 'denied' ? 'Notifikasi diblokir' : 'Aktifkan notifikasi'}
             </motion.button>
@@ -217,37 +223,32 @@ export default function QueueTrackingPage() {
         </motion.div>
 
         {queue.status === 'waiting' && positionInLine > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mb-4">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center">
-                    <Users className="w-7 h-7 text-blue-500" />
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5 md:mb-6">
+            <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 md:w-7 md:h-7 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">{positionInLine}</p>
-                    <p className="text-sm text-gray-500">dari {totalInLine} antrian</p>
+                    <p className="text-2xl md:text-3xl font-bold text-foreground">{positionInLine}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">dari {totalInLine} antrian</p>
                   </div>
                 </div>
-                <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center">
-                  <Timer className="w-7 h-7 text-orange-500" />
-                </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-gray-900">
-                    ~{positionInLine * 10} menit
-                  </p>
-                  <p className="text-sm text-gray-500">estimasi</p>
+                  <p className="text-xl md:text-2xl font-bold text-foreground">~{positionInLine * 10}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">menit estimasi</p>
                 </div>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              <div className="w-full bg-muted rounded-full h-2 md:h-2.5 overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercent}%` }}
-                  transition={{ duration: 1 }}
-                  className="bg-blue-500 h-3 rounded-full"
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                  className="bg-primary h-2 md:h-2.5 rounded-full"
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-2 text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-2 md:mt-3 text-center">
                 {progressPercent}% antrian telah selesai
               </p>
             </div>
@@ -255,37 +256,35 @@ export default function QueueTrackingPage() {
         )}
 
         {queue.status === 'serving' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-purple-50 border border-purple-200 rounded-2xl p-6 mb-4 text-center">
-            <Users className="w-10 h-10 text-purple-500 mx-auto mb-2" />
-            <h3 className="text-lg font-bold text-purple-900">Sedang Dilayani</h3>
-            <p className="text-sm text-purple-700">Mohon bersiap jika dipanggil</p>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-5 md:p-6 mb-5 md:mb-6 text-center">
+            <Users className="w-8 h-8 md:w-10 md:h-10 text-purple-500 dark:text-purple-400 mx-auto mb-2" />
+            <h3 className="text-base md:text-lg font-bold text-foreground">Sedang Dilayani</h3>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">Mohon bersiap jika dipanggil</p>
           </motion.div>
         )}
 
-        <div className="space-y-3 mb-8">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-1">Antrian Saat Ini</h3>
+        <div className="space-y-3 mb-6 md:mb-8">
+          <h3 className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">Antrian Saat Ini</h3>
 
-          {liveData?.current && (
-            <div className="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-green-400 flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
+          {liveData?.current ? (
+            <div className="bg-card border border-border rounded-2xl p-4 md:p-5 border-l-4 border-l-green-500 flex items-center gap-3 md:gap-4 shadow-sm">
+              <div className="w-9 h-9 md:w-10 md:h-10 bg-green-500/10 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{liveData.current.queueNumber}</p>
-                <p className="text-sm text-gray-500">{liveData.current.customerName}</p>
+                <p className="font-semibold text-sm md:text-base text-foreground">{liveData.current.queueNumber}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{liveData.current.customerName}</p>
               </div>
             </div>
-          )}
-
-          {!liveData?.current && (
-            <div className="bg-white rounded-2xl shadow-sm p-6 text-center">
-              <p className="text-gray-500">Belum ada antrian yang dilayani</p>
+          ) : (
+            <div className="bg-card border border-border rounded-2xl p-5 md:p-6 text-center">
+              <p className="text-xs md:text-sm text-muted-foreground">Belum ada antrian yang dilayani</p>
             </div>
           )}
 
           {liveData && liveData.waiting.length > 0 && (
             <>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-1 mt-6">
+              <h3 className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1 mt-4 md:mt-6">
                 Menunggu ({liveData.waiting.length})
               </h3>
               <AnimatePresence>
@@ -297,21 +296,25 @@ export default function QueueTrackingPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className={`bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 ${isMe ? 'border-2 border-blue-300 bg-blue-50' : ''}`}
+                      className={`bg-card border rounded-2xl p-3 md:p-4 flex items-center gap-3 shadow-sm ${
+                        isMe ? 'border-primary bg-primary/5' : 'border-border'
+                      }`}
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isMe ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                        <span className="font-semibold text-sm">{q.queueNumber}</span>
+                      <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        <span className="font-semibold text-xs md:text-sm">{q.queueNumber}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`font-medium truncate ${isMe ? 'text-blue-900' : 'text-gray-900'}`}>
+                        <p className={`font-medium text-sm md:text-base truncate ${isMe ? 'text-foreground' : 'text-foreground'}`}>
                           {q.customerName}
-                          {isMe && <span className="text-xs ml-2 text-blue-500">(Kamu)</span>}
+                          {isMe && <span className="text-[10px] md:text-xs ml-1.5 text-primary">(Kamu)</span>}
                         </p>
                         {q.serviceId && typeof q.serviceId !== 'string' && (
-                          <p className="text-sm text-gray-500 truncate">{q.serviceId.name}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground truncate">{q.serviceId.name}</p>
                         )}
                       </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     </motion.div>
                   );
                 })}
@@ -321,11 +324,11 @@ export default function QueueTrackingPage() {
         </div>
 
         {queue.status === 'done' && !ratingSent && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-sm p-6 mb-4 text-center">
-            <PartyPopper className="w-10 h-10 text-green-500 mx-auto mb-2" />
-            <h3 className="text-lg font-bold text-gray-900 mb-1">Selesai!</h3>
-            <p className="text-sm text-gray-500 mb-4">Bagaimana pelayanan kami?</p>
-            <div className="flex justify-center gap-2">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-5 md:p-6 mb-5 md:mb-6 text-center shadow-sm">
+            <PartyPopper className="w-8 h-8 md:w-10 md:h-10 text-green-500 mx-auto mb-2" />
+            <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Selesai!</h3>
+            <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Bagaimana pelayanan kami?</p>
+            <div className="flex justify-center gap-1.5 md:gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <motion.button
                   key={star}
@@ -336,27 +339,27 @@ export default function QueueTrackingPage() {
                   className="focus:outline-none"
                 >
                   <Star
-                    className={`w-8 h-8 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                    className={`w-7 h-7 md:w-8 md:h-8 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`}
                   />
                 </motion.button>
               ))}
             </div>
-            {ratingLoading && <Loader2 className="w-5 h-5 animate-spin text-blue-500 mx-auto mt-2" />}
+            {ratingLoading && <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto mt-2 md:mt-3" />}
           </motion.div>
         )}
 
         {ratingSent && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-green-50 rounded-2xl p-4 border border-green-200 text-center mb-4">
-            <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-1" />
-            <p className="text-green-800 font-medium">Terima kasih atas penilaiannya!</p>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 md:p-5 text-center mb-5 md:mb-6">
+            <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8 text-green-500 mx-auto mb-1" />
+            <p className="text-sm md:text-base text-green-600 dark:text-green-400 font-medium">Terima kasih atas penilaiannya!</p>
           </motion.div>
         )}
 
         {liveData && (
-          <div className="bg-blue-50 rounded-2xl p-4 border border-blue-100">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-blue-800 font-medium">Selesai hari ini</span>
-              <span className="text-blue-600 font-bold">{liveData.doneToday}</span>
+          <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 md:p-5">
+            <div className="flex items-center justify-between text-xs md:text-sm">
+              <span className="text-foreground font-medium">Selesai hari ini</span>
+              <span className="text-primary font-bold text-base md:text-lg">{liveData.doneToday}</span>
             </div>
           </div>
         )}

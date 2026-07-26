@@ -3,10 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { Loader2, UserPlus, Eye, EyeOff, Waves } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 declare global {
   interface Window {
@@ -115,39 +116,49 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Waves className="w-5 h-5 text-primary" />
+            <span className="font-bold text-xl text-foreground">Antriin</span>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <div className="flex-1 flex items-center justify-center p-4">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-sm"
         >
-          <div className="bg-white rounded-3xl shadow-xl shadow-blue-200/50 p-8">
+          <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <UserPlus className="w-8 h-8 text-white" />
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <UserPlus className="w-7 h-7 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Daftar</h1>
-              <p className="text-gray-500 mt-1">Bikin akun merchant baru</p>
+              <h1 className="text-2xl font-bold text-foreground">Daftar</h1>
+              <p className="text-muted-foreground mt-1 text-sm">Bikin akun merchant baru</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1.5">
                   Nama Admin
                 </label>
                 <input
                   id="name"
                   type="text"
                   {...register('name', { required: 'Nama wajib diisi' })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm placeholder:text-muted-foreground/60"
                   placeholder="Nama kamu"
                 />
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
                   Email
                 </label>
                 <input
@@ -155,14 +166,14 @@ export default function RegisterPage() {
                   type="email"
                   autoComplete="email"
                   {...register('email', { required: 'Email wajib diisi' })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm placeholder:text-muted-foreground/60"
                   placeholder="admin@example.com"
                 />
                 {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
                   Password
                 </label>
                 <div className="relative">
@@ -171,13 +182,13 @@ export default function RegisterPage() {
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     {...register('password', { required: 'Password wajib diisi', minLength: { value: 8, message: 'Minimal 8 karakter' } })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-11"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent pr-11 text-sm placeholder:text-muted-foreground/60"
                     placeholder="Minimal 8 karakter"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -187,9 +198,9 @@ export default function RegisterPage() {
 
               {registerError && (
                 <motion.p
-                  initial={{ opacity: 0, y: -5 }}
+                  initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-3 text-center"
+                  className="text-sm text-red-500 bg-red-500/10 rounded-xl px-4 py-3 text-center"
                 >
                   {registerError}
                 </motion.p>
@@ -199,7 +210,7 @@ export default function RegisterPage() {
                 type="submit"
                 disabled={isSubmitting}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-3 bg-blue-500 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
+                className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-sm"
               >
                 {isSubmitting ? (
                   <>
@@ -217,10 +228,10 @@ export default function RegisterPage() {
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">atau</span>
+                <span className="px-3 bg-card text-muted-foreground">atau</span>
               </div>
             </div>
 
@@ -228,7 +239,7 @@ export default function RegisterPage() {
               onClick={handleGoogle}
               disabled={googleLoading}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 border border-border text-foreground font-semibold rounded-xl hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-colors"
             >
               {googleLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -246,9 +257,9 @@ export default function RegisterPage() {
             </motion.button>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Sudah punya akun?{' '}
-                <button onClick={() => router.push('/login')} className="text-blue-500 font-medium hover:underline">
+                <button onClick={() => router.push('/login')} className="text-primary font-medium hover:underline">
                   Masuk
                 </button>
               </p>
@@ -256,6 +267,6 @@ export default function RegisterPage() {
           </div>
         </motion.div>
       </div>
-    </>
+    </div>
   );
 }

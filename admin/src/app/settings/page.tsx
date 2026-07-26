@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Loader2, ArrowLeft, Store, MapPin, Phone, QrCode, Download } from 'lucide-react';
+import { Loader2, Store, MapPin, Phone, QrCode, Download, Waves } from 'lucide-react';
 import QRCode from 'qrcode';
 import { adminApi } from '@/lib/api/admin';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { Merchant } from '@/lib/types';
 
 export default function SettingsPage() {
@@ -87,140 +88,145 @@ export default function SettingsPage() {
   if (status !== 'authenticated') return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.push('/dashboard')} className="text-gray-400 hover:text-gray-600">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
-            <Store className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">Pengaturan</h1>
-            <p className="text-xs text-gray-500">Konfigurasi merchant</p>
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
+              >
+                <Store className="w-5 h-5 text-white" />
+              </button>
+              <div>
+                <h1 className="text-lg font-bold text-foreground">Pengaturan</h1>
+                <p className="text-xs text-muted-foreground">Konfigurasi merchant</p>
+              </div>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : !merchant ? (
           <div className="text-center py-20">
-            <Store className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Merchant tidak ditemukan</h3>
-            <p className="text-gray-500">Silakan setup merchant terlebih dahulu</p>
+            <Store className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">Merchant tidak ditemukan</h3>
+            <p className="text-muted-foreground">Silakan setup merchant terlebih dahulu</p>
           </div>
         ) : (
           <motion.form
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             onSubmit={handleSubmit}
-            className="space-y-6"
+            className="space-y-6 max-w-lg"
           >
             {error && (
-              <div className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-3 text-center">{error}</div>
+              <div className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-center">{error}</div>
             )}
             {success && (
               <motion.div
-                initial={{ opacity: 0, y: -5 }}
+                initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-green-600 bg-green-50 rounded-xl px-4 py-3 text-center"
+                className="text-sm text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3 text-center"
               >
                 {success}
               </motion.div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <Store className="w-4 h-4 text-blue-500" />
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Store className="w-4 h-4 text-primary" />
                 Informasi Merchant
               </h2>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Nama Merchant <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                   placeholder="Nama merchant"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Link Merchant</label>
-                <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 px-4 py-2.5">
-                  <span className="text-sm text-gray-500">/antriin/</span>
-                  <span className="text-sm text-gray-700 font-medium ml-1">{merchant.slug}</span>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Link Merchant</label>
+                <div className="flex items-center border border-border rounded-xl bg-muted px-4 py-2.5">
+                  <span className="text-sm text-muted-foreground">/antriin/</span>
+                  <span className="text-sm text-foreground font-medium ml-1">{merchant.slug}</span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Slug tidak dapat diubah</p>
+                <p className="text-xs text-muted-foreground mt-1">Slug tidak dapat diubah</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                     Alamat
                   </span>
                 </label>
                 <textarea
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-20 resize-none"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-20 resize-none text-sm"
                   placeholder="Alamat merchant (opsional)"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <span className="flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-gray-400" />
+                <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-muted-foreground" />
                     No. Telepon
                   </span>
                 </label>
                 <input
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                   placeholder="+6281234567890 (opsional)"
                 />
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-blue-500" />
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-primary" />
                 QR Code Merchant
               </h2>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Scan QR code untuk masuk ke halaman merchant.
               </p>
 
               <div className="flex flex-col items-center gap-3">
-                <div className="bg-white border border-gray-200 rounded-xl p-3">
+                <div className="bg-card border border-border rounded-xl p-3">
                   {qrDataUrl ? (
                     <img src={qrDataUrl} alt="QR Code" className="w-48 h-48" />
                   ) : (
                     <div className="w-48 h-48 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                     </div>
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-gray-700">{merchantUrl}</p>
+                  <p className="text-sm font-medium text-foreground">{merchantUrl}</p>
                 </div>
                 <button
                   type="button"
                   onClick={downloadQr}
                   disabled={!qrDataUrl}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-foreground text-background text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 transition-all"
                 >
                   <Download className="w-4 h-4" />
                   Download QR Code
@@ -232,14 +238,14 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => router.push('/dashboard')}
-                className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                className="px-6 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-2.5 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                className="px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-sm"
               >
                 {saving ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>

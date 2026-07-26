@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useClientStore } from '@/lib/store/clientStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Loader2, ArrowLeft, AlertCircle, Clock, X } from 'lucide-react';
+import { User, Phone, Loader2, ArrowLeft, AlertCircle, Clock, X, Waves } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 
@@ -55,29 +55,38 @@ export default function OrderPage() {
   }, [createQueue, slug, setQueue, router]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <Link href={`/${slug}`} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border">
+        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Kembali</span>
+            <span className="font-medium text-sm">Kembali</span>
           </Link>
+          <div className="flex items-center gap-2">
+            <Waves className="w-5 h-5 text-primary" />
+            <span className="font-bold text-sm text-foreground">Antriin</span>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-md mx-auto px-4 py-6 pb-20">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <span className="text-blue-500 text-xl font-bold">{selectedService.name[0]}</span>
+      <main className="max-w-lg mx-auto px-4 py-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-sm">
+            <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-6 p-3 md:p-4 bg-muted rounded-xl">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-primary text-base md:text-xl font-bold">{selectedService.name[0]}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">{selectedService.name}</h1>
-                <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                <h1 className="text-base md:text-lg font-bold text-foreground truncate">{selectedService.name}</h1>
+                <div className="flex items-center gap-2 md:gap-3 mt-1 text-xs md:text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
+                    <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     {selectedService.duration} menit
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {selectedService.price > 0
+                      ? `Rp${selectedService.price.toLocaleString('id-ID')}`
+                      : 'Gratis'}
                   </span>
                 </div>
               </div>
@@ -86,54 +95,54 @@ export default function OrderPage() {
             <AnimatePresence>
               {error && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-start gap-3"
+                  exit={{ opacity: 0, y: -8 }}
+                  className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 md:p-4 mb-4 md:mb-5 flex items-start gap-2 md:gap-3"
                 >
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700 flex-1">{error}</p>
-                  <button onClick={() => setError('')} className="text-red-400 hover:text-red-600">
+                  <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs md:text-sm text-red-600 dark:text-red-400 flex-1">{error}</p>
+                  <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-5">
               <input type="hidden" {...register('serviceId')} />
 
               <div>
-                <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="customerName" className="block text-sm font-medium text-foreground mb-1.5">
                   Nama Lengkap <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                   <input
                     id="customerName"
                     {...register('customerName', {
                       required: 'Nama wajib diisi',
                       maxLength: { value: 100, message: 'Nama maksimal 100 karakter' },
                     })}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 md:pl-11 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm placeholder:text-muted-foreground/60"
                     placeholder="Masukkan nama Anda"
                     disabled={createQueue.isPending}
                   />
                 </div>
                 {errors.customerName && (
-                  <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
+                  <p className="mt-1.5 text-xs md:text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     {errors.customerName.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="customerPhone" className="block text-sm font-medium text-foreground mb-1.5">
                   Nomor Telepon
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                   <input
                     id="customerPhone"
                     {...register('customerPhone', {
@@ -142,14 +151,14 @@ export default function OrderPage() {
                         message: 'Format nomor tidak valid (10-15 digit)',
                       },
                     })}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 md:pl-11 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm placeholder:text-muted-foreground/60"
                     placeholder="08xxxxxxxxxx"
                     disabled={createQueue.isPending}
                   />
                 </div>
                 {errors.customerPhone && (
-                  <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
+                  <p className="mt-1.5 text-xs md:text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     {errors.customerPhone.message}
                   </p>
                 )}
@@ -159,11 +168,11 @@ export default function OrderPage() {
                 type="submit"
                 disabled={createQueue.isPending}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-3.5 bg-blue-500 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-sm text-sm md:text-base"
               >
                 {createQueue.isPending ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
                     Memproses...
                   </>
                 ) : (

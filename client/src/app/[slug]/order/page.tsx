@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Phone, Loader2, ArrowLeft, AlertCircle, X, Waves } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
+import { saveActiveQueue } from '@/lib/activeQueue';
 
 export default function OrderPage() {
   const params = useParams();
@@ -52,6 +53,7 @@ export default function OrderPage() {
         customerPhone: data.customerPhone,
       });
       setQueue(result.queue as never);
+      saveActiveQueue(slug, { queueId: result.queue.id, number: result.queue.queueNumber, status: 'waiting' });
       router.push(`/${slug}/queue/${result.queue.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.');

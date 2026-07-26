@@ -12,6 +12,7 @@ import { merchantApi } from '@/lib/api/merchant';
 import { getCustomerSocket, disconnectCustomerSocket } from '@/lib/socket';
 import api from '@/lib/axios';
 import type { Queue } from '@/lib/types';
+import { clearActiveQueue } from '@/lib/activeQueue';
 import {
   Clock, CheckCircle2, Loader2, Users, ArrowLeft,
   AlertTriangle, ChevronRight, PartyPopper, Star,
@@ -55,6 +56,12 @@ export default function QueueTrackingPage() {
   const queue = currentQueue || myQueue || fetchedQueue;
   const statusInfo = queue ? statusConfig[queue.status] : statusConfig.waiting;
 
+  useEffect(() => {
+    if (queue && (queue.status === 'done' || queue.status === 'skipped')) {
+      clearActiveQueue(slug);
+    }
+  }, [queue, slug]);
+
   const myPosition = liveData?.waiting?.findIndex((q) => q._id === queueId) ?? -1;
   const positionInLine = myPosition >= 0 ? myPosition + 1 : 0;
   const totalInLine = liveData?.waiting?.length ?? 0;
@@ -65,6 +72,9 @@ export default function QueueTrackingPage() {
     socket.on('queue:status', (data: { queue: Queue; action: string }) => {
       if (data.queue._id === queueId) {
         setQueue(data.queue);
+        if (data.queue.status === 'done' || data.queue.status === 'skipped') {
+          clearActiveQueue(slug);
+        }
       }
       queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });
     });

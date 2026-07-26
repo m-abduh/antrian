@@ -44,6 +44,7 @@ export default function SettingsPage() {
     name: '',
     address: '',
     phone: '',
+    description: '',
     image: '',
   });
 
@@ -60,6 +61,7 @@ export default function SettingsPage() {
           name: m.name,
           address: m.address || '',
           phone: m.phone || '',
+          description: m.description || '',
           image: m.image || '',
         });
       })
@@ -77,6 +79,7 @@ export default function SettingsPage() {
         name: form.name,
         address: form.address,
         phone: form.phone,
+        description: form.description,
         image: form.image,
       });
       setMerchant(updated);
@@ -200,6 +203,16 @@ export default function SettingsPage() {
                   placeholder="+6281234567890 (opsional)"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Deskripsi</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-20 resize-none text-sm"
+                  placeholder="Deskripsi merchant (opsional)"
+                />
+              </div>
               </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
@@ -210,11 +223,11 @@ export default function SettingsPage() {
 
               <div className="flex items-center gap-4">
                 {form.image ? (
-                  <div className="w-20 h-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border border-border flex-shrink-0">
                     <img src={imageUrl(form.image)} alt="Merchant" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                  <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                     <Store className="w-8 h-8 text-muted-foreground/50" />
                   </div>
                 )}

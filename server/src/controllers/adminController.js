@@ -233,7 +233,7 @@ export async function getMerchant(req, res, next) {
 
 export async function updateMerchant(req, res, next) {
   try {
-    const { name, address, phone, image, bank } = req.body;
+    const { name, address, phone, image, description, bank } = req.body;
     const update = {};
 
     if (name !== undefined) {
@@ -249,6 +249,10 @@ export async function updateMerchant(req, res, next) {
     if (phone !== undefined) {
       if (phone && !/^\+?[0-9]{10,15}$/.test(phone)) return error(res, 'Format nomor telepon tidak valid');
       update.phone = phone;
+    }
+    if (description !== undefined) {
+      if (description.length > 500) return error(res, 'Deskripsi maksimal 500 karakter');
+      update.description = description;
     }
     if (bank !== undefined) {
       if (bank.name !== undefined) update['bank.name'] = bank.name;

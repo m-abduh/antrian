@@ -185,7 +185,7 @@ export default function ServicesPage() {
                   </div>
 
                   {s.image && (
-                    <div className="w-full h-32 rounded-xl overflow-hidden mb-3 bg-muted">
+                    <div className="w-full aspect-square rounded-xl overflow-hidden mb-3 bg-muted">
                       <img src={imageUrl(s.image)} alt={s.name} className="w-full h-full object-cover" />
                     </div>
                   )}
@@ -293,7 +293,7 @@ export default function ServicesPage() {
                   <input type="hidden" {...register('image')} />
                 </div>
                 {watch('image') && (
-                  <div className="mt-2 w-24 h-24 rounded-xl overflow-hidden border border-border">
+                  <div className="mt-2 w-24 aspect-square rounded-xl overflow-hidden border border-border">
                     <img src={imageUrl(watch('image'))} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 )}

@@ -28,6 +28,12 @@ const merchantSchema = new mongoose.Schema({
     match: [/^\+?[0-9]{10,15}$/, 'Format nomor telepon tidak valid'],
     default: '',
   },
+  description: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Deskripsi maksimal 500 karakter'],
+    default: '',
+  },
   image: {
     type: String,
     default: '',

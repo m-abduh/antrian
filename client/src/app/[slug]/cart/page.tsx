@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import { useMerchant } from '@/lib/hooks/useMerchant';
 import { imageUrl } from '@/lib/imageUrl';
+import { saveActiveQueue } from '@/lib/activeQueue';
 
 export default function CartPage() {
   const params = useParams();
@@ -43,6 +44,7 @@ export default function CartPage() {
         note: note || undefined,
       });
       clearCart();
+      saveActiveQueue(slug, { queueId: result.queue.id, number: result.queue.queueNumber, status: 'waiting' });
       router.push(`/${slug}/queue/${result.queue.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.');

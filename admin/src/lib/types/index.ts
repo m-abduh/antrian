@@ -49,6 +49,7 @@ export interface Merchant {
   image: string;
   address: string;
   phone: string;
+  description: string;
   isActive: boolean;
   bank: {
     name: string;

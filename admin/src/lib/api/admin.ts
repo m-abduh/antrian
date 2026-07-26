@@ -14,7 +14,7 @@ export const adminApi = {
   getMerchant: () =>
     api.get('/admin/merchant').then(handleResponse) as Promise<Merchant>,
 
-  updateMerchant: (data: { name?: string; address?: string; phone?: string; image?: string; bank?: { name?: string; account?: string; holder?: string } }) =>
+  updateMerchant: (data: { name?: string; address?: string; phone?: string; description?: string; image?: string; bank?: { name?: string; account?: string; holder?: string } }) =>
     api.put('/admin/merchant', data).then(handleResponse) as Promise<Merchant>,
 
   setupMerchant: (data: { name: string; slug: string }) =>

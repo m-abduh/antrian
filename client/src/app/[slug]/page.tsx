@@ -1,14 +1,14 @@
 'use client';
-
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState, useEffect } from 'react';
-import { CreditCard, MapPin, Phone, ShoppingCart, Store, Waves, Plus, Minus, Sparkles, Bell } from 'lucide-react';
+import { CreditCard, MapPin, Phone, ShoppingCart, Store, Waves, Plus, Minus, Sparkles, Bell, Check, ArrowRight } from 'lucide-react';
 import { useMerchant, useServices, useGroups } from '@/lib/hooks/useMerchant';
 import { useCartStore } from '@/lib/store/cartStore';
 import { imageUrl } from '@/lib/imageUrl';
 import { getActiveQueue, clearActiveQueue } from '@/lib/activeQueue';
+import { SocialIcon } from '@/components/SocialIcon';
 import type { Service } from '@/lib/types';
 
 function Skeleton({ className }: { className: string }) {
@@ -23,6 +23,7 @@ export default function MerchantPage() {
   const { data: groups } = useGroups(slug);
   const { items, addItem, updateQuantity, totalPrice, itemCount } = useCartStore();
   const [activeQ, setActiveQ] = useState<{ queueId: string; number: string } | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<string>('all');
 
   useEffect(() => {
     const aq = getActiveQueue(slug);
@@ -41,20 +42,42 @@ export default function MerchantPage() {
     return services.filter(s => !groupedIds.has(s._id));
   }, [services, groups]);
 
+  const groupOptions = useMemo(() => {
+    const opts: { id: string; label: string }[] = [{ id: 'all', label: 'Semua' }];
+    if (groups) groups.forEach(g => opts.push({ id: g._id, label: g.name }));
+    if (grouplessServices.length > 0) opts.push({ id: 'ungrouped', label: 'Lainnya' });
+    return opts;
+  }, [groups, grouplessServices]);
+
+  const filteredGroups = useMemo(() => {
+    if (!groups) return [];
+    if (selectedGroup === 'all') return groups;
+    return groups.filter(g => g._id === selectedGroup);
+  }, [groups, selectedGroup]);
+
+  const showGroupless = selectedGroup === 'all' || selectedGroup === 'ungrouped';
+
   if (merchantLoading || servicesLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-6 space-y-6">
           <div className="flex items-center gap-4">
-            <Skeleton className="w-16 h-16 rounded-full" />
+            <Skeleton className="w-16 h-16 md:w-20 md:h-20 rounded-full" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-5 w-40" />
               <Skeleton className="h-3 w-24" />
             </div>
           </div>
+          <Skeleton className="h-20 w-full rounded-2xl" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-40 w-full" />
+              <div key={i} className="space-y-0 overflow-hidden rounded-3xl border border-border">
+                <Skeleton className="aspect-square w-full rounded-none" />
+                <div className="p-3.5 space-y-2">
+                  <Skeleton className="h-3.5 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -84,19 +107,33 @@ export default function MerchantPage() {
     return (
       <motion.div
         key={service._id}
+        layout
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-card border rounded-2xl overflow-hidden transition-all duration-200 ${qty > 0 ? 'border-primary ring-1 ring-primary/30 bg-primary/[0.03]' : 'border-border hover:border-primary/20 hover:shadow-md'}`}
+        className={`group relative bg-card border rounded-3xl overflow-hidden transition-all duration-200 ${
+          qty > 0
+            ? 'border-primary/60 ring-2 ring-primary/20 shadow-md shadow-primary/5'
+            : 'border-border hover:border-primary/25 hover:shadow-lg hover:-translate-y-0.5'
+        }`}
       >
+        {qty > 0 && (
+          <div className="absolute top-2.5 left-2.5 z-10 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+            <Check className="w-3 h-3" strokeWidth={3} />
+          </div>
+        )}
         {service.image && (
-          <div className="w-full aspect-square bg-muted">
-            <img src={imageUrl(service.image)} alt={service.name} className="w-full h-full object-cover" />
+          <div className="w-full aspect-square bg-muted overflow-hidden rounded-b-3xl">
+            <img
+              src={imageUrl(service.image)}
+              alt={service.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
           </div>
         )}
         <div className={`flex items-center gap-3 ${service.image ? 'p-3.5' : 'p-4'}`}>
           {!service.image && (
-            <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-5 h-5 md:w-5 md:h-5 text-primary" />
+            <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-primary/15 to-primary/5 rounded-xl flex items-center justify-center flex-shrink-0">
+              <CreditCard className="w-5 h-5 text-primary" />
             </div>
           )}
           <div className="flex-1 min-w-0">
@@ -104,32 +141,32 @@ export default function MerchantPage() {
             {service.description && (
               <p className="text-xs md:text-sm text-muted-foreground/80 truncate mt-0.5">{service.description}</p>
             )}
-            <p className="font-semibold text-foreground text-xs md:text-sm mt-1.5">
+            <p className="font-bold text-foreground text-xs md:text-sm mt-1.5 font-mono tabular-nums">
               {service.price > 0 ? `Rp${service.price.toLocaleString('id-ID')}` : 'Gratis'}
             </p>
           </div>
           {qty > 0 ? (
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0 bg-muted rounded-full p-1">
               <button
                 onClick={() => updateQuantity(service._id, qty - 1)}
-                className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center"
+                className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-card text-foreground hover:text-primary transition-colors flex items-center justify-center shadow-sm"
               >
-                <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                <Minus className="w-3 h-3" />
               </button>
-              <span className="w-6 text-center text-sm font-semibold text-foreground">{qty}</span>
+              <span className="w-5 text-center text-sm font-bold text-foreground font-mono tabular-nums">{qty}</span>
               <button
                 onClick={() => addItem(service)}
-                className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-sm"
+                className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-sm"
               >
-                <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                <Plus className="w-3 h-3" />
               </button>
             </div>
           ) : (
             <button
               onClick={() => addItem(service)}
-              className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 hover:scale-105 transition-all flex items-center justify-center flex-shrink-0"
+              className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center flex-shrink-0"
             >
-              <Plus className="w-4 h-4 md:w-4 md:h-4" />
+              <Plus className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -137,123 +174,191 @@ export default function MerchantPage() {
     );
   };
 
+  const hasContent = services && services.length > 0;
+  const noGroupsAtAll = !groups?.length && !grouplessServices.length;
+
+  const EmptyServices = () => (
+    <div className="bg-card border border-dashed border-border rounded-3xl p-8 md:p-12 text-center">
+      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+        <CreditCard className="w-7 h-7 text-muted-foreground/30" />
+      </div>
+      <h3 className="text-base md:text-lg font-semibold text-foreground mb-1.5">Belum Ada Layanan</h3>
+      <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <main className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 pt-4 pb-6">
+    <div className="min-h-screen bg-background pb-28">
+      <main className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 pt-6 pb-6">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-          <div className="flex items-start gap-4 md:gap-5">
-            {merchant.image ? (
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-border mt-0.5">
-                <img src={imageUrl(merchant.image)} alt={merchant.name} className="w-full h-full object-cover" />
-              </div>
-            ) : (
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary/15 to-primary/5 rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-border mt-0.5">
-                <Store className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+
+          {/* Banner + Hero */}
+          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/[0.07] via-primary/[0.03] to-transparent p-5 md:p-6">
+            {merchant.banner && (
+              <div className="absolute inset-0">
+                <img src={imageUrl(merchant.banner)} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
               </div>
             )}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">{merchant.name}</h1>
-              <p className="text-xs md:text-sm text-muted-foreground mt-0.5">@{merchant.slug}</p>
-              {merchant.description && (
-                <p className="text-sm md:text-base text-muted-foreground/80 mt-2 leading-relaxed">{merchant.description}</p>
-              )}
-              {merchant.address && (
-                <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground/70 mt-3">
-                  <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{merchant.address}</span>
-                </div>
-              )}
-              {merchant.phone && (
-                <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground/70 mt-1">
-                  <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{merchant.phone}</span>
+            <div className="relative flex items-start gap-4 md:gap-5">
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-110 -z-10" />
+                {merchant.image ? (
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-muted ring-4 ring-background shadow-md">
+                    <img src={imageUrl(merchant.image)} alt={merchant.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center ring-4 ring-background shadow-md">
+                    <Store className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{merchant.name}</h1>
+                <span className="inline-flex items-center gap-1 mt-1 text-[11px] md:text-xs font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
+                  @{merchant.slug}
+                </span>
+                {merchant.description && (
+                  <p className="text-sm md:text-base text-muted-foreground/80 mt-2.5 leading-relaxed">{merchant.description}</p>
+                )}
+                {(merchant.address || merchant.phone) && (
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    {merchant.address && (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-full px-2.5 py-1">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        {merchant.address}
+                      </span>
+                    )}
+                    {merchant.phone && (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-full px-2.5 py-1">
+                        <Phone className="w-3 h-3 flex-shrink-0" />
+                        {merchant.phone}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              {merchant.socialLinks?.length > 0 && (
+                <div className="flex-shrink-0 pt-1 flex flex-row gap-1.5">
+                  {merchant.socialLinks.map(link => (
+                    <a
+                      key={link.platform}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary flex items-center justify-center transition-colors"
+                    >
+                      <SocialIcon platform={link.platform} className="w-full h-full" />
+                    </a>
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
-          {activeQ && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-              <Link
-                href={`/${slug}/queue/${activeQ.queueId}`}
-                className="flex items-center gap-3 bg-primary/[0.06] border border-primary/15 rounded-2xl p-4 hover:bg-primary/[0.09] transition-colors"
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-                  <Bell className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Antrian Aktif</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    No. {activeQ.number} — Tap untuk lihat status
-                  </p>
-                </div>
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3 h-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </div>
-              </Link>
-            </motion.div>
+          {/* Antrian aktif — gaya tiket sobekan */}
+          <AnimatePresence>
+            {activeQ && (
+              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                <Link href={`/${slug}/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-primary/[0.05] border border-primary/20 rounded-2xl overflow-hidden hover:bg-primary/[0.08] transition-colors">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
+                    <div className="relative w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                      <Bell className="w-4 h-4 text-primary" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Antrian Aktif — tap untuk lihat status</p>
+                      <p className="text-sm font-semibold text-foreground truncate">Sedang berjalan</p>
+                    </div>
+                  </div>
+                  <div className="relative flex items-center gap-2 px-4 border-l border-dashed border-primary/25">
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
+                    <div className="text-center">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">No.</p>
+                      <p className="font-mono text-lg font-bold text-primary tabular-nums leading-none">{activeQ.number}</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                  </div>
+                </Link>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Filter Grup */}
+          {groupOptions.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+              {groupOptions.map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => setSelectedGroup(opt.id)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    selectedGroup === opt.id
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           )}
 
-          {services && services.length > 0 ? (
+          {/* Layanan */}
+          {hasContent ? (
             <div className="space-y-8">
-              {groups && groups.map((group, idx) => (
+              {filteredGroups.map((group, idx) => (
                 <motion.div key={group._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}>
-                  <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-2.5 mb-3">
                     <div className="w-1 h-5 md:h-6 rounded-full bg-primary flex-shrink-0" />
                     <h2 className="text-base md:text-lg font-bold text-foreground">{group.name}</h2>
+                    <span className="text-xs text-muted-foreground/60 font-mono">({group.serviceIds.length})</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
                     {group.serviceIds.map(renderService)}
                   </div>
                 </motion.div>
               ))}
-              {grouplessServices.length > 0 && (
+
+              {showGroupless && grouplessServices.length > 0 && (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                  <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-2.5 mb-3">
                     <div className="w-1 h-5 md:h-6 rounded-full bg-muted-foreground/30 flex-shrink-0" />
                     <h2 className="text-base md:text-lg font-bold text-foreground">Lainnya</h2>
+                    <span className="text-xs text-muted-foreground/60 font-mono">({grouplessServices.length})</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
                     {grouplessServices.map(renderService)}
                   </div>
                 </motion.div>
               )}
-              {!groups?.length && !grouplessServices.length && (
-                <div className="bg-card border border-border rounded-2xl p-8 md:p-12 text-center">
-                  <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <CreditCard className="w-7 h-7 text-muted-foreground/30" />
-                  </div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2">Belum Ada Layanan</h3>
-                  <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
-                </div>
-              )}
+
+              {noGroupsAtAll && <EmptyServices />}
             </div>
           ) : (
-            <div className="bg-card border border-border rounded-2xl p-8 md:p-12 text-center">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <CreditCard className="w-7 h-7 text-muted-foreground/30" />
-              </div>
-              <h3 className="text-base md:text-lg font-semibold text-foreground mb-2">Belum Ada Layanan</h3>
-              <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
-            </div>
+            <EmptyServices />
           )}
 
-          <div className="bg-gradient-to-br from-primary/[0.04] to-transparent border border-primary/10 rounded-2xl p-5 md:p-6">
-            <h4 className="font-semibold text-sm md:text-base text-foreground mb-4 flex items-center gap-2">
+          {/* Cara Pakai — alur langkah bernomor */}
+          <div className="relative bg-gradient-to-br from-primary/[0.05] to-transparent border border-primary/10 rounded-2xl p-5 md:p-6">
+            <h4 className="font-semibold text-sm md:text-base text-foreground mb-5 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
               Cara Pakai
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="relative grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-5">
+              <div className="hidden md:block absolute top-[18px] left-[12.5%] right-[12.5%] border-t border-dashed border-primary/25 -z-0" />
               {[
                 { icon: Plus, label: 'Pilih Layanan', desc: 'Tap + pada layanan yang diinginkan' },
                 { icon: ShoppingCart, label: 'Buka Keranjang', desc: 'Tap ikon keranjang di bawah' },
                 { icon: Waves, label: 'Ambil Antrian', desc: 'Isi data diri & submit' },
                 { icon: MapPin, label: 'Pantau Real-time', desc: 'Lihat posisi antrianmu' },
               ].map(({ icon: Icon, label, desc }, i) => (
-                <div key={i} className="text-center p-3 md:p-4 rounded-xl bg-card/50">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2.5">
-                    <Icon className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                <div key={i} className="relative text-center">
+                  <div className="relative w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-2 text-xs font-bold font-mono shadow-sm">
+                    {i + 1}
                   </div>
+                  <Icon className="w-3.5 h-3.5 text-primary/60 mx-auto mb-1" />
                   <p className="text-xs md:text-sm font-semibold text-foreground">{label}</p>
                   <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
                 </div>
@@ -263,30 +368,43 @@ export default function MerchantPage() {
         </motion.div>
       </main>
 
-      {itemCount() > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-lg border-t border-border p-3 md:p-4 shadow-lg">
-          <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+      {/* Cart bar — floating */}
+      <AnimatePresence>
+        {itemCount() > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 24, stiffness: 260 }}
+            className="fixed bottom-3 left-3 right-3 z-40"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto flex items-center justify-between gap-3 bg-card/95 backdrop-blur-lg border border-border rounded-2xl shadow-xl p-3 md:p-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {items.slice(0, 2).map(i => i.name).join(', ')}
+                    {items.length > 2 && <span className="text-muted-foreground font-normal">, +{items.length - 2} lainnya</span>}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono tabular-nums">
+                    {totalPrice() > 0 ? `Rp${totalPrice().toLocaleString('id-ID')}` : 'Gratis'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{itemCount()} Layanan</p>
-                <p className="text-xs text-muted-foreground">
-                  {totalPrice() > 0 ? `Rp${totalPrice().toLocaleString('id-ID')}` : 'Gratis'}
-                </p>
-              </div>
+              <Link
+                href={`/${slug}/cart`}
+                className="px-6 py-2.5 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm text-sm flex items-center gap-2 flex-shrink-0"
+              >
+                Pesan
+                <ShoppingCart className="w-4 h-4" />
+              </Link>
             </div>
-            <Link
-              href={`/${slug}/cart`}
-              className="px-6 py-2.5 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm text-sm flex items-center gap-2"
-            >
-              Pesan
-              <ShoppingCart className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

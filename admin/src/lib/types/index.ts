@@ -42,11 +42,17 @@ export interface Group {
   updatedAt: string;
 }
 
+export interface SocialLink {
+  platform: 'instagram' | 'tiktok' | 'youtube' | 'facebook';
+  url: string;
+}
+
 export interface Merchant {
   _id: string;
   name: string;
   slug: string;
   image: string;
+  banner: string;
   address: string;
   phone: string;
   description: string;
@@ -56,6 +62,7 @@ export interface Merchant {
     account: string;
     holder: string;
   };
+  socialLinks: SocialLink[];
   createdAt: string;
   updatedAt: string;
 }

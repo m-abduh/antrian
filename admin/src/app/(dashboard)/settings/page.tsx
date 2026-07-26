@@ -4,11 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Loader2, Store, MapPin, Phone, QrCode, Download, Upload, Waves } from 'lucide-react';
+import { Loader2, Store, MapPin, Phone, QrCode, Download, Upload, Waves, Plus, X, Link2, Image } from 'lucide-react';
 import QRCode from 'qrcode';
 import { adminApi } from '@/lib/api/admin';
 import { imageUrl } from '@/lib/imageUrl';
-import type { Merchant } from '@/lib/types';
+import type { Merchant, SocialLink } from '@/lib/types';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -46,6 +46,8 @@ export default function SettingsPage() {
     phone: '',
     description: '',
     image: '',
+    banner: '',
+    socialLinks: [] as SocialLink[],
   });
 
   useEffect(() => {
@@ -63,6 +65,8 @@ export default function SettingsPage() {
           phone: m.phone || '',
           description: m.description || '',
           image: m.image || '',
+          banner: m.banner || '',
+          socialLinks: m.socialLinks || [],
         });
       })
       .catch(() => setError('Gagal memuat data merchant'))
@@ -81,6 +85,8 @@ export default function SettingsPage() {
         phone: form.phone,
         description: form.description,
         image: form.image,
+        banner: form.banner,
+        socialLinks: form.socialLinks,
       });
       setMerchant(updated);
       setSuccess('Pengaturan berhasil disimpan');
@@ -263,6 +269,52 @@ export default function SettingsPage() {
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Image className="w-4 h-4 text-primary" />
+                Banner Merchant
+              </h2>
+
+              <div className="flex items-center gap-4">
+                {form.banner ? (
+                  <div className="w-full max-w-sm aspect-[3/1] rounded-xl overflow-hidden border border-border flex-shrink-0">
+                    <img src={imageUrl(form.banner)} alt="Banner" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-full max-w-sm aspect-[3/1] rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                    <Image className="w-8 h-8 text-muted-foreground/50" />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = async () => {
+                      const file = input.files?.[0];
+                      if (!file) return;
+                      setUploading(true);
+                      try {
+                        const { url } = await adminApi.uploadImage(file);
+                        setForm({ ...form, banner: url });
+                      } catch {
+                        setError('Gagal upload banner');
+                      } finally {
+                        setUploading(false);
+                      }
+                    };
+                    input.click();
+                  }}
+                  disabled={uploading}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors text-sm"
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploading ? 'Mengupload...' : form.banner ? 'Ganti Banner' : 'Upload Banner'}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <QrCode className="w-4 h-4 text-primary" />
                 QR Code Merchant
               </h2>
@@ -294,6 +346,69 @@ export default function SettingsPage() {
                   Download QR Code
                 </button>
               </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-primary" />
+                Social Media <span className="text-xs font-normal text-muted-foreground">(maks. 3)</span>
+              </h2>
+
+              <div className="space-y-3">
+                {form.socialLinks.map((link, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <select
+                      value={link.platform}
+                      onChange={(e) => {
+                        const next = [...form.socialLinks];
+                        next[i] = { ...next[i], platform: e.target.value as SocialLink['platform'] };
+                        setForm({ ...form, socialLinks: next });
+                      }}
+                      className="px-3 py-2.5 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring flex-shrink-0"
+                    >
+                      <option value="instagram">Instagram</option>
+                      <option value="tiktok">TikTok</option>
+                      <option value="youtube">YouTube</option>
+                      <option value="facebook">Facebook</option>
+                    </select>
+                    <input
+                      value={link.url}
+                      onChange={(e) => {
+                        const next = [...form.socialLinks];
+                        next[i] = { ...next[i], url: e.target.value };
+                        setForm({ ...form, socialLinks: next });
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="https://instagram.com/username"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = form.socialLinks.filter((_, idx) => idx !== i);
+                        setForm({ ...form, socialLinks: next });
+                      }}
+                      className="w-9 h-9 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-center flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {form.socialLinks.length < 3 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const existingPlatforms = form.socialLinks.map(l => l.platform);
+                    const avail = (['instagram', 'tiktok', 'youtube', 'facebook'] as const).find(p => !existingPlatforms.includes(p));
+                    setForm({ ...form, socialLinks: [...form.socialLinks, { platform: avail || 'instagram', url: '' }] });
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 rounded-xl text-sm transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tambah Social Media
+                </button>
+              )}
             </div>
 
             <div className="flex justify-end gap-3">

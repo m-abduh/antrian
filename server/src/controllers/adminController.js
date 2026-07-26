@@ -233,7 +233,7 @@ export async function getMerchant(req, res, next) {
 
 export async function updateMerchant(req, res, next) {
   try {
-    const { name, address, phone, image, description, bank } = req.body;
+    const { name, address, phone, image, banner, description, bank, socialLinks } = req.body;
     const update = {};
 
     if (name !== undefined) {
@@ -246,6 +246,7 @@ export async function updateMerchant(req, res, next) {
       update.address = address;
     }
     if (image !== undefined) update.image = image;
+    if (banner !== undefined) update.banner = banner;
     if (phone !== undefined) {
       if (phone && !/^\+?[0-9]{10,15}$/.test(phone)) return error(res, 'Format nomor telepon tidak valid');
       update.phone = phone;
@@ -258,6 +259,19 @@ export async function updateMerchant(req, res, next) {
       if (bank.name !== undefined) update['bank.name'] = bank.name;
       if (bank.account !== undefined) update['bank.account'] = bank.account;
       if (bank.holder !== undefined) update['bank.holder'] = bank.holder;
+    }
+
+    if (socialLinks !== undefined) {
+      if (!Array.isArray(socialLinks)) return error(res, 'socialLinks harus berupa array');
+      if (socialLinks.length > 3) return error(res, 'Maksimal 3 social media');
+      const validPlatforms = ['instagram', 'tiktok', 'youtube', 'facebook'];
+      for (const link of socialLinks) {
+        if (!link.platform || !validPlatforms.includes(link.platform))
+          return error(res, 'Platform sosial media tidak valid');
+        if (!link.url || !link.url.trim())
+          return error(res, 'URL sosial media wajib diisi');
+      }
+      update.socialLinks = socialLinks.map(l => ({ platform: l.platform, url: l.url }));
     }
 
     const merchant = await Merchant.findByIdAndUpdate(req.admin.merchantId, update, { new: true, runValidators: true });

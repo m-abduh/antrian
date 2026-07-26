@@ -38,6 +38,10 @@ const merchantSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  banner: {
+    type: String,
+    default: '',
+  },
   isActive: {
     type: Boolean,
     default: true,
@@ -46,6 +50,13 @@ const merchantSchema = new mongoose.Schema({
     name: { type: String, default: '' },
     account: { type: String, default: '' },
     holder: { type: String, default: '' },
+  },
+  socialLinks: {
+    type: [{
+      platform: { type: String, required: true, enum: ['instagram', 'tiktok', 'youtube', 'facebook'] },
+      url: { type: String, required: true, trim: true },
+    }],
+    default: [],
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

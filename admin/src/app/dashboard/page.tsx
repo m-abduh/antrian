@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -10,9 +10,11 @@ import {
   Settings, BarChart3, AlertCircle, Bell,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api/admin';
-import { useQueues, useUpdateQueueStatus, useStartServing, useStats } from '@/lib/hooks/useAdmin';
+import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { ErrorAlert } from '@/components/ErrorAlert';
+import { getAdminSocket, disconnectAdminSocket } from '@/lib/socket';
+import { useQueryClient } from '@tanstack/react-query';
 const statusColors: Record<string, string> = {
   waiting: 'bg-blue-100 text-blue-800',
   called: 'bg-green-100 text-green-800',
@@ -32,6 +34,7 @@ const statusLabels: Record<string, string> = {
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [actionError, setActionError] = useState('');
@@ -57,6 +60,26 @@ export default function DashboardPage() {
       router.replace('/merchant/setup');
     }
   }, [status, session, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const socket = getAdminSocket();
+    if (!socket) return;
+
+    const handleQueueEvent = () => {
+      queryClient.invalidateQueries({ queryKey: queueKeys.all });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    };
+
+    socket.on('queue:new', handleQueueEvent);
+    socket.on('queue:status', handleQueueEvent);
+
+    return () => {
+      socket.off('queue:new', handleQueueEvent);
+      socket.off('queue:status', handleQueueEvent);
+      disconnectAdminSocket();
+    };
+  }, [queryClient, status]);
 
   if (status !== 'authenticated' || !session?.user) return null;
 

@@ -79,6 +79,12 @@ export async function createQueue(req, res, next) {
       estimatedStartTime,
     });
 
+    const io = req.app.get('io');
+    if (io) {
+      const populated = await Queue.findById(queue._id).populate('serviceId', 'name duration price');
+      io.to(`merchant:${merchant.slug}`).emit('queue:new', { queue: populated });
+    }
+
     return success(res, {
       queue: {
         id: queue._id,

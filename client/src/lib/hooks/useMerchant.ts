@@ -25,7 +25,6 @@ export function useLiveQueue(slug: string, enabled = true) {
     queryKey: ['liveQueue', slug],
     queryFn: () => merchantApi.getLiveQueue(slug) as Promise<LiveQueueResponse>,
     enabled: enabled && !!slug,
-    refetchInterval: 5000,
     staleTime: 0,
   });
 }

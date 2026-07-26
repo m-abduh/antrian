@@ -1,5 +1,5 @@
 import api from '../axios';
-import type { Merchant, Service, CreateQueueResponse, LiveQueueResponse } from '../types';
+import type { Merchant, Queue, Service, CreateQueueResponse, LiveQueueResponse } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleResponse = (r: any) => r.data;

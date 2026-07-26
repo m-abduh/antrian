@@ -372,6 +372,15 @@ export async function updateQueueStatus(req, res, next) {
 
     await queue.save();
 
+    const populated = await Queue.findById(queue._id).populate('serviceId', 'name duration price');
+    const io = req.app.get('io');
+    if (io) {
+      const merchant = await Merchant.findById(queue.merchantId).select('slug');
+      if (merchant) {
+        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: populated, action });
+      }
+    }
+
     return success(res, queue);
   } catch (err) {
     next(err);
@@ -394,6 +403,15 @@ export async function startServing(req, res, next) {
     queue.status = 'serving';
     queue.startedAt = new Date();
     await queue.save();
+
+    const populated = await Queue.findById(queue._id).populate('serviceId', 'name duration price');
+    const io = req.app.get('io');
+    if (io) {
+      const merchant = await Merchant.findById(queue.merchantId).select('slug');
+      if (merchant) {
+        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: populated, action: 'serve' });
+      }
+    }
 
     return success(res, queue);
   } catch (err) {

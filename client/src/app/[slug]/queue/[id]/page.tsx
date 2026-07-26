@@ -4,11 +4,12 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLiveQueue } from '@/lib/hooks/useMerchant';
 import { useClientStore } from '@/lib/store/clientStore';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { merchantApi } from '@/lib/api/merchant';
+import { getCustomerSocket, disconnectCustomerSocket } from '@/lib/socket';
 import api from '@/lib/axios';
 import type { Queue } from '@/lib/types';
 import {
@@ -33,13 +34,13 @@ export default function QueueTrackingPage() {
   const params = useParams();
   const slug = params.slug as string;
   const queueId = params.id as string;
+  const queryClient = useQueryClient();
   const { currentQueue, setQueue } = useClientStore();
   const { data: liveData, isLoading: liveLoading } = useLiveQueue(slug);
   const { data: fetchedQueue, isLoading: queueLoading } = useQuery<Queue>({
     queryKey: ['queue', slug, queueId],
     queryFn: () => merchantApi.getQueue(slug, queueId),
     enabled: !currentQueue,
-    refetchInterval: 15000,
   });
   const [called, setCalled] = useState(false);
   const [rating, setRating] = useState(0);
@@ -57,6 +58,27 @@ export default function QueueTrackingPage() {
   const myPosition = liveData?.waiting?.findIndex((q) => q._id === queueId) ?? -1;
   const positionInLine = myPosition >= 0 ? myPosition + 1 : 0;
   const totalInLine = liveData?.waiting?.length ?? 0;
+
+  useEffect(() => {
+    const socket = getCustomerSocket(slug);
+
+    socket.on('queue:status', (data: { queue: Queue; action: string }) => {
+      if (data.queue._id === queueId) {
+        setQueue(data.queue);
+      }
+      queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });
+    });
+
+    socket.on('queue:new', () => {
+      queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });
+    });
+
+    return () => {
+      socket.off('queue:status');
+      socket.off('queue:new');
+      disconnectCustomerSocket();
+    };
+  }, [slug, queueId, setQueue, queryClient]);
 
   useEffect(() => {
     if (queue?.status === 'called') setCalled(true);

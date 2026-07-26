@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -10,6 +11,7 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 import merchantRoutes from './routes/merchant.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notification.js';
+import { initSocket } from './socket.js';
 
 const app = express();
 
@@ -31,7 +33,7 @@ app.use(cors({
 app.use(cookieParser());
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
@@ -85,7 +87,10 @@ app.use(errorHandler);
 async function start() {
   await connectDB();
 
-  app.listen(env.PORT, () => {
+  const server = http.createServer(app);
+  initSocket(server, app);
+
+  server.listen(env.PORT, () => {
     logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
   });
 }

@@ -1,12 +1,12 @@
 import Queue from '../models/Queue.js';
 import Merchant from '../models/Merchant.js';
 import Service from '../models/Service.js';
-import { verifyNotification } from '../utils/midtrans.js';
+import { verifyNotification, calculateMidtransFee } from '../utils/midtrans.js';
 import { calculateEstimatedTime } from '../utils/queueNumber.js';
 
 export async function handleNotification(req, res, next) {
   try {
-    const { order_id, transaction_id, transaction_status } = req.body;
+    const { order_id, transaction_id, transaction_status, gross_amount, payment_type } = req.body;
 
     const queue = await Queue.findOne({ midtransOrderId: order_id });
     if (!queue) {
@@ -36,6 +36,8 @@ export async function handleNotification(req, res, next) {
       queue.paymentStatus = 'paid';
       queue.status = 'waiting';
       queue.midtransTransactionId = transaction_id || '';
+      queue.paymentMethod = result.paymentType || payment_type || '';
+      queue.midtransFee = calculateMidtransFee(result.paymentType || payment_type || '', gross_amount || 0);
 
       const service = await Service.findById(queue.serviceId);
       const queuesAhead = await Queue.countDocuments({

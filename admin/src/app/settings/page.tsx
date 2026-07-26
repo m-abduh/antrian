@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Loader2, ArrowLeft, Store, MapPin, Phone, Key, Eye, EyeOff, ShieldCheck, QrCode, Download } from 'lucide-react';
+import { Loader2, ArrowLeft, Store, MapPin, Phone, Key, Eye, EyeOff, ShieldCheck, QrCode, Download, Building2 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { adminApi } from '@/lib/api/admin';
 import type { Merchant } from '@/lib/types';
@@ -46,6 +46,9 @@ export default function SettingsPage() {
     phone: '',
     serverKey: '',
     clientKey: '',
+    bankName: '',
+    bankAccount: '',
+    bankHolder: '',
   });
 
   useEffect(() => {
@@ -63,6 +66,9 @@ export default function SettingsPage() {
           phone: m.phone || '',
           serverKey: m.midtrans?.serverKey || '',
           clientKey: m.midtrans?.clientKey || '',
+          bankName: m.bank?.name || '',
+          bankAccount: m.bank?.account || '',
+          bankHolder: m.bank?.holder || '',
         });
       })
       .catch(() => setError('Gagal memuat data merchant'))
@@ -79,6 +85,11 @@ export default function SettingsPage() {
         name: form.name,
         address: form.address,
         phone: form.phone,
+        bank: {
+          name: form.bankName || undefined,
+          account: form.bankAccount || undefined,
+          holder: form.bankHolder || undefined,
+        },
         midtrans: {
           serverKey: form.serverKey || undefined,
           clientKey: form.clientKey || undefined,
@@ -235,6 +246,64 @@ export default function SettingsPage() {
                   <Download className="w-4 h-4" />
                   Download QR Code
                 </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-blue-500" />
+                Rekening Bank (untuk penarikan saldo)
+              </h2>
+
+              <p className="text-xs text-gray-500">
+                Masukkan data rekening untuk menerima penarikan saldo.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nama Bank <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={form.bankName}
+                  onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Bank</option>
+                  <option value="BCA">BCA</option>
+                  <option value="BNI">BNI</option>
+                  <option value="BRI">BRI</option>
+                  <option value="Mandiri">Mandiri</option>
+                  <option value="CIMB Niaga">CIMB Niaga</option>
+                  <option value="Danamon">Danamon</option>
+                  <option value="Permata">Permata</option>
+                  <option value="BSI">BSI</option>
+                  <option value="SeaBank">SeaBank</option>
+                  <option value="Bank Saqu">Bank Saqu</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  No. Rekening <span className="text-red-500">*</span>
+                </label>
+                <input
+                  value={form.bankAccount}
+                  onChange={(e) => setForm({ ...form, bankAccount: e.target.value.replace(/\D/g, '') })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="1234567890"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Atas Nama <span className="text-red-500">*</span>
+                </label>
+                <input
+                  value={form.bankHolder}
+                  onChange={(e) => setForm({ ...form, bankHolder: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="NAMA SESUAI REKENING"
+                />
               </div>
             </div>
 

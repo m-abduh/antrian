@@ -36,6 +36,11 @@ const merchantSchema = new mongoose.Schema({
     serverKey: { type: String, default: '' },
     clientKey: { type: String, default: '' },
   },
+  bank: {
+    name: { type: String, default: '' },
+    account: { type: String, default: '' },
+    holder: { type: String, default: '' },
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

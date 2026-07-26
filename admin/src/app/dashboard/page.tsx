@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Clock, CheckCircle2, SkipForward, LogOut, Loader2,
   Phone, Search, X, LayoutDashboard,
-  Settings, BarChart3, AlertCircle, Bell,
+  Settings, BarChart3, AlertCircle, Bell, Wallet,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api/admin';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats } from '@/lib/hooks/useAdmin';
@@ -94,6 +94,13 @@ export default function DashboardPage() {
               >
                 <LayoutDashboard className="w-4 h-4" />
                 Layanan
+              </button>
+              <button
+                onClick={() => router.push('/finance')}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-green-500 hover:bg-green-50 rounded-xl transition-colors"
+              >
+                <Wallet className="w-4 h-4" />
+                Keuangan
               </button>
               <button
                 onClick={subscribe}

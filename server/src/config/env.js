@@ -32,6 +32,7 @@ const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '8h',
   MIDTRANS_SERVER_KEY: process.env.MIDTRANS_SERVER_KEY,
   MIDTRANS_CLIENT_KEY: process.env.MIDTRANS_CLIENT_KEY,
+  MIDTRANS_IRIS_API_KEY: process.env.MIDTRANS_IRIS_API_KEY || '',
   MIDTRANS_IS_PRODUCTION: process.env.MIDTRANS_IS_PRODUCTION === 'true',
   CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',

@@ -205,6 +205,9 @@ export default function OrderPage() {
                   {selectedService.price > 0 ? (
                     <>
                       Total bayar: <strong className="text-gray-900">Rp {selectedService.price.toLocaleString('id-ID')}</strong>
+                      <span className="text-xs text-gray-400 block mt-1">
+                        (Termasuk biaya pemrosesan)
+                      </span>
                     </>
                   ) : (
                     'Layanan gratis - tidak perlu pembayaran'

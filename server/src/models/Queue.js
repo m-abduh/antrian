@@ -43,6 +43,8 @@ const queueSchema = new mongoose.Schema({
   },
   midtransOrderId: { type: String, default: '' },
   midtransTransactionId: { type: String, default: '' },
+  paymentMethod: { type: String, default: '' },
+  midtransFee: { type: Number, default: 0 },
   rating: {
     type: Number,
     min: 1,

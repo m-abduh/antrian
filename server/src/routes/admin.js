@@ -18,6 +18,11 @@ import {
   createService,
   updateService,
   deleteService,
+  getFinanceSummary,
+  getFinanceTransactions,
+  getFinanceDisbursements,
+  requestWithdraw,
+  getFinanceBalance,
 } from '../controllers/adminController.js';
 
 const router = Router();
@@ -39,6 +44,12 @@ router.patch('/queues/:id/status', updateQueueStatus);
 router.patch('/queues/:id/start', startServing);
 
 router.get('/stats', getStats);
+
+router.get('/finance/summary', getFinanceSummary);
+router.get('/finance/transactions', getFinanceTransactions);
+router.get('/finance/disbursements', getFinanceDisbursements);
+router.post('/finance/withdraw', requestWithdraw);
+router.get('/finance/balance', getFinanceBalance);
 
 router.get('/services', getServices);
 router.post('/services', createService);

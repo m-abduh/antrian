@@ -1,5 +1,5 @@
 import api from '../axios';
-import type { Queue, Service, LoginResponse, Stats, Merchant } from '../types';
+import type { Queue, Service, LoginResponse, Stats, Merchant, FinanceSummary, FinanceBalance, Disbursement } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleResponse = (r: any) => r.data;
@@ -14,8 +14,23 @@ export const adminApi = {
   getMerchant: () =>
     api.get('/admin/merchant').then(handleResponse) as Promise<Merchant>,
 
-  updateMerchant: (data: { name?: string; address?: string; phone?: string; midtrans?: { serverKey?: string; clientKey?: string } }) =>
+  updateMerchant: (data: { name?: string; address?: string; phone?: string; bank?: { name?: string; account?: string; holder?: string }; midtrans?: { serverKey?: string; clientKey?: string } }) =>
     api.put('/admin/merchant', data).then(handleResponse) as Promise<Merchant>,
+
+  getFinanceSummary: () =>
+    api.get('/admin/finance/summary').then(handleResponse) as Promise<FinanceSummary>,
+
+  getFinanceBalance: () =>
+    api.get('/admin/finance/balance').then(handleResponse) as Promise<FinanceBalance>,
+
+  getFinanceTransactions: (params?: { page?: number; limit?: number; start?: string; end?: string }) =>
+    api.get('/admin/finance/transactions', { params }).then(handleResponse) as Promise<{ transactions: Queue[]; total: number; page: number; pages: number }>,
+
+  getFinanceDisbursements: (params?: { page?: number; limit?: number }) =>
+    api.get('/admin/finance/disbursements', { params }).then(handleResponse) as Promise<{ disbursements: Disbursement[]; total: number; page: number; pages: number }>,
+
+  requestWithdraw: (amount: number) =>
+    api.post('/admin/finance/withdraw', { amount }).then(handleResponse) as Promise<{ disbursement: Disbursement; message: string }>,
 
   setupMerchant: (data: { name: string; slug: string }) =>
     api.post('/admin/merchant/setup', data).then(handleResponse) as Promise<{ merchant: { _id: string; name: string; slug: string }; token?: string }>,

@@ -36,6 +36,8 @@ export interface Queue {
   paymentStatus: 'pending' | 'paid' | 'expired';
   midtransOrderId: string;
   midtransTransactionId: string;
+  paymentMethod: string;
+  midtransFee: number;
   rating: number | null;
   estimatedStartTime: string | null;
   startedAt: string | null;

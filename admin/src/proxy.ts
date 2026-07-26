@@ -7,7 +7,8 @@ export async function proxy(req: NextRequest) {
     req.nextUrl.pathname.startsWith('/dashboard') ||
     req.nextUrl.pathname.startsWith('/services') ||
     req.nextUrl.pathname.startsWith('/merchant') ||
-    req.nextUrl.pathname.startsWith('/settings');
+    req.nextUrl.pathname.startsWith('/settings') ||
+    req.nextUrl.pathname.startsWith('/finance');
 
   if (isProtected && !token) {
     const signInUrl = new URL('/login', req.nextUrl);
@@ -19,5 +20,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/services/:path*', '/stats/:path*', '/merchant/:path*'],
+  matcher: ['/dashboard/:path*', '/services/:path*', '/stats/:path*', '/merchant/:path*', '/finance/:path*', '/settings/:path*'],
 };

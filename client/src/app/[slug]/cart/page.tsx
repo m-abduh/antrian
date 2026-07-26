@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMerchant } from '@/lib/hooks/useMerchant';
+import { imageUrl } from '@/lib/imageUrl';
 
 export default function CartPage() {
   const params = useParams();
@@ -110,9 +111,15 @@ export default function CartPage() {
                 exit={{ opacity: 0, x: 16 }}
                 className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3"
               >
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <ShoppingCart className="w-5 h-5 text-primary" />
-                </div>
+                {item.image ? (
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+                    <img src={imageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <ShoppingCart className="w-5 h-5 text-primary" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-foreground truncate">{item.name}</p>
                   <div className="flex items-center text-xs text-muted-foreground mt-0.5">
@@ -127,7 +134,7 @@ export default function CartPage() {
                     </button>
                     <span className="w-5 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
                     <button
-                      onClick={() => addItem({ _id: item._id, name: item.name, price: item.price, image: '', merchantId: '', description: '', isActive: true, createdAt: '', updatedAt: '' })}
+                      onClick={() => addItem({ _id: item._id, name: item.name, price: item.price, image: item.image || '', merchantId: '', description: '', isActive: true, createdAt: '', updatedAt: '' })}
                       className="w-7 h-7 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center"
                     >
                       <Plus className="w-3 h-3" />
@@ -143,6 +150,16 @@ export default function CartPage() {
               </motion.div>
             ))}
           </AnimatePresence>
+
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <label className="block text-sm font-medium text-foreground mb-2">Catatan (opsional)</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Tulis catatan untuk merchant..."
+              className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-20 resize-none text-sm"
+            />
+          </div>
 
           <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
             {items.map((item) => (
@@ -163,16 +180,6 @@ export default function CartPage() {
                 </span>
               </div>
             </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-2xl p-4">
-            <label className="block text-sm font-medium text-foreground mb-2">Catatan (opsional)</label>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Tulis catatan untuk merchant..."
-              className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-20 resize-none text-sm"
-            />
           </div>
 
           <AnimatePresence>

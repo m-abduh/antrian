@@ -58,13 +58,15 @@ export async function createQueue(req, res, next) {
       return error(res, 'Format nomor telepon tidak valid');
     }
 
+    const uniqueIds = [...new Set(serviceIds.map(id => id.toString()))];
+
     const services = await Service.find({
-      _id: { $in: serviceIds },
+      _id: { $in: uniqueIds },
       merchantId: merchant._id,
       isActive: true,
     }).select('name price');
 
-    if (services.length !== serviceIds.length) {
+    if (services.length !== uniqueIds.length) {
       return error(res, 'Beberapa layanan tidak ditemukan atau tidak aktif', 404);
     }
 

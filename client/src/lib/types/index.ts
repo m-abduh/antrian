@@ -5,9 +5,10 @@ export interface Merchant {
   address: string;
   phone: string;
   isActive: boolean;
-  midtrans: {
-    serverKey: string;
-    clientKey: string;
+  bank: {
+    name: string;
+    account: string;
+    holder: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -32,12 +33,7 @@ export interface Queue {
   queueNumber: string;
   customerName: string;
   customerPhone: string;
-  status: 'pending_payment' | 'waiting' | 'called' | 'serving' | 'done' | 'skipped';
-  paymentStatus: 'pending' | 'paid' | 'expired';
-  midtransOrderId: string;
-  midtransTransactionId: string;
-  paymentMethod: string;
-  midtransFee: number;
+  status: 'waiting' | 'called' | 'serving' | 'done' | 'skipped';
   rating: number | null;
   estimatedStartTime: string | null;
   startedAt: string | null;
@@ -55,10 +51,6 @@ export interface CreateQueueResponse {
     estimatedMinutes: number;
     queuesAhead: number;
   };
-  snapToken: string | null;
-  orderId: string;
-  paymentRequired: boolean;
-  amount: number;
 }
 
 export interface LiveQueueResponse {

@@ -12,8 +12,6 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   process.env.MONGODB_URI = mongoServer.getUri();
   process.env.JWT_SECRET = 'test-secret-key-min-16-chars!!';
-  process.env.MIDTRANS_SERVER_KEY = 'test-server-key';
-  process.env.MIDTRANS_CLIENT_KEY = 'test-client-key';
   process.env.NODE_ENV = 'test';
 
   mongoose.set('strictQuery', true);

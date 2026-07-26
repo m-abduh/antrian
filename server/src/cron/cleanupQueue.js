@@ -2,20 +2,15 @@ import Queue from '../models/Queue.js';
 import logger from '../config/logger.js';
 
 export async function cleanupExpiredQueues() {
-  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-
   const result = await Queue.updateMany(
     {
-      status: 'pending_payment',
-      paymentStatus: 'pending',
-      createdAt: { $lt: thirtyMinutesAgo },
+      status: 'waiting',
+      createdAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
     },
-    {
-      $set: { paymentStatus: 'expired', status: 'skipped' },
-    }
+    { $set: { status: 'skipped' } }
   );
 
   if (result.modifiedCount > 0) {
-    logger.info(`[Cron] Cleaned up ${result.modifiedCount} expired queues`);
+    logger.info(`[Cron] Cleaned up ${result.modifiedCount} stale waiting queues`);
   }
 }

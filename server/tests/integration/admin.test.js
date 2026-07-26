@@ -16,8 +16,6 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   process.env.MONGODB_URI = mongoServer.getUri();
   process.env.JWT_SECRET = 'test-secret-key-min-16-chars!!';
-  process.env.MIDTRANS_SERVER_KEY = 'test-server-key';
-  process.env.MIDTRANS_CLIENT_KEY = 'test-client-key';
   process.env.NODE_ENV = 'test';
 
   await mongoose.connect(mongoServer.getUri());
@@ -129,9 +127,9 @@ describe('Protected Admin Routes', () => {
     it('should return stats for authenticated admin', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
 
-      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'A', status: 'done', paymentStatus: 'paid' });
-      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A002', customerName: 'B', status: 'done', paymentStatus: 'paid' });
-      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A003', customerName: 'C', status: 'waiting', paymentStatus: 'paid' });
+      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'A', status: 'done' });
+      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A002', customerName: 'B', status: 'done' });
+      await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A003', customerName: 'C', status: 'waiting' });
 
       const res = await request(app)
         .get('/api/admin/stats')
@@ -159,7 +157,7 @@ describe('Protected Admin Routes', () => {
   describe('PATCH /api/admin/queues/:id/status', () => {
     it('should call next queue', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting', paymentStatus: 'paid' });
+      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)
@@ -172,7 +170,7 @@ describe('Protected Admin Routes', () => {
 
     it('should skip a queue', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting', paymentStatus: 'paid' });
+      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)
@@ -185,7 +183,7 @@ describe('Protected Admin Routes', () => {
 
     it('should reject invalid action', async () => {
       const service = await Service.create({ merchantId: merchant._id, name: 'Test', duration: 15, price: 0 });
-      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting', paymentStatus: 'paid' });
+      const queue = await Queue.create({ merchantId: merchant._id, serviceId: service._id, queueNumber: 'A001', customerName: 'Budi', status: 'waiting' });
 
       const res = await request(app)
         .patch(`/api/admin/queues/${queue._id}/status`)

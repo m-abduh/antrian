@@ -5,21 +5,9 @@ import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useClientStore } from '@/lib/store/clientStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, User, Phone, Loader2, ArrowLeft, AlertCircle, Clock, X } from 'lucide-react';
+import { User, Phone, Loader2, ArrowLeft, AlertCircle, Clock, X } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
-
-function loadMidtransSnap(clientKey: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if ((window as any).snap) return resolve();
-    const script = document.createElement('script');
-    script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-    script.setAttribute('data-client-key', clientKey);
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Gagal memuat payment gateway'));
-    document.body.appendChild(script);
-  });
-}
+import { useState, useCallback } from 'react';
 
 export default function OrderPage() {
   const params = useParams();
@@ -45,53 +33,21 @@ export default function OrderPage() {
     },
   });
 
-  useEffect(() => {
-    if (!selectedMerchant || !selectedService) {
-      router.push(`/${slug}`);
-    }
-  }, [selectedMerchant, selectedService, router, slug]);
+  if (!selectedMerchant || !selectedService) {
+    router.push(`/${slug}`);
+    return null;
+  }
 
   const onSubmit = useCallback(async (data: { customerName: string; customerPhone: string; serviceId: string }) => {
     setError('');
     try {
       const result = await createQueue.mutateAsync(data);
       setQueue(result.queue as never);
-
-      if (result.paymentRequired && result.snapToken && selectedMerchant) {
-        const clientKey = selectedMerchant.midtrans?.clientKey
-          || process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
-          || '';
-
-        await loadMidtransSnap(clientKey);
-
-        (window as any).snap.pay(result.snapToken, {
-          onSuccess: () => router.push(`/${slug}/queue/${result.queue.id}`),
-          onPending: () => router.push(`/${slug}/queue/${result.queue.id}`),
-          onError: () => setError('Pembayaran gagal. Silakan coba lagi.'),
-          onClose: () => {
-            if (!document.cookie.includes('midtrans_done')) {
-              setError('Pembayaran belum selesai. Silakan selesaikan pembayaran.');
-            }
-          },
-        });
-      } else {
-        router.push(`/${slug}/queue/${result.queue.id}`);
-      }
+      router.push(`/${slug}/queue/${result.queue.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.');
     }
-  }, [createQueue, slug, setQueue, router, selectedMerchant]);
-
-  if (!selectedMerchant || !selectedService) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-2" />
-          <p className="text-gray-500">Mengalihkan...</p>
-        </motion.div>
-      </div>
-    );
-  }
+  }, [createQueue, slug, setQueue, router]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,17 +65,11 @@ export default function OrderPage() {
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <CreditCard className="w-6 h-6 text-blue-500" />
+                <span className="text-blue-500 text-xl font-bold">{selectedService.name[0]}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <h1 className="text-lg font-bold text-gray-900 truncate">{selectedService.name}</h1>
                 <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <CreditCard className="w-3.5 h-3.5" />
-                    {selectedService.price > 0
-                      ? `Rp ${selectedService.price.toLocaleString('id-ID')}`
-                      : 'Gratis'}
-                  </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
                     {selectedService.duration} menit
@@ -200,21 +150,6 @@ export default function OrderPage() {
                 )}
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                <p className="text-sm text-gray-600">
-                  {selectedService.price > 0 ? (
-                    <>
-                      Total bayar: <strong className="text-gray-900">Rp {selectedService.price.toLocaleString('id-ID')}</strong>
-                      <span className="text-xs text-gray-400 block mt-1">
-                        (Termasuk biaya pemrosesan)
-                      </span>
-                    </>
-                  ) : (
-                    'Layanan gratis - tidak perlu pembayaran'
-                  )}
-                </p>
-              </div>
-
               <motion.button
                 type="submit"
                 disabled={createQueue.isPending}
@@ -226,22 +161,12 @@ export default function OrderPage() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Memproses...
                   </>
-                ) : selectedService.price > 0 ? (
-                  <>
-                    <CreditCard className="w-5 h-5" />
-                    Bayar & Dapatkan Antrian
-                  </>
                 ) : (
                   'Dapatkan Antrian'
                 )}
               </motion.button>
             </form>
           </div>
-
-          <p className="text-center text-sm text-gray-500">
-            Dengan melanjutkan, Anda setuju dengan{' '}
-            <a href="#" className="text-blue-500 underline">Syarat & Ketentuan</a>
-          </p>
         </motion.div>
       </main>
     </div>

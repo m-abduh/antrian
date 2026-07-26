@@ -7,14 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Clock, CheckCircle2, SkipForward, LogOut, Loader2,
   Phone, Search, X, LayoutDashboard,
-  Settings, BarChart3, AlertCircle, Bell, Wallet,
+  Settings, BarChart3, AlertCircle, Bell,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api/admin';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats } from '@/lib/hooks/useAdmin';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { ErrorAlert } from '@/components/ErrorAlert';
 const statusColors: Record<string, string> = {
-  pending_payment: 'bg-yellow-100 text-yellow-800',
   waiting: 'bg-blue-100 text-blue-800',
   called: 'bg-green-100 text-green-800',
   serving: 'bg-purple-100 text-purple-800',
@@ -23,7 +22,6 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  pending_payment: 'Menunggu Bayar',
   waiting: 'Menunggu',
   called: 'Dipanggil',
   serving: 'Dilayani',
@@ -96,13 +94,6 @@ export default function DashboardPage() {
                 Layanan
               </button>
               <button
-                onClick={() => router.push('/finance')}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-green-500 hover:bg-green-50 rounded-xl transition-colors"
-              >
-                <Wallet className="w-4 h-4" />
-                Keuangan
-              </button>
-              <button
                 onClick={subscribe}
                 disabled={permission === 'denied'}
                 className={`flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
@@ -166,7 +157,6 @@ export default function DashboardPage() {
             className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Semua</option>
-            <option value="pending_payment">Menunggu Bayar</option>
             <option value="waiting">Menunggu</option>
             <option value="called">Dipanggil</option>
             <option value="serving">Dilayani</option>
@@ -222,9 +212,6 @@ export default function DashboardPage() {
                           {q.customerPhone || '-'}
                         </span>
                         <span>{q.serviceId?.name || '-'}</span>
-                        {q.paymentStatus === 'paid' && (
-                          <span className="text-green-600 font-medium">Lunas</span>
-                        )}
                       </div>
                     </div>
 

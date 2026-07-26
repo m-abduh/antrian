@@ -12,17 +12,9 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   process.env.MONGODB_URI = mongoServer.getUri();
   process.env.JWT_SECRET = 'test-secret-key-min-16-chars!!';
-  process.env.MIDTRANS_SERVER_KEY = 'test-server-key';
-  process.env.MIDTRANS_CLIENT_KEY = 'test-client-key';
-  process.env.MIDTRANS_IS_PRODUCTION = 'false';
   process.env.NODE_ENV = 'test';
 
   await mongoose.connect(mongoServer.getUri());
-
-  jest.unstable_mockModule('../../src/utils/midtrans.js', () => ({
-    createTransaction: jest.fn(() => Promise.resolve({ token: null })),
-    verifyNotification: jest.fn(() => ({ valid: true, paymentStatus: 'paid' })),
-  }));
 
   const MerchantMod = await import('../../src/models/Merchant.js');
   const ServiceMod = await import('../../src/models/Service.js');
@@ -137,10 +129,10 @@ describe('POST /api/merchant/:slug/queue', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.data.queue.queueNumber).toBe('A001');
-    expect(res.body.data.paymentRequired).toBe(false);
+    expect(res.body.data.queue.status).toBe('waiting');
   });
 
-  it('should create queue with pending payment for paid service', async () => {
+  it('should create queue for paid service', async () => {
     const merchant = await Merchant.create({ name: 'Test', slug: 'test' });
     const service = await Service.create({
       merchantId: merchant._id, name: 'Paid', duration: 30, price: 50000,
@@ -151,8 +143,8 @@ describe('POST /api/merchant/:slug/queue', () => {
       .send({ serviceId: service._id.toString(), customerName: 'Budi' });
 
     expect(res.status).toBe(201);
-    expect(res.body.data.snapToken).toBeNull();
-    expect(res.body.data.paymentRequired).toBe(true);
+    expect(res.body.data.queue.queueNumber).toBe('A001');
+    expect(res.body.data.queue.status).toBe('waiting');
   });
 
   it('should reject empty customer name', async () => {
@@ -210,7 +202,6 @@ describe('GET /api/merchant/:slug/queue/live', () => {
       queueNumber: 'A001',
       customerName: 'Budi',
       status: 'serving',
-      paymentStatus: 'paid',
     });
     await Queue.create({
       merchantId: merchant._id,
@@ -218,7 +209,6 @@ describe('GET /api/merchant/:slug/queue/live', () => {
       queueNumber: 'A002',
       customerName: 'Ani',
       status: 'waiting',
-      paymentStatus: 'paid',
     });
     await Queue.create({
       merchantId: merchant._id,
@@ -226,7 +216,6 @@ describe('GET /api/merchant/:slug/queue/live', () => {
       queueNumber: 'A003',
       customerName: 'Citra',
       status: 'waiting',
-      paymentStatus: 'paid',
     });
 
     const res = await request(app).get('/api/merchant/test/queue/live');

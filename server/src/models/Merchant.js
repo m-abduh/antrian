@@ -32,10 +32,6 @@ const merchantSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  midtrans: {
-    serverKey: { type: String, default: '' },
-    clientKey: { type: String, default: '' },
-  },
   bank: {
     name: { type: String, default: '' },
     account: { type: String, default: '' },

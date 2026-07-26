@@ -10,12 +10,7 @@ export interface Queue {
   queueNumber: string;
   customerName: string;
   customerPhone: string;
-  status: 'pending_payment' | 'waiting' | 'called' | 'serving' | 'done' | 'skipped';
-  paymentStatus: 'pending' | 'paid' | 'expired';
-  midtransOrderId: string;
-  midtransTransactionId: string;
-  paymentMethod: string;
-  midtransFee: number;
+  status: 'waiting' | 'called' | 'serving' | 'done' | 'skipped';
   rating: number | null;
   estimatedStartTime: string | null;
   startedAt: string | null;
@@ -42,10 +37,6 @@ export interface Merchant {
   address: string;
   phone: string;
   isActive: boolean;
-  midtrans: {
-    serverKey: string;
-    clientKey: string;
-  };
   bank: {
     name: string;
     account: string;
@@ -53,44 +44,6 @@ export interface Merchant {
   };
   createdAt: string;
   updatedAt: string;
-}
-
-export interface Disbursement {
-  _id: string;
-  merchantId: string;
-  amount: number;
-  fee: number;
-  netAmount: number;
-  status: 'pending' | 'processing' | 'success' | 'failed';
-  bankName: string;
-  bankAccount: string;
-  bankHolder: string;
-  referenceNo: string;
-  notes: string;
-  requestedAt: string;
-  processedAt: string | null;
-}
-
-export interface FinanceSummary {
-  totalRevenue: number;
-  totalFees: number;
-  netRevenue: number;
-  totalDisbursed: number;
-  totalDisbursementFees: number;
-  pendingAmount: number;
-  balance: number;
-  todayRevenue: number;
-  transactionCount: number;
-}
-
-export interface FinanceBalance {
-  totalRevenue: number;
-  totalMidtransFees: number;
-  netRevenue: number;
-  totalDisbursed: number;
-  totalDisbursementFees: number;
-  pendingAmount: number;
-  balance: number;
 }
 
 export interface Admin {

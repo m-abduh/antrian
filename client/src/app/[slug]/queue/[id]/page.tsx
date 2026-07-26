@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 
 const statusConfig = {
-  pending_payment: { label: 'Menunggu Pembayaran', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-300', icon: AlertTriangle },
   waiting: { label: 'Menunggu', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-300', icon: Clock },
   called: { label: 'Dipanggil!', color: 'text-green-600', bg: 'bg-green-50 border-green-300', icon: Bell },
   serving: { label: 'Sedang Dilayani', color: 'text-purple-600', bg: 'bg-purple-50 border-purple-300', icon: Users },
@@ -136,7 +135,7 @@ export default function QueueTrackingPage() {
             layout
           >
             <motion.div
-              animate={queue.status === 'waiting' || queue.status === 'pending_payment' ? { rotate: 360 } : {}}
+              animate={queue.status === 'waiting' ? { rotate: 360 } : {}}
               transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
             >
               {queue.status === 'waiting' ? (
@@ -158,7 +157,7 @@ export default function QueueTrackingPage() {
           </motion.h1>
           <p className="text-gray-500">{queue.customerName}</p>
 
-          {['waiting', 'pending_payment'].includes(queue.status) && (
+          {queue.status === 'waiting' && (
             <motion.button
               onClick={async () => {
                 setNotifLoading(true);

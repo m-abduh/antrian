@@ -31,20 +31,11 @@ const queueSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ['pending_payment', 'waiting', 'called', 'serving', 'done', 'skipped'],
+      values: ['waiting', 'called', 'serving', 'done', 'skipped'],
       message: 'Status antrean tidak valid',
     },
-    default: 'pending_payment',
+    default: 'waiting',
   },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'paid', 'expired'],
-    default: 'pending',
-  },
-  midtransOrderId: { type: String, default: '' },
-  midtransTransactionId: { type: String, default: '' },
-  paymentMethod: { type: String, default: '' },
-  midtransFee: { type: Number, default: 0 },
   rating: {
     type: Number,
     min: 1,
@@ -58,6 +49,5 @@ const queueSchema = new mongoose.Schema({
 });
 
 queueSchema.index({ merchantId: 1, status: 1, createdAt: -1 });
-queueSchema.index({ midtransOrderId: 1 });
 
 export default mongoose.model('Queue', queueSchema);

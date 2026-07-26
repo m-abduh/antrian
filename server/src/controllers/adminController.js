@@ -2,14 +2,12 @@ import Admin from '../models/Admin.js';
 import Queue from '../models/Queue.js';
 import Service from '../models/Service.js';
 import Merchant from '../models/Merchant.js';
-import Disbursement from '../models/Disbursement.js';
 import PushSubscription from '../models/PushSubscription.js';
 import jwt from 'jsonwebtoken';
 import webpush from 'web-push';
 import { OAuth2Client } from 'google-auth-library';
 import env from '../config/env.js';
 import { success, error } from '../utils/response.js';
-import { createDisbursement, getDisbursementBalance, getDisbursementHistory, getBeneficiaryBanks } from '../utils/midtrans.js';
 
 if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
@@ -235,7 +233,7 @@ export async function getMerchant(req, res, next) {
 
 export async function updateMerchant(req, res, next) {
   try {
-    const { name, address, phone, bank, midtrans } = req.body;
+    const { name, address, phone, bank } = req.body;
     const update = {};
 
     if (name !== undefined) {
@@ -255,11 +253,6 @@ export async function updateMerchant(req, res, next) {
       if (bank.name !== undefined) update['bank.name'] = bank.name;
       if (bank.account !== undefined) update['bank.account'] = bank.account;
       if (bank.holder !== undefined) update['bank.holder'] = bank.holder;
-    }
-    if (midtrans !== undefined) {
-      update.midtrans = {};
-      if (midtrans.serverKey !== undefined) update['midtrans.serverKey'] = midtrans.serverKey;
-      if (midtrans.clientKey !== undefined) update['midtrans.clientKey'] = midtrans.clientKey;
     }
 
     const merchant = await Merchant.findByIdAndUpdate(req.admin.merchantId, update, { new: true, runValidators: true });
@@ -424,7 +417,6 @@ export async function getStats(req, res, next) {
     const waitingNow = await Queue.countDocuments({
       merchantId,
       status: { $in: ['waiting', 'called'] },
-      paymentStatus: 'paid',
     });
 
     const doneQueues = await Queue.find({ merchantId, status: 'done', createdAt: { $gte: start, $lt: end } })
@@ -559,239 +551,6 @@ export async function deleteService(req, res, next) {
 
     await Service.findByIdAndUpdate(id, { isActive: false });
     return success(res, { message: 'Layanan berhasil dinonaktifkan' });
-  } catch (err) {
-    next(err);
-  }
-}
-
-// ─── Finance ──────────────────────────────────────────────────────
-
-export async function getFinanceSummary(req, res, next) {
-  try {
-    const merchantId = req.admin.merchantId;
-
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-
-    const paidQueues = await Queue.find({
-      merchantId,
-      paymentStatus: 'paid',
-    }).populate('serviceId', 'name price').lean();
-
-    const totalRevenue = paidQueues.reduce((sum, q) => sum + (q.serviceId?.price || 0), 0);
-    const totalFees = paidQueues.reduce((sum, q) => sum + (q.midtransFee || 0), 0);
-    const netRevenue = totalRevenue - totalFees;
-
-    const allDisbursements = await Disbursement.find({ merchantId }).sort({ requestedAt: -1 }).lean();
-    const totalDisbursed = allDisbursements
-      .filter((d) => d.status === 'success')
-      .reduce((sum, d) => sum + d.amount, 0);
-    const totalDisbursementFees = allDisbursements
-      .filter((d) => d.status === 'success')
-      .reduce((sum, d) => sum + d.fee, 0);
-    const pendingDisbursements = allDisbursements.filter((d) => d.status === 'pending');
-    const pendingAmount = pendingDisbursements.reduce((sum, d) => sum + d.amount, 0);
-
-    const balance = netRevenue - totalDisbursed - pendingAmount;
-
-    const todayRevenue = paidQueues.filter(
-      (q) => new Date(q.createdAt) >= start
-    ).reduce((sum, q) => sum + (q.serviceId?.price || 0), 0);
-
-    return success(res, {
-      totalRevenue,
-      totalFees,
-      netRevenue,
-      totalDisbursed,
-      totalDisbursementFees,
-      pendingAmount,
-      balance,
-      todayRevenue,
-      transactionCount: paidQueues.length,
-    });
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function getFinanceTransactions(req, res, next) {
-  try {
-    const merchantId = req.admin.merchantId;
-    const { page = 1, limit = 20, start, end } = req.query;
-
-    const filter = { merchantId, paymentStatus: 'paid' };
-
-    if (start || end) {
-      filter.createdAt = {};
-      if (start) filter.createdAt.$gte = new Date(start);
-      if (end) {
-        const endDate = new Date(end);
-        endDate.setDate(endDate.getDate() + 1);
-        filter.createdAt.$lt = endDate;
-      }
-    }
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const [transactions, total] = await Promise.all([
-      Queue.find(filter)
-        .populate('serviceId', 'name price')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .lean(),
-      Queue.countDocuments(filter),
-    ]);
-
-    return success(res, {
-      transactions,
-      total,
-      page: parseInt(page),
-      pages: Math.ceil(total / parseInt(limit)),
-    });
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function getFinanceDisbursements(req, res, next) {
-  try {
-    const merchantId = req.admin.merchantId;
-    const { page = 1, limit = 20 } = req.query;
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const [disbursements, total] = await Promise.all([
-      Disbursement.find({ merchantId })
-        .sort({ requestedAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .lean(),
-      Disbursement.countDocuments({ merchantId }),
-    ]);
-
-    return success(res, {
-      disbursements,
-      total,
-      page: parseInt(page),
-      pages: Math.ceil(total / parseInt(limit)),
-    });
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function requestWithdraw(req, res, next) {
-  try {
-    const merchantId = req.admin.merchantId;
-    const { amount } = req.body;
-
-    if (!amount || amount <= 0) {
-      return error(res, 'Jumlah penarikan tidak valid');
-    }
-
-    const merchant = await Merchant.findById(merchantId);
-    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
-
-    if (!merchant.bank?.name || !merchant.bank?.account || !merchant.bank?.holder) {
-      return error(res, 'Lengkapi data rekening bank di halaman Pengaturan terlebih dahulu');
-    }
-
-    const paidQueues = await Queue.find({ merchantId, paymentStatus: 'paid' })
-      .populate('serviceId', 'price').lean();
-    const totalRevenue = paidQueues.reduce((sum, q) => sum + (q.serviceId?.price || 0), 0);
-    const totalMidtransFees = paidQueues.reduce((sum, q) => sum + (q.midtransFee || 0), 0);
-    const netRevenue = totalRevenue - totalMidtransFees;
-
-    const disbursements = await Disbursement.find({ merchantId, status: { $in: ['pending', 'success'] } }).lean();
-    const totalDisbursedOrPending = disbursements.reduce((sum, d) => sum + d.amount, 0);
-
-    const balance = netRevenue - totalDisbursedOrPending;
-
-    if (amount > balance) {
-      return error(res, `Saldo tidak mencukupi. Saldo saat ini: Rp ${balance.toLocaleString('id-ID')}`);
-    }
-
-    const disbursementFee = 5550;
-    const netAmount = amount - disbursementFee;
-
-    if (netAmount <= 0) {
-      return error(res, 'Jumlah penarikan terlalu kecil setelah dipotong biaya transfer');
-    }
-
-    const disbursement = await Disbursement.create({
-      merchantId,
-      amount,
-      fee: disbursementFee,
-      netAmount,
-      status: 'pending',
-      bankName: merchant.bank.name,
-      bankAccount: merchant.bank.account,
-      bankHolder: merchant.bank.holder,
-      notes: `Penarikan saldo Rp ${amount.toLocaleString('id-ID')}`,
-    });
-
-    try {
-      const result = await createDisbursement(
-        netAmount,
-        merchant.bank.name,
-        merchant.bank.account,
-        merchant.bank.holder,
-        `Antriin-${disbursement._id}`
-      );
-
-      const referenceNo = result?.reference_no || result?.payouts?.[0]?.reference_no || '';
-      disbursement.status = 'processing';
-      disbursement.referenceNo = referenceNo;
-      await disbursement.save();
-
-      return success(res, {
-        disbursement,
-        message: 'Penarikan sedang diproses. Dana akan masuk ke rekening Anda.',
-      });
-    } catch (irisErr) {
-      console.error('Iris disbursement error:', irisErr.message);
-      disbursement.status = 'pending';
-      disbursement.notes += ` | Gagal: ${irisErr.message}`;
-      await disbursement.save();
-
-      return success(res, {
-        disbursement,
-        message: 'Permintaan penarikan tercatat. Admin akan memproses secara manual.',
-      });
-    }
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function getFinanceBalance(req, res, next) {
-  try {
-    const merchantId = req.admin.merchantId;
-
-    const paidQueues = await Queue.find({ merchantId, paymentStatus: 'paid' })
-      .populate('serviceId', 'price').lean();
-    const totalRevenue = paidQueues.reduce((sum, q) => sum + (q.serviceId?.price || 0), 0);
-    const totalMidtransFees = paidQueues.reduce((sum, q) => sum + (q.midtransFee || 0), 0);
-    const netRevenue = totalRevenue - totalMidtransFees;
-
-    const disbursements = await Disbursement.find({
-      merchantId,
-      status: { $in: ['pending', 'success', 'processing'] },
-    }).lean();
-    const totalDisbursedOrPending = disbursements.reduce((sum, d) => sum + d.amount, 0);
-
-    const balance = netRevenue - totalDisbursedOrPending;
-
-    return success(res, {
-      totalRevenue,
-      totalMidtransFees,
-      netRevenue,
-      totalDisbursed: disbursements.filter(d => d.status !== 'pending').reduce((sum, d) => sum + d.amount, 0),
-      totalDisbursementFees: disbursements.filter(d => d.status !== 'pending').reduce((sum, d) => sum + d.fee, 0),
-      pendingAmount: disbursements.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0),
-      balance,
-    });
   } catch (err) {
     next(err);
   }

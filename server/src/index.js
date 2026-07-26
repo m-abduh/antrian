@@ -3,16 +3,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
-import cron from 'node-cron';
 import { connectDB, isDBConnected } from './config/db.js';
 import logger from './config/logger.js';
 import env from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import merchantRoutes from './routes/merchant.js';
 import adminRoutes from './routes/admin.js';
-import midtransRoutes from './routes/midtrans.js';
 import notificationRoutes from './routes/notification.js';
-import { cleanupExpiredQueues } from './cron/cleanupQueue.js';
 
 const app = express();
 
@@ -42,14 +39,6 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-
-const webhookLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  message: { error: 'Too many webhook requests' },
-});
-
-app.use('/api/midtrans', webhookLimiter);
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -88,7 +77,6 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/midtrans', midtransRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 app.use(notFound);
@@ -97,13 +85,8 @@ app.use(errorHandler);
 async function start() {
   await connectDB();
 
-  cron.schedule('*/5 * * * *', () => {
-    cleanupExpiredQueues();
-  });
-
   app.listen(env.PORT, () => {
     logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
-    logger.info('Cron job: cleanup expired queues every 5 minutes');
   });
 }
 

@@ -357,12 +357,15 @@ export function MerchantClient({ slug }: { slug: string }) {
                     <h2 className="text-sm md:text-base font-bold text-foreground">{group.name}</h2>
                     <span className="text-[11px] text-muted-foreground/50 font-mono">({group.serviceIds.length})</span>
                   </div>
-                  <div className="flex overflow-x-auto scrollbar-hide gap-4 px-1 pb-1">
-                    {group.serviceIds.map(service => (
-                      <div key={service._id} className="w-[180px] flex-shrink-0">
-                        {renderService(service)}
-                      </div>
-                    ))}
+                  <div className="relative">
+                    <div className="flex overflow-x-auto scrollbar-hide gap-4 px-1 pb-1">
+                      {group.serviceIds.map(service => (
+                        <div key={service._id} className="w-[180px] flex-shrink-0">
+                          {renderService(service)}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-background via-background/60 to-transparent pointer-events-none" />
                   </div>
                  </motion.div>
                ))}
@@ -374,12 +377,15 @@ export function MerchantClient({ slug }: { slug: string }) {
                     <h2 className="text-sm md:text-base font-bold text-foreground">Lainnya</h2>
                     <span className="text-[11px] text-muted-foreground/50 font-mono">({grouplessServices.length})</span>
                   </div>
-                  <div className="flex overflow-x-auto scrollbar-hide gap-4 px-1 pb-1">
-                    {grouplessServices.map(service => (
-                      <div key={service._id} className="w-[180px] flex-shrink-0">
-                        {renderService(service)}
-                      </div>
-                    ))}
+                  <div className="relative">
+                    <div className="flex overflow-x-auto scrollbar-hide gap-4 px-1 pb-1">
+                      {grouplessServices.map(service => (
+                        <div key={service._id} className="w-[180px] flex-shrink-0">
+                          {renderService(service)}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-background via-background/60 to-transparent pointer-events-none" />
                   </div>
                 </motion.div>
               )}
@@ -409,7 +415,7 @@ export function MerchantClient({ slug }: { slug: string }) {
             <div className="md:col-span-2 space-y-4 md:sticky md:top-6 md:self-start">
 
                {/* Cart Summary */}
-               <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden">
                  <div className="p-4 border-b border-border">
                    <div className="flex items-center gap-2">
                      <IconShoppingCart className="w-4 h-4 text-primary" />
@@ -461,12 +467,12 @@ export function MerchantClient({ slug }: { slug: string }) {
                </div>
 
               {/* Cara Pakai */}
-              <div className="relative bg-gradient-to-br from-primary/[0.04] to-transparent border border-primary/[0.08] rounded-2xl p-5 md:p-6">
-                <h4 className="font-semibold text-sm md:text-base text-foreground mb-5 flex items-center gap-2">
-                  <IconSparkles className="w-4 h-4 text-primary" />
+              <div className="relative bg-gradient-to-br from-primary/[0.04] to-transparent border border-primary/[0.08] rounded-2xl p-4 md:p-5">
+                <h4 className="font-semibold text-xs md:text-sm text-foreground mb-3 flex items-center gap-1.5">
+                  <IconSparkles className="w-3.5 h-3.5 text-primary" />
                   Cara Pakai
                 </h4>
-                <div className="relative grid grid-cols-2 gap-3">
+                <div className="relative grid grid-cols-2 gap-2">
                   {[
                     { icon: IconPlus, label: 'Pilih Layanan', desc: 'Tap + pada layanan yang diinginkan' },
                     { icon: IconShoppingCart, label: 'Buka Keranjang', desc: 'Tap ikon keranjang di bawah' },
@@ -474,13 +480,13 @@ export function MerchantClient({ slug }: { slug: string }) {
                     { icon: IconMapPin, label: 'Pantau Real-time', desc: 'Lihat posisi antrianmu' },
                   ].map(({ icon: Icon, label, desc }, i) => (
                     <div key={i} className="relative group cursor-default">
-                      <div className="relative flex flex-col items-center p-3.5 rounded-xl bg-background/50 hover:bg-background/80 border border-transparent hover:border-primary/[0.06] transition-all duration-200 hover:-translate-y-0.5">
-                        <div className="relative w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-2 text-xs font-bold font-mono shadow-xs">
+                      <div className="relative flex flex-col items-center p-2.5 rounded-xl bg-background/50 hover:bg-background/80 border border-transparent hover:border-primary/[0.06] transition-all duration-200 hover:-translate-y-0.5">
+                        <div className="relative w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-1.5 text-[11px] font-bold font-mono shadow-xs">
                           {i + 1}
                         </div>
-                        <Icon className="w-4 h-4 text-primary/60 mb-1" />
-                        <p className="text-xs md:text-sm font-semibold text-foreground text-center">{label}</p>
-                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 leading-relaxed text-center">{desc}</p>
+                        <Icon className="w-3.5 h-3.5 text-primary/60 mb-0.5" />
+                        <p className="text-[11px] md:text-xs font-semibold text-foreground text-center leading-tight">{label}</p>
+                        <p className="text-[9px] md:text-[11px] text-muted-foreground/70 mt-0.5 leading-snug text-center">{desc}</p>
                       </div>
                     </div>
                   ))}
@@ -499,7 +505,7 @@ export function MerchantClient({ slug }: { slug: string }) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 24, stiffness: 260 }}
-            className="fixed bottom-3 left-3 right-3 z-40"
+            className="fixed bottom-3 left-3 right-3 z-40 md:hidden"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
             <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 bg-card/80 backdrop-blur-xl border border-border/80 rounded-2xl shadow-lg shadow-primary/5 p-3 md:p-4">

@@ -29,7 +29,9 @@ export default function SettingsPage() {
   const [qrDataUrl, setQrDataUrl] = useState('');
 
   const merchantUrl = merchant
-    ? `${window.location.protocol}//${window.location.hostname}:3000/${merchant.slug}`
+    ? process.env.NODE_ENV === 'development'
+      ? `http://${merchant.slug}.localhost:3000`
+      : `https://${merchant.slug}.tunggu.id`
     : '';
 
   useEffect(() => {

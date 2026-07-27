@@ -61,7 +61,12 @@ export default function LandingPage() {
     e.preventDefault();
     if (slug.trim()) {
       setLoading(true);
-      router.push(`/${slug.trim().toLowerCase()}`);
+      const s = slug.trim().toLowerCase();
+      if (window.location.hostname === 'localhost') {
+        window.location.href = `http://${s}.localhost:3000`;
+      } else {
+        window.location.href = `https://${s}.tunggu.id`;
+      }
     }
   };
 

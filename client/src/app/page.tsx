@@ -11,6 +11,8 @@ import {
   IconBrandGooglePlay, IconBrandApple,
 } from '@tabler/icons-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 
 const features = [
   { icon: IconQrcode, title: 'Scan QR / Link', desc: 'Pelanggan bisa masuk lewat QR code atau link merchant, tanpa install apps' },
@@ -75,10 +77,10 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50/50 via-background to-background dark:from-blue-950/20 dark:via-background dark:to-background">
+    <div className="min-h-screen bg-gradient-to-b from-primary/[0.04] via-background to-background dark:from-primary/[0.06] dark:via-background dark:to-background">
       {/* ─── NAVBAR ─── */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
               <IconClock className="w-5 h-5 text-white" />
@@ -107,7 +109,7 @@ export default function LandingPage() {
 
       <main>
         {/* ─── HERO ─── */}
-        <section className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 min-h-[calc(100vh-73px)] flex flex-col items-center justify-center">
+        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 min-h-[calc(100vh-73px)] flex flex-col items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -223,7 +225,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── STATS ─── */}
-        <section className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[
               { value: '500+', label: 'Merchant Aktif', icon: IconBuildingStore },
@@ -249,7 +251,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── CARA KERJA (CUSTOMER) ─── */}
-        <section id="how-customer" className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section id="how-customer" className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -291,7 +293,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── CARA KERJA (MERCHANT) ─── */}
-        <section className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -333,7 +335,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── FITUR ─── */}
-        <section id="features" className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section id="features" className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -370,7 +372,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── DASHBOARD PREVIEW ─── */}
-        <section className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -394,7 +396,7 @@ export default function LandingPage() {
               className="bg-card border border-border rounded-2xl p-5 md:p-7 space-y-4"
             >
               {[
-                { icon: IconUsers, label: 'Total Antrian', color: 'bg-blue-500' },
+                { icon: IconUsers, label: 'Total Antrian', color: 'bg-primary' },
                 { icon: IconCircleCheck, label: 'Selesai', color: 'bg-green-500' },
                 { icon: IconClock, label: 'Menunggu', color: 'bg-yellow-500' },
                 { icon: IconPlayerSkipForward, label: 'Dilewati', color: 'bg-red-500' },
@@ -455,7 +457,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── TESTIMONI ─── */}
-        <section className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -505,7 +507,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── FAQ ─── */}
-        <section id="faq" className="max-w-3xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section id="faq" className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -559,7 +561,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── CTA ─── */}
-        <section className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -593,7 +595,7 @@ export default function LandingPage() {
 
       {/* ─── FOOTER ─── */}
       <footer className="border-t border-border">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div className="sm:col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-3">
@@ -638,7 +640,7 @@ export default function LandingPage() {
 
       {/* ─── BOTTOM BAR ─── */}
       <div className="border-t border-border bg-muted/30">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} Tunggu.id. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <a href="#" className="hover:text-foreground transition-colors">Kebijakan Privasi</a>

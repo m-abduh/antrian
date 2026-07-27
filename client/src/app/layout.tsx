@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: 'Sistem antrian online untuk bisnis kecil',
   manifest: '/manifest.json',
   other: {
-    'theme-color': '#3b82f6',
+    'theme-color': '#0f0f0f',
   },
 };
 

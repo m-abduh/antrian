@@ -2,17 +2,30 @@
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState, useEffect } from 'react';
-import { IconCreditCard, IconMapPin, IconPhone, IconShoppingCart, IconBuildingStore, IconWavesElectricity, IconPlus, IconMinus, IconSparkles, IconBell, IconCheck, IconArrowRight } from '@tabler/icons-react';
+import {
+  IconCreditCard, IconMapPin, IconPhone, IconShoppingCart, IconBuildingStore,
+  IconWavesElectricity, IconPlus, IconMinus, IconSparkles, IconBell, IconCheck,
+  IconArrowRight,
+} from '@tabler/icons-react';
 import { useMerchant, useServices, useGroups } from '@/lib/hooks/useMerchant';
 import { useCartStore } from '@/lib/store/cartStore';
 import { imageUrl } from '@/lib/imageUrl';
 import { getActiveQueue, clearActiveQueue } from '@/lib/activeQueue';
 import { SocialIcon } from '@/components/SocialIcon';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import type { Service } from '@/lib/types';
 
 function Skeleton({ className }: { className: string }) {
   return <div className={`bg-muted rounded-2xl animate-pulse ${className}`} />;
 }
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.04 },
+  },
+};
 
 export function MerchantClient({ slug }: { slug: string }) {
   const { data: merchant, isLoading: merchantLoading } = useMerchant(slug);
@@ -57,7 +70,7 @@ export function MerchantClient({ slug }: { slug: string }) {
   if (!slug || merchantLoading || servicesLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-6 space-y-6">
+        <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
           <div className="flex items-center gap-4">
             <Skeleton className="w-16 h-16 md:w-20 md:h-20 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -66,11 +79,11 @@ export function MerchantClient({ slug }: { slug: string }) {
             </div>
           </div>
           <Skeleton className="h-20 w-full rounded-2xl" />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-0 overflow-hidden rounded-3xl border border-border">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-2xl border border-border">
                 <Skeleton className="aspect-square w-full rounded-none" />
-                <div className="p-3.5 space-y-2">
+                <div className="p-3 space-y-2">
                   <Skeleton className="h-3.5 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
                 </div>
@@ -91,7 +104,7 @@ export function MerchantClient({ slug }: { slug: string }) {
           </div>
           <h1 className="text-xl font-bold text-foreground mb-2">Merchant tidak ditemukan</h1>
           <p className="text-muted-foreground text-sm">QR Code mungkin tidak valid atau merchant tidak aktif</p>
-          <Link href="/" className="inline-flex mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium text-sm hover:opacity-90 transition-all">
+          <Link href="/" className="mt-6 inline-flex items-center justify-center h-9 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all">
             Kembali ke Beranda
           </Link>
         </div>
@@ -105,67 +118,72 @@ export function MerchantClient({ slug }: { slug: string }) {
       <motion.div
         key={service._id}
         layout
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`group relative bg-card border rounded-3xl overflow-hidden transition-all duration-200 ${
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className={`relative bg-card border rounded-2xl overflow-hidden transition-all duration-200 ${
           qty > 0
-            ? 'border-primary/60 ring-2 ring-primary/20 shadow-md shadow-primary/5'
-            : 'border-border hover:border-primary/25 hover:shadow-lg hover:-translate-y-0.5'
+            ? 'border-primary/40 ring-2 ring-primary/15 shadow-sm shadow-primary/5'
+            : 'border-border hover:border-primary/20 hover:shadow-md hover:-translate-y-0.5'
         }`}
       >
         {qty > 0 && (
-          <div className="absolute top-2.5 left-2.5 z-10 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+          <div className="absolute top-2 left-2 z-10 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
             <IconCheck className="w-3 h-3" strokeWidth={3} />
           </div>
         )}
-        {service.image && (
-          <div className="w-full aspect-square bg-muted overflow-hidden rounded-b-3xl">
-            <img
-              src={imageUrl(service.image)}
-              alt={service.name}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          </div>
-        )}
-        <div className={`flex items-center gap-3 ${service.image ? 'p-3.5' : 'p-4'}`}>
-          {!service.image && (
-            <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-primary/15 to-primary/5 rounded-xl flex items-center justify-center flex-shrink-0">
-              <IconCreditCard className="w-5 h-5 text-primary" />
+          {service.image && (
+            <div className="w-full aspect-square overflow-hidden rounded-2xl">
+              <img
+                src={imageUrl(service.image)}
+                alt={service.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm md:text-[15px] text-foreground leading-tight truncate">{service.name}</h3>
-            {service.description && (
-              <p className="text-xs md:text-sm text-muted-foreground/80 truncate mt-0.5">{service.description}</p>
+        <div className={`${service.image ? 'p-3' : 'p-3.5'}`}>
+          <div className="flex items-start gap-2.5">
+            {!service.image && (
+              <div className="w-9 h-9 md:w-10 md:h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                <IconCreditCard className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+              </div>
             )}
-            <p className="font-bold text-foreground text-xs md:text-sm mt-1.5 font-mono tabular-nums">
-              {service.price > 0 ? `Rp${service.price.toLocaleString('id-ID')}` : 'Gratis'}
-            </p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm text-foreground leading-tight truncate">{service.name}</h3>
+              {service.description && (
+                <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{service.description}</p>
+              )}
+              <p className="font-semibold text-foreground text-xs mt-1.5 font-mono tabular-nums">
+                {service.price > 0 ? `Rp${service.price.toLocaleString('id-ID')}` : 'Gratis'}
+              </p>
+            </div>
           </div>
-          {qty > 0 ? (
-            <div className="flex items-center gap-1 flex-shrink-0 bg-muted rounded-full p-1">
-              <button
-                onClick={() => updateQuantity(service._id, qty - 1)}
-                className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-card text-foreground hover:text-primary transition-colors flex items-center justify-center shadow-sm"
-              >
-                <IconMinus className="w-3 h-3" />
-              </button>
-              <span className="w-5 text-center text-sm font-bold text-foreground font-mono tabular-nums">{qty}</span>
+          <div className="mt-2.5">
+            {qty > 0 ? (
+              <div className="flex items-center justify-between bg-muted/50 rounded-xl p-0.5">
+                <button
+                  onClick={() => updateQuantity(service._id, qty - 1)}
+                  className="w-7 h-7 rounded-lg bg-card text-foreground hover:text-primary transition-colors flex items-center justify-center shadow-xs"
+                >
+                  <IconMinus className="w-3.5 h-3.5" />
+                </button>
+                <span className="w-6 text-center text-sm font-bold text-foreground font-mono tabular-nums">{qty}</span>
+                <button
+                  onClick={() => addItem(service)}
+                  className="w-7 h-7 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-xs"
+                >
+                  <IconPlus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
               <button
                 onClick={() => addItem(service)}
-                className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-sm"
+                className="w-full py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all text-xs font-semibold flex items-center justify-center gap-1"
               >
-                <IconPlus className="w-3 h-3" />
+                <IconPlus className="w-3.5 h-3.5" />
+                Tambah
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => addItem(service)}
-              className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center flex-shrink-0"
-            >
-              <IconPlus className="w-4 h-4" />
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </motion.div>
     );
@@ -174,23 +192,13 @@ export function MerchantClient({ slug }: { slug: string }) {
   const hasContent = services && services.length > 0;
   const noGroupsAtAll = !groups?.length && !grouplessServices.length;
 
-  const EmptyServices = () => (
-    <div className="bg-card border border-dashed border-border rounded-3xl p-8 md:p-12 text-center">
-      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-        <IconCreditCard className="w-7 h-7 text-muted-foreground/30" />
-      </div>
-      <h3 className="text-base md:text-lg font-semibold text-foreground mb-1.5">Belum Ada Layanan</h3>
-      <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background pb-28">
-      <main className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 pt-6 pb-6">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+      <main className="max-w-5xl mx-auto px-4 pt-6 pb-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
 
           {/* Banner + Hero */}
-          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/[0.07] via-primary/[0.03] to-transparent p-5 md:p-6">
+          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/[0.06] via-primary/[0.02] to-transparent border border-primary/[0.06] p-5 md:p-6">
             {merchant.banner && (
               <div className="absolute inset-0">
                 <img src={imageUrl(merchant.banner)} alt="" className="w-full h-full object-cover" />
@@ -211,23 +219,25 @@ export function MerchantClient({ slug }: { slug: string }) {
                 )}
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{merchant.name}</h1>
-                <span className="inline-flex items-center gap-1 mt-1 text-[11px] md:text-xs font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
-                  @{merchant.slug}
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{merchant.name}</h1>
+                  <Badge variant="secondary" className="text-[10px] md:text-xs font-mono px-2 py-0 rounded-full">
+                    @{merchant.slug}
+                  </Badge>
+                </div>
                 {merchant.description && (
-                  <p className="text-sm md:text-base text-muted-foreground/80 mt-2.5 leading-relaxed">{merchant.description}</p>
+                  <p className="text-sm md:text-base text-muted-foreground/80 mt-2 leading-relaxed">{merchant.description}</p>
                 )}
                 {(merchant.address || merchant.phone) && (
                   <div className="flex flex-wrap items-center gap-2 mt-3">
                     {merchant.address && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-full px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/70 rounded-full px-2.5 py-1">
                         <IconMapPin className="w-3 h-3 flex-shrink-0" />
                         {merchant.address}
                       </span>
                     )}
                     {merchant.phone && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-full px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/70 rounded-full px-2.5 py-1">
                         <IconPhone className="w-3 h-3 flex-shrink-0" />
                         {merchant.phone}
                       </span>
@@ -253,11 +263,11 @@ export function MerchantClient({ slug }: { slug: string }) {
             </div>
           </div>
 
-          {/* Antrian aktif — gaya tiket sobekan */}
+          {/* Antrian aktif */}
           <AnimatePresence>
             {activeQ && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                <Link href={`/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-primary/[0.05] border border-primary/20 rounded-2xl overflow-hidden hover:bg-primary/[0.08] transition-colors">
+                <Link href={`/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-primary/[0.04] border border-primary/15 rounded-2xl overflow-hidden hover:bg-primary/[0.06] transition-colors group">
                   <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
                     <div className="relative w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
                       <IconBell className="w-4 h-4 text-primary" />
@@ -269,14 +279,14 @@ export function MerchantClient({ slug }: { slug: string }) {
                       <p className="text-sm font-semibold text-foreground truncate">Sedang berjalan</p>
                     </div>
                   </div>
-                  <div className="relative flex items-center gap-2 px-4 border-l border-dashed border-primary/25">
+                  <div className="relative flex items-center gap-2.5 px-4 border-l border-dashed border-primary/20">
                     <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
                     <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
                     <div className="text-center">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">No.</p>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60">No.</p>
                       <p className="font-mono text-lg font-bold text-primary tabular-nums leading-none">{activeQ.number}</p>
                     </div>
-                    <IconArrowRight className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                    <IconArrowRight className="w-4 h-4 text-primary/40 group-hover:text-primary/70 transition-colors flex-shrink-0" />
                   </div>
                 </Link>
               </motion.div>
@@ -285,14 +295,14 @@ export function MerchantClient({ slug }: { slug: string }) {
 
           {/* Filter Grup */}
           {groupOptions.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+            <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide -mx-4 px-4">
               {groupOptions.map(opt => (
                 <button
                   key={opt.id}
                   onClick={() => setSelectedGroup(opt.id)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                     selectedGroup === opt.id
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary text-primary-foreground shadow-xs'
                       : 'bg-muted text-muted-foreground hover:bg-muted/80'
                   }`}
                 >
@@ -304,47 +314,64 @@ export function MerchantClient({ slug }: { slug: string }) {
 
           {/* Layanan */}
           {hasContent ? (
-            <div className="space-y-8">
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-7">
               {filteredGroups.map((group, idx) => (
-                <motion.div key={group._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}>
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="w-1 h-5 md:h-6 rounded-full bg-primary flex-shrink-0" />
-                    <h2 className="text-base md:text-lg font-bold text-foreground">{group.name}</h2>
-                    <span className="text-xs text-muted-foreground/60 font-mono">({group.serviceIds.length})</span>
+                <motion.div key={group._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-4 md:h-5 rounded-full bg-primary/60 flex-shrink-0" />
+                    <h2 className="text-sm md:text-base font-bold text-foreground">{group.name}</h2>
+                    <span className="text-[11px] text-muted-foreground/50 font-mono">({group.serviceIds.length})</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {group.serviceIds.map(renderService)}
                   </div>
                 </motion.div>
               ))}
 
               {showGroupless && grouplessServices.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="w-1 h-5 md:h-6 rounded-full bg-muted-foreground/30 flex-shrink-0" />
-                    <h2 className="text-base md:text-lg font-bold text-foreground">Lainnya</h2>
-                    <span className="text-xs text-muted-foreground/60 font-mono">({grouplessServices.length})</span>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-4 md:h-5 rounded-full bg-muted-foreground/30 flex-shrink-0" />
+                    <h2 className="text-sm md:text-base font-bold text-foreground">Lainnya</h2>
+                    <span className="text-[11px] text-muted-foreground/50 font-mono">({grouplessServices.length})</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {grouplessServices.map(renderService)}
                   </div>
                 </motion.div>
               )}
 
-              {noGroupsAtAll && <EmptyServices />}
-            </div>
+              {noGroupsAtAll && (
+                <div className="bg-card border border-dashed border-border rounded-2xl p-10 text-center">
+                  <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <IconCreditCard className="w-7 h-7 text-muted-foreground/30" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">Belum Ada Layanan</h3>
+                  <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
+                </div>
+              )}
+            </motion.div>
           ) : (
-            <EmptyServices />
+            <div className="bg-card border border-dashed border-border rounded-2xl p-10 text-center">
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <IconCreditCard className="w-7 h-7 text-muted-foreground/30" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-1">Belum Ada Layanan</h3>
+              <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
+            </div>
           )}
 
-          {/* Cara Pakai — alur langkah bernomor */}
-          <div className="relative bg-gradient-to-br from-primary/[0.05] to-transparent border border-primary/10 rounded-2xl p-5 md:p-6">
+          {/* Separator */}
+          <Separator className="opacity-40" />
+
+          {/* Cara Pakai */}
+          <div className="relative bg-gradient-to-br from-primary/[0.04] to-transparent border border-primary/[0.08] rounded-2xl p-5 md:p-6">
             <h4 className="font-semibold text-sm md:text-base text-foreground mb-5 flex items-center gap-2">
               <IconSparkles className="w-4 h-4 text-primary" />
               Cara Pakai
             </h4>
             <div className="relative grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-5">
-              <div className="hidden md:block absolute top-[18px] left-[12.5%] right-[12.5%] border-t border-dashed border-primary/25 -z-0" />
+              <div className="hidden md:block absolute top-[18px] left-[12.5%] right-[12.5%] border-t border-dashed border-primary/20 -z-0" />
               {[
                 { icon: IconPlus, label: 'Pilih Layanan', desc: 'Tap + pada layanan yang diinginkan' },
                 { icon: IconShoppingCart, label: 'Buka Keranjang', desc: 'Tap ikon keranjang di bawah' },
@@ -352,7 +379,7 @@ export function MerchantClient({ slug }: { slug: string }) {
                 { icon: IconMapPin, label: 'Pantau Real-time', desc: 'Lihat posisi antrianmu' },
               ].map(({ icon: Icon, label, desc }, i) => (
                 <div key={i} className="relative text-center">
-                  <div className="relative w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-2 text-xs font-bold font-mono shadow-sm">
+                  <div className="relative w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-2 text-xs font-bold font-mono shadow-xs">
                     {i + 1}
                   </div>
                   <Icon className="w-3.5 h-3.5 text-primary/60 mx-auto mb-1" />
@@ -376,7 +403,7 @@ export function MerchantClient({ slug }: { slug: string }) {
             className="fixed bottom-3 left-3 right-3 z-40"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto flex items-center justify-between gap-3 bg-card/95 backdrop-blur-lg border border-border rounded-2xl shadow-xl p-3 md:p-4">
+            <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 bg-card/95 backdrop-blur-lg border border-border rounded-2xl shadow-lg p-3 md:p-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <IconShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
@@ -391,10 +418,7 @@ export function MerchantClient({ slug }: { slug: string }) {
                   </p>
                 </div>
               </div>
-              <Link
-                href="/cart"
-                className="px-6 py-2.5 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm text-sm flex items-center gap-2 flex-shrink-0"
-              >
+              <Link href="/cart" className="inline-flex items-center justify-center h-9 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-xs gap-2">
                 Pesan
                 <IconShoppingCart className="w-4 h-4" />
               </Link>

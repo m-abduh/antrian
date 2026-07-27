@@ -11,7 +11,7 @@ import { merchantApi } from '@/lib/api/merchant';
 import { getCustomerSocket, disconnectCustomerSocket } from '@/lib/socket';
 import api from '@/lib/axios';
 import type { Queue } from '@/lib/types';
-import { clearActiveQueue } from '@/lib/activeQueue';
+import { updateActiveQueueStatus } from '@/lib/activeQueue';
 import {
   IconClock, IconCircleCheck, IconLoader2, IconUsers, IconArrowLeft,
   IconAlertTriangle, IconChevronRight, IconTrophy, IconStar,
@@ -65,7 +65,7 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
 
   useEffect(() => {
     if (queue && (queue.status === 'done' || queue.status === 'skipped')) {
-      clearActiveQueue(slug);
+      updateActiveQueueStatus(slug, queue.status);
     }
   }, [queue, slug]);
 
@@ -80,7 +80,7 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
       if (data.queue._id === queueId) {
         setQueue(data.queue);
         if (data.queue.status === 'done' || data.queue.status === 'skipped') {
-          clearActiveQueue(slug);
+          updateActiveQueueStatus(slug, data.queue.status);
         }
       }
       queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });

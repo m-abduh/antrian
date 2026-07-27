@@ -1,16 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   IconCreditCard, IconMapPin, IconPhone, IconShoppingCart, IconBuildingStore,
   IconWavesElectricity, IconPlus, IconMinus, IconSparkles, IconBell, IconCheck,
-  IconArrowRight,
+  IconArrowRight, IconCircleCheck, IconAlertTriangle, IconX, IconUsers,
 } from '@tabler/icons-react';
-import { useMerchant, useServices, useGroups } from '@/lib/hooks/useMerchant';
+import { useMerchant, useServices, useGroups, useLiveQueue } from '@/lib/hooks/useMerchant';
 import { useCartStore } from '@/lib/store/cartStore';
 import { imageUrl } from '@/lib/imageUrl';
-import { getActiveQueue, clearActiveQueue } from '@/lib/activeQueue';
+import { getActiveQueue, updateActiveQueueStatus, clearActiveQueue } from '@/lib/activeQueue';
+import { getCustomerSocket } from '@/lib/socket';
 import { SocialIcon } from '@/components/SocialIcon';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -32,17 +34,42 @@ export function MerchantClient({ slug }: { slug: string }) {
   const { data: services, isLoading: servicesLoading } = useServices(slug);
   const { data: groups } = useGroups(slug);
   const { items, addItem, updateQuantity, totalPrice, itemCount } = useCartStore();
-  const [activeQ, setActiveQ] = useState<{ queueId: string; number: string } | null>(null);
+  const [activeQ, setActiveQ] = useState<{ queueId: string; number: string; status: string } | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const queryClient = useQueryClient();
+  const { data: liveData } = useLiveQueue(slug);
+
+  const activeQRef = useRef(activeQ);
+  activeQRef.current = activeQ;
 
   useEffect(() => {
     const aq = getActiveQueue(slug);
-    if (aq && (aq.status === 'waiting' || aq.status === 'called' || aq.status === 'serving')) {
-      setActiveQ({ queueId: aq.queueId, number: aq.number });
-    } else {
-      setActiveQ(null);
-    }
+    setActiveQ(aq ? { queueId: aq.queueId, number: aq.number, status: aq.status } : null);
   }, [slug]);
+
+  useEffect(() => {
+    if (!activeQ || !liveData) return;
+    const match = liveData.waiting?.find(q => q._id === activeQ.queueId)
+      || (liveData.current?._id === activeQ.queueId ? liveData.current : null);
+    if (match && match.status !== activeQ.status) {
+      setActiveQ(prev => prev ? { ...prev, status: match.status } : null);
+      updateActiveQueueStatus(slug, match.status);
+    }
+  }, [liveData, activeQ?.queueId, slug]);
+
+  useEffect(() => {
+    const socket = getCustomerSocket(slug);
+    const handler = (data: { queue: { _id: string; status: string; queueNumber?: string }; action: string }) => {
+      const cur = activeQRef.current;
+      if (cur && cur.queueId === data.queue._id) {
+        setActiveQ({ ...cur, status: data.queue.status });
+        updateActiveQueueStatus(slug, data.queue.status);
+      }
+      queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });
+    };
+    socket.on('queue:status', handler);
+    return () => { socket.off('queue:status', handler); };
+  }, [slug, queryClient]);
 
   const getQty = (id: string) => items.find((i) => i._id === id)?.quantity || 0;
 
@@ -299,28 +326,106 @@ export function MerchantClient({ slug }: { slug: string }) {
           <AnimatePresence>
             {activeQ && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                <Link href={`/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-gradient-to-r from-primary/[0.06] to-primary/[0.02] border border-primary/15 rounded-2xl overflow-hidden hover:from-primary/[0.08] hover:to-primary/[0.04] transition-all group">
-                  <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-1 bg-primary/30 rounded-l-2xl" />
+                <Link href={`/queue/${activeQ.queueId}`} className={`relative flex items-stretch border rounded-2xl overflow-hidden transition-all group ${
+                  activeQ.status === 'done' ? 'bg-gradient-to-r from-emerald-500/[0.06] to-transparent border-emerald-500/15'
+                  : activeQ.status === 'skipped' ? 'bg-gradient-to-r from-red-500/[0.06] to-transparent border-red-500/15'
+                  : activeQ.status === 'called' ? 'bg-gradient-to-r from-amber-500/[0.06] to-transparent border-amber-500/15'
+                  : activeQ.status === 'serving' ? 'bg-gradient-to-r from-purple-500/[0.06] to-transparent border-purple-500/15'
+                  : 'bg-gradient-to-r from-primary/[0.06] to-primary/[0.02] border-primary/15'
+                }`}>
+                  <div className={`hidden md:flex absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${
+                    activeQ.status === 'done' ? 'bg-emerald-400'
+                    : activeQ.status === 'skipped' ? 'bg-red-400'
+                    : activeQ.status === 'called' ? 'bg-amber-400'
+                    : activeQ.status === 'serving' ? 'bg-purple-400'
+                    : 'bg-primary/30'
+                  }`} />
                   <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
-                    <div className="relative w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-                      <IconBell className="w-4 h-4 text-primary" />
-                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary" />
+                    <div className={`relative w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      activeQ.status === 'done' ? 'bg-emerald-500/15'
+                      : activeQ.status === 'skipped' ? 'bg-red-500/15'
+                      : activeQ.status === 'called' ? 'bg-amber-500/15'
+                      : activeQ.status === 'serving' ? 'bg-purple-500/15'
+                      : 'bg-primary/15'
+                    }`}>
+                      {activeQ.status === 'done' ? (
+                        <IconCircleCheck className="w-4 h-4 text-emerald-500" />
+                      ) : activeQ.status === 'skipped' ? (
+                        <IconAlertTriangle className="w-4 h-4 text-red-500" />
+                      ) : activeQ.status === 'called' ? (
+                        <>
+                          <IconBell className="w-4 h-4 text-amber-500" />
+                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500" />
+                        </>
+                      ) : activeQ.status === 'serving' ? (
+                        <IconUsers className="w-4 h-4 text-purple-500" />
+                      ) : (
+                        <>
+                          <IconBell className="w-4 h-4 text-primary" />
+                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
+                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary" />
+                        </>
+                      )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">Antrian Aktif — tap untuk lihat status</p>
-                      <p className="text-sm font-semibold text-foreground truncate">Sedang berjalan</p>
+                      <p className="text-xs text-muted-foreground">
+                        {activeQ.status === 'done' ? 'Selesai'
+                        : activeQ.status === 'skipped' ? 'Dilewati'
+                        : activeQ.status === 'called' ? 'Dipanggil!'
+                        : activeQ.status === 'serving' ? 'Sedang Dilayani'
+                        : 'Antrian Aktif'} — tap untuk lihat
+                      </p>
+                      <p className={`text-sm font-semibold truncate ${
+                        activeQ.status === 'done' ? 'text-emerald-600 dark:text-emerald-400'
+                        : activeQ.status === 'skipped' ? 'text-red-600 dark:text-red-400'
+                        : activeQ.status === 'called' ? 'text-amber-600 dark:text-amber-400'
+                        : activeQ.status === 'serving' ? 'text-purple-600 dark:text-purple-400'
+                        : 'text-foreground'
+                      }`}>
+                        {activeQ.status === 'done' ? 'Sudah selesai'
+                        : activeQ.status === 'skipped' ? 'Dilewati'
+                        : activeQ.status === 'called' ? 'Silakan menuju loket'
+                        : activeQ.status === 'serving' ? 'Sedang dilayani'
+                        : 'Sedang berjalan'}
+                      </p>
                     </div>
                   </div>
-                  <div className="relative flex items-center gap-2.5 px-4 border-l border-dashed border-primary/20">
+                  <div className={`relative flex items-center gap-2.5 px-4 border-l border-dashed ${
+                    activeQ.status === 'done' ? 'border-emerald-500/20'
+                    : activeQ.status === 'skipped' ? 'border-red-500/20'
+                    : activeQ.status === 'called' ? 'border-amber-500/20'
+                    : activeQ.status === 'serving' ? 'border-purple-500/20'
+                    : 'border-primary/20'
+                  }`}>
                     <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
                     <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
                     <div className="text-center">
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60">No.</p>
-                      <p className="font-mono text-lg font-bold text-primary tabular-nums leading-none">{activeQ.number}</p>
+                      <p className={`font-mono text-lg font-bold tabular-nums leading-none ${
+                        activeQ.status === 'done' ? 'text-emerald-500'
+                        : activeQ.status === 'skipped' ? 'text-red-500'
+                        : activeQ.status === 'called' ? 'text-amber-500'
+                        : activeQ.status === 'serving' ? 'text-purple-500'
+                        : 'text-primary'
+                      }`}>{activeQ.number}</p>
                     </div>
-                    <IconArrowRight className="w-4 h-4 text-primary/40 group-hover:text-primary/70 transition-all flex-shrink-0 group-hover:translate-x-0.5" />
+                    <IconArrowRight className={`w-4 h-4 transition-all flex-shrink-0 group-hover:translate-x-0.5 ${
+                      activeQ.status === 'done' ? 'text-emerald-400/40 group-hover:text-emerald-400/70'
+                      : activeQ.status === 'skipped' ? 'text-red-400/40 group-hover:text-red-400/70'
+                      : activeQ.status === 'called' ? 'text-amber-400/40 group-hover:text-amber-400/70'
+                      : activeQ.status === 'serving' ? 'text-purple-400/40 group-hover:text-purple-400/70'
+                      : 'text-primary/40 group-hover:text-primary/70'
+                    }`} />
                   </div>
+                  {(activeQ.status === 'done' || activeQ.status === 'skipped') && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearActiveQueue(slug); setActiveQ(null); }}
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-background/60 hover:bg-background border border-border/50 hover:border-border flex items-center justify-center transition-all z-10"
+                    >
+                      <IconX className="w-3 h-3 text-muted-foreground/60 hover:text-muted-foreground" />
+                    </button>
+                  )}
                 </Link>
               </motion.div>
             )}

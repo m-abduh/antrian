@@ -29,6 +29,14 @@ export function getActiveQueue(slug: string): ActiveQueue | null {
   return read()[slug] || null;
 }
 
+export function updateActiveQueueStatus(slug: string, status: string) {
+  const all = read();
+  if (all[slug]) {
+    all[slug].status = status;
+    write(all);
+  }
+}
+
 export function clearActiveQueue(slug: string) {
   const all = read();
   delete all[slug];

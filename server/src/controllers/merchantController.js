@@ -97,7 +97,15 @@ export async function createQueue(req, res, next) {
 
     const io = req.app.get('io');
     if (io) {
-      io.to(`merchant:${merchant.slug}`).emit('queue:new', { queue });
+      const publicQueue = {
+        id: queue._id,
+        queueNumber: queue.queueNumber,
+        services: queue.services,
+        status: queue.status,
+        estimatedStartTime: queue.estimatedStartTime,
+        createdAt: queue.createdAt,
+      };
+      io.to(`merchant:${merchant.slug}`).emit('queue:new', { queue: publicQueue });
     }
 
     return success(res, {

@@ -10,6 +10,7 @@ import env from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { authenticate } from './middleware/auth.js';
 import merchantRoutes from './routes/merchant.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notification.js';
@@ -73,6 +74,16 @@ const loginLimiter = rateLimit({
 
 app.use('/api/admin/login', loginLimiter);
 
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: { error: 'Terlalu banyak percobaan daftar. Silakan coba lagi nanti.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/admin/register', registerLimiter);
+
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false }));
 
@@ -99,7 +110,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
-app.use('/api/upload', uploadRoutes);
+app.use('/api/upload', authenticate, uploadRoutes);
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);

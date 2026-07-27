@@ -6,6 +6,7 @@ node_modules/
 .env.development
 *.log
 .DS_Store
+uploads/
 coverage/
 dist/
 build/

@@ -13,22 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (config: {
-            client_id: string;
-            scope: string;
-            callback: (response: { access_token?: string; error?: string }) => void;
-          }) => { requestAccessToken: () => void };
-        };
-      };
-    };
-  }
-}
-
 interface RegisterForm {
   name: string;
   email: string;

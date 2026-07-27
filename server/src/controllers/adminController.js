@@ -175,39 +175,7 @@ export async function googleAuth(req, res, next) {
   }
 }
 
-export async function googleEmailLogin(req, res, next) {
-  try {
-    const { email } = req.body;
-    if (!email) return error(res, 'Email wajib diisi');
 
-    const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
-    if (!admin) return error(res, 'Email Google belum terdaftar. Silakan daftar di halaman register.', 401);
-    if (admin.role !== 'admin') return error(res, 'Akun ini bukan admin', 403);
-
-    const token = jwt.sign(
-      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
-    );
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 8 * 60 * 60 * 1000,
-      path: '/',
-    };
-
-    res.cookie('token', token, cookieOptions);
-
-    return success(res, {
-      admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role, merchantId: admin.merchantId },
-      token,
-    });
-  } catch (err) {
-    next(err);
-  }
-}
 
 export async function getMe(req, res) {
   return success(res, {
@@ -394,7 +362,20 @@ export async function updateQueueStatus(req, res, next) {
     if (io) {
       const merchant = await Merchant.findById(queue.merchantId).select('slug');
       if (merchant) {
-        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue, action });
+        const publicQueue = {
+          id: queue._id,
+          queueNumber: queue.queueNumber,
+          services: queue.services,
+          status: queue.status,
+          estimatedStartTime: queue.estimatedStartTime,
+          startedAt: queue.startedAt,
+          finishedAt: queue.finishedAt,
+          createdAt: queue.createdAt,
+        };
+        if (action === 'call' || action === 'serve') {
+          publicQueue.customerName = queue.customerName;
+        }
+        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: publicQueue, action });
       }
     }
 
@@ -425,7 +406,18 @@ export async function startServing(req, res, next) {
     if (io) {
       const merchant = await Merchant.findById(queue.merchantId).select('slug');
       if (merchant) {
-        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue, action: 'serve' });
+        const publicQueue = {
+          id: queue._id,
+          queueNumber: queue.queueNumber,
+          customerName: queue.customerName,
+          services: queue.services,
+          status: queue.status,
+          estimatedStartTime: queue.estimatedStartTime,
+          startedAt: queue.startedAt,
+          finishedAt: queue.finishedAt,
+          createdAt: queue.createdAt,
+        };
+        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: publicQueue, action: 'serve' });
       }
     }
 

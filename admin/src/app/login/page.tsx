@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { IconLoader2, IconLogin, IconEye, IconEyeOff, IconWavesElectricity, IconBrandGoogle } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
-import { signIn, getCsrfToken } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -14,6 +14,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        oauth2: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (response: { id_token?: string; access_token?: string; error?: string }) => void;
+            error_callback?: () => void;
+          }) => { requestAccessToken: () => void };
+        };
+      };
+    };
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -21,9 +38,12 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
-    if (window.opener && window.location.search.includes('google_callback=1')) {
-      window.close();
-    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+    return () => { document.body.removeChild(script); };
   }, []);
 
   const {
@@ -48,59 +68,60 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setLoginError('');
     try {
-      const csrfToken = await getCsrfToken();
-      const res = await fetch('/api/auth/signin/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          csrfToken: csrfToken ?? '',
-          callbackUrl: window.location.origin + '/login?google_callback=1',
-          json: 'true',
-        }),
+      await new Promise<void>((resolve) => {
+        const check = () => {
+          if (window.google?.accounts?.oauth2) return resolve();
+          setTimeout(check, 100);
+        };
+        check();
       });
-      const data = await res.json();
-      if (!data.url) {
-        setLoginError('Gagal mendapatkan URL Google');
-        return;
-      }
-      const popup = window.open(data.url, 'google-auth', 'width=500,height=600');
-      if (!popup) {
-        setLoginError('Popup diblokir. Izinkan popup untuk Google login.');
+      if (!window.google?.accounts?.oauth2) {
+        setLoginError('Google Identity Services tidak tersedia');
         setGoogleLoading(false);
         return;
       }
-      await new Promise<void>((resolve) => {
-        const timer = setInterval(() => {
-          if (popup.closed) { clearInterval(timer); resolve(); }
-        }, 500);
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+        scope: 'openid email profile',
+        callback: async (response: any) => {
+          try {
+            if (!response?.id_token) {
+              setLoginError('Gagal mendapatkan token Google');
+              setGoogleLoading(false);
+              return;
+            }
+            const expressRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ credential: response.id_token }),
+            });
+            const expressData = await expressRes.json();
+            if (!expressData.success) {
+              setLoginError(expressData.error || 'Gagal login');
+              setGoogleLoading(false);
+              return;
+            }
+            setAccessToken(expressData.data.token);
+            const si = await signIn('credentials', { token: expressData.data.token, redirect: false });
+            if (si?.error) {
+              setLoginError('Gagal sync session');
+              setGoogleLoading(false);
+              return;
+            }
+            router.push(expressData.data.admin.merchantId ? '/dashboard' : '/merchant/setup');
+          } catch {
+            setLoginError('Gagal login dengan Google');
+            setGoogleLoading(false);
+          }
+        },
+        error_callback: () => {
+          setLoginError('Gagal otentikasi Google');
+          setGoogleLoading(false);
+        },
       });
-      const sessionRes = await fetch('/api/auth/session');
-      const session = await sessionRes.json();
-      const userEmail = session?.user?.email;
-      if (!userEmail) {
-        setLoginError('Gagal mendapatkan email dari Google');
-        return;
-      }
-      const expressRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail }),
-      });
-      const expressData = await expressRes.json();
-      if (!expressData.success) {
-        setLoginError(expressData.error || 'Gagal login');
-        return;
-      }
-      setAccessToken(expressData.data.token);
-      const si = await signIn('credentials', { token: expressData.data.token, redirect: false });
-      if (si?.error) {
-        setLoginError('Gagal sync session');
-        return;
-      }
-      router.push(expressData.data.admin.merchantId ? '/dashboard' : '/merchant/setup');
+      client.requestAccessToken();
     } catch {
-      setLoginError('Gagal login dengan Google');
-    } finally {
+      setLoginError('Gagal memuat Google Login');
       setGoogleLoading(false);
     }
   };

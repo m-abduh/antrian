@@ -28,7 +28,22 @@ app.use(helmet.ieNoOpen());
 app.use(helmet.noSniff());
 
 app.use(cors({
-  origin: env.CORS_ORIGIN === '*' ? '*' : env.CORS_ORIGIN.split(','),
+  origin: (origin, callback) => {
+    if (!origin || env.CORS_ORIGIN === '*') {
+      callback(null, true);
+      return;
+    }
+    const allowed = env.CORS_ORIGIN.split(',');
+    const ok = allowed.some(a => {
+      if (origin === a) return true;
+      try {
+        const u = new URL(a);
+        if (origin.endsWith(`.${u.host}`)) return true;
+      } catch {}
+      return false;
+    });
+    callback(null, ok);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],

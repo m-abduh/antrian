@@ -7,7 +7,22 @@ import logger from './config/logger.js';
 export function initSocket(httpServer, app) {
   const io = new Server(httpServer, {
     cors: {
-      origin: env.CORS_ORIGIN === '*' ? '*' : env.CORS_ORIGIN.split(','),
+      origin: (origin, callback) => {
+        if (!origin || env.CORS_ORIGIN === '*') {
+          callback(null, true);
+          return;
+        }
+        const allowed = env.CORS_ORIGIN.split(',');
+        const ok = allowed.some(a => {
+          if (origin === a) return true;
+          try {
+            const u = new URL(a);
+            if (origin.endsWith(`.${u.host}`)) return true;
+          } catch {}
+          return false;
+        });
+        callback(null, ok);
+      },
       credentials: true,
     },
   });

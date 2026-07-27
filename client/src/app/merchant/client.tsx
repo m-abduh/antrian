@@ -1,5 +1,4 @@
 'use client';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState, useEffect } from 'react';
@@ -15,9 +14,7 @@ function Skeleton({ className }: { className: string }) {
   return <div className={`bg-muted rounded-2xl animate-pulse ${className}`} />;
 }
 
-export default function MerchantPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+export function MerchantClient({ slug }: { slug: string }) {
   const { data: merchant, isLoading: merchantLoading } = useMerchant(slug);
   const { data: services, isLoading: servicesLoading } = useServices(slug);
   const { data: groups } = useGroups(slug);
@@ -57,7 +54,7 @@ export default function MerchantPage() {
 
   const showGroupless = selectedGroup === 'all' || selectedGroup === 'ungrouped';
 
-  if (merchantLoading || servicesLoading) {
+  if (!slug || merchantLoading || servicesLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-6 space-y-6">
@@ -260,7 +257,7 @@ export default function MerchantPage() {
           <AnimatePresence>
             {activeQ && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                <Link href={`/${slug}/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-primary/[0.05] border border-primary/20 rounded-2xl overflow-hidden hover:bg-primary/[0.08] transition-colors">
+                <Link href={`/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-primary/[0.05] border border-primary/20 rounded-2xl overflow-hidden hover:bg-primary/[0.08] transition-colors">
                   <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
                     <div className="relative w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
                       <IconBell className="w-4 h-4 text-primary" />
@@ -395,7 +392,7 @@ export default function MerchantPage() {
                 </div>
               </div>
               <Link
-                href={`/${slug}/cart`}
+                href="/cart"
                 className="px-6 py-2.5 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm text-sm flex items-center gap-2 flex-shrink-0"
               >
                 Pesan

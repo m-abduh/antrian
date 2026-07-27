@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useClientStore } from '@/lib/store/clientStore';
@@ -10,10 +10,8 @@ import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 import { saveActiveQueue } from '@/lib/activeQueue';
 
-export default function OrderPage() {
-  const params = useParams();
+export function OrderClient({ slug }: { slug: string }) {
   const router = useRouter();
-  const slug = params.slug as string;
   const { selectedMerchant, selectedService, setQueue } = useClientStore();
   const createQueue = useCreateQueue(slug);
   const [error, setError] = useState('');
@@ -36,9 +34,9 @@ export default function OrderPage() {
 
   useEffect(() => {
     if (!selectedMerchant || !selectedService) {
-      router.replace(`/${slug}`);
+      router.replace('/');
     }
-  }, [selectedMerchant, selectedService, router, slug]);
+  }, [selectedMerchant, selectedService, router]);
 
   if (!selectedMerchant || !selectedService) {
     return null;
@@ -54,7 +52,7 @@ export default function OrderPage() {
       });
       setQueue(result.queue as never);
       saveActiveQueue(slug, { queueId: result.queue.id, number: result.queue.queueNumber, status: 'waiting' });
-      router.push(`/${slug}/queue/${result.queue.id}`);
+      router.push(`/queue/${result.queue.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.');
     }
@@ -64,7 +62,7 @@ export default function OrderPage() {
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border">
         <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <IconArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
           </Link>

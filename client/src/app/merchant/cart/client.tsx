@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useCreateQueue } from '@/lib/hooks/useCreateQueue';
 import { useCartStore } from '@/lib/store/cartStore';
@@ -34,10 +34,8 @@ function saveCustomerData(customerName: string, customerPhone: string) {
   } catch { /* noop */ }
 }
 
-export default function CartPage() {
-  const params = useParams();
+export function CartClient({ slug }: { slug: string }) {
   const router = useRouter();
-  const slug = params.slug as string;
   const { data: merchant } = useMerchant(slug);
   const { items, note, addItem, updateQuantity, removeItem, clearCart, setNote, totalPrice } = useCartStore();
   const createQueue = useCreateQueue(slug);
@@ -74,7 +72,7 @@ export default function CartPage() {
       saveCustomerData(data.customerName, data.customerPhone);
       clearCart();
       saveActiveQueue(slug, { queueId: result.queue.id, number: result.queue.queueNumber, status: 'waiting' });
-      router.push(`/${slug}/queue/${result.queue.id}`);
+      router.push(`/queue/${result.queue.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.');
     }
@@ -85,7 +83,7 @@ export default function CartPage() {
       <div className="min-h-screen bg-background">
         <header className="bg-card border-b border-border">
           <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <IconArrowLeft className="w-5 h-5" />
               <span className="font-medium text-sm">Kembali</span>
             </Link>
@@ -100,7 +98,7 @@ export default function CartPage() {
           <h2 className="text-lg font-semibold text-foreground mb-2">Keranjang Kosong</h2>
           <p className="text-sm text-muted-foreground mb-6">Pilih layanan dulu yuk</p>
           <Link
-            href={`/${slug}`}
+            href="/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all"
           >
             Lihat Layanan
@@ -114,7 +112,7 @@ export default function CartPage() {
     <div className="min-h-screen bg-background pb-32">
       <header className="bg-card border-b border-border">
         <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <IconArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
           </Link>

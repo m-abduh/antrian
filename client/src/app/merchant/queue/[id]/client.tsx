@@ -1,6 +1,5 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
@@ -31,10 +30,7 @@ function Skeleton({ className }: { className: string }) {
   return <div className={`bg-muted rounded-xl animate-pulse ${className}`} />;
 }
 
-export default function QueueTrackingPage() {
-  const params = useParams();
-  const slug = params.slug as string;
-  const queueId = params.id as string;
+export function QueueClient({ slug, queueId }: { slug: string; queueId: string }) {
   const queryClient = useQueryClient();
   const { currentQueue, setQueue } = useClientStore();
   const { data: liveData, isLoading: liveLoading } = useLiveQueue(slug);
@@ -52,6 +48,17 @@ export default function QueueTrackingPage() {
 
   const myQueue = liveData?.waiting?.find((q) => q._id === queueId)
     || (liveData?.current?._id === queueId ? liveData.current : null);
+
+  if (!slug) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-6 space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   const queue = currentQueue || myQueue || fetchedQueue;
   const statusInfo = queue ? statusConfig[queue.status] : statusConfig.waiting;
@@ -166,7 +173,7 @@ export default function QueueTrackingPage() {
 
       <header className="bg-card border-b border-border">
         <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={`/${slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <IconArrowLeft className="w-5 h-5" />
             <span className="font-medium text-sm">Kembali</span>
           </Link>

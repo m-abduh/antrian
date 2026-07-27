@@ -215,7 +215,7 @@ export function CartClient({ slug }: { slug: string }) {
             {/* Kanan — Ringkasan + Form */}
             <div className="md:col-span-2 space-y-4">
               {/* Ringkasan */}
-              <Card className="rounded-2xl">
+              <Card className="rounded-2xl hidden md:block">
                 <CardContent className="p-4 space-y-2">
                   {items.map((item) => (
                     <div key={item._id} className="flex items-center justify-between text-sm">

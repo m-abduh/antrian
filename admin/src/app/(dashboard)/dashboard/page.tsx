@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconUsers, IconClock, IconCircleCheck, IconPlayerSkipForward, IconLoader2,
-  IconPhone, IconSearch, IconX, IconAlertCircle, IconBell, IconChartBar,
+  IconBrandWhatsapp, IconSearch, IconX, IconAlertCircle, IconBell, IconChartBar,
 } from '@tabler/icons-react';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
 import { useNotification } from '@/lib/hooks/useNotification';
@@ -226,13 +226,23 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                               {q.customerPhone && (
-                                <span className="flex items-center gap-1">
-                                  <IconPhone className="w-3 h-3" />
+                                <a
+                                  href={`https://wa.me/${q.customerPhone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 hover:text-primary transition-colors"
+                                >
+                                  <IconBrandWhatsapp className="w-3.5 h-3.5 text-green-500" />
                                   {q.customerPhone}
-                                </span>
+                                </a>
                               )}
                               <span>{q.services?.map((s: any) => s.name).join(', ') || '-'}</span>
                             </div>
+                            {q.note && (
+                              <p className="text-xs text-muted-foreground/70 mt-1 italic truncate">
+                                Catatan: {q.note}
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {q.status === 'waiting' && (

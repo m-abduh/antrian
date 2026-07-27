@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Antriin - Antrian Mudah',
+  title: 'Tunggu.id - Antrian Mudah',
   description: 'Sistem antrian online untuk bisnis kecil',
   manifest: '/manifest.json',
   other: {

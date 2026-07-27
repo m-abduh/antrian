@@ -48,7 +48,7 @@ export function AdminSidebar() {
             </div>
           )}
           <div className="min-w-0">
-            <span className="font-bold text-foreground text-base block truncate">{merchant?.name || 'Antriin'}</span>
+            <span className="font-bold text-foreground text-base block truncate">{merchant?.name || 'Tunggu.id'}</span>
             <p className="text-[10px] text-muted-foreground leading-tight truncate">Admin Panel</p>
           </div>
         </div>

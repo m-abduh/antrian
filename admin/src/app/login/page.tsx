@@ -111,9 +111,17 @@ export default function LoginPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <IconWavesElectricity className="w-5 h-5 text-primary" />
-            <span className="font-bold text-xl text-foreground">Antriin</span>
+            <span className="font-bold text-xl text-foreground">Tunggu.id</span>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" className="rounded-xl" onClick={() => router.push('/login')}>
+              Masuk
+            </Button>
+            <Button className="rounded-xl" onClick={() => router.push('/register')}>
+              Daftar
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -129,7 +137,7 @@ export default function LoginPage() {
                   <IconLogin className="w-7 h-7 text-primary" />
                 </div>
                 <CardTitle className="text-2xl">Masuk</CardTitle>
-                <CardDescription>Dashboard admin Antriin</CardDescription>
+                <CardDescription>Dashboard admin Tunggu.id</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -200,15 +208,6 @@ export default function LoginPage() {
                 )}
               </motion.button>
             </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Belum punya akun?{' '}
-                <Button variant="link" className="p-0 h-auto" onClick={() => router.push('/register')}>
-                  Daftar
-                </Button>
-              </p>
-            </div>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">

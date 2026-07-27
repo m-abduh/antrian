@@ -1,6 +1,6 @@
 {
-  "name": "Antriin - Admin Dashboard",
-  "short_name": "Antriin Admin",
+  "name": "Tunggu.id - Admin Dashboard",
+  "short_name": "Tunggu.id Admin",
   "description": "Dashboard manajemen antrian",
   "start_url": "/",
   "display": "standalone",

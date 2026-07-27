@@ -55,7 +55,7 @@ export default function MerchantSetupPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <IconWavesElectricity className="w-5 h-5 text-primary" />
-            <span className="font-bold text-xl text-foreground">Antriin</span>
+            <span className="font-bold text-xl text-foreground">Tunggu.id</span>
           </div>
           <ThemeToggle />
         </div>

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Antriin - Admin Dashboard',
+  title: 'Tunggu.id - Admin Dashboard',
   description: 'Dashboard manajemen antrian',
   manifest: '/manifest.json',
   other: {

@@ -27,7 +27,7 @@ self.addEventListener('push', (event) => {
     const { title, body, url } = event.data.json();
 
     event.waitUntil(
-      self.registration.showNotification(title || 'Antriin Admin', {
+      self.registration.showNotification(title || 'Tunggu.id Admin', {
         body: body || '',
         icon: '/icons/icon-192.svg',
         badge: '/icons/icon-192.svg',
@@ -37,7 +37,7 @@ self.addEventListener('push', (event) => {
     );
   } catch {
     event.waitUntil(
-      self.registration.showNotification('Antriin Admin', {
+      self.registration.showNotification('Tunggu.id Admin', {
         body: event.data.text(),
         icon: '/icons/icon-192.svg',
       }),

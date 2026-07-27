@@ -125,9 +125,23 @@ export default function RegisterPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <IconWavesElectricity className="w-5 h-5 text-primary" />
-            <span className="font-bold text-xl text-foreground">Antriin</span>
+            <span className="font-bold text-xl text-foreground">Tunggu.id</span>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-muted/50 rounded-xl border border-border/50">
+              <span className="text-[10px] font-medium text-muted-foreground/60">Android</span>
+              <span className="text-[10px] text-muted-foreground/30">|</span>
+              <span className="text-[10px] font-medium text-muted-foreground/60">iOS</span>
+              <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 font-medium">Dev</span>
+            </div>
+            <Button variant="ghost" className="rounded-xl" onClick={() => router.push('/login')}>
+              Masuk
+            </Button>
+            <Button className="rounded-xl" onClick={() => router.push('/register')}>
+              Daftar
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

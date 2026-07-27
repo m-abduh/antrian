@@ -79,9 +79,9 @@ export function MerchantClient({ slug }: { slug: string }) {
             </div>
           </div>
           <Skeleton className="h-20 w-full rounded-2xl" />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-2xl border border-border">
+           <div className="flex flex-wrap gap-3 md:gap-4">
+             {[...Array(5)].map((_, i) => (
+               <div key={i} className="w-[180px] flex-shrink-0 overflow-hidden rounded-2xl border border-border">
                 <Skeleton className="aspect-square w-full rounded-none" />
                 <div className="p-3 space-y-2">
                   <Skeleton className="h-3.5 w-3/4" />
@@ -193,9 +193,17 @@ export function MerchantClient({ slug }: { slug: string }) {
   const noGroupsAtAll = !groups?.length && !grouplessServices.length;
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-28 md:pb-6 relative">
+      {/* Decorative background orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl animate-float-slow" />
+        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/[0.02] blur-3xl animate-float-reverse" />
+      </div>
       <main className="max-w-5xl mx-auto px-4 pt-6 pb-6">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            {/* Left column */}
+            <div className="md:col-span-3 space-y-6">
 
           {/* Banner + Hero */}
           <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/[0.06] via-primary/[0.02] to-transparent border border-primary/[0.06] p-5 md:p-6">
@@ -205,61 +213,85 @@ export function MerchantClient({ slug }: { slug: string }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
               </div>
             )}
-            <div className="relative flex items-start gap-4 md:gap-5">
-              <div className="relative flex-shrink-0">
-                <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-110 -z-10" />
-                {merchant.image ? (
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-muted ring-4 ring-background shadow-md">
-                    <img src={imageUrl(merchant.image)} alt={merchant.name} className="w-full h-full object-cover" />
+            <div className="relative z-10">
+              <div className="flex items-start gap-4 md:gap-5">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-110 -z-10" />
+                  {merchant.image ? (
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-muted ring-4 ring-background shadow-md">
+                      <img src={imageUrl(merchant.image)} alt={merchant.name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center ring-4 ring-background shadow-md">
+                      <IconBuildingStore className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{merchant.name}</h1>
+                    <Badge variant="secondary" className="text-[10px] md:text-xs font-mono px-2 py-0 rounded-full">
+                      @{merchant.slug}
+                    </Badge>
                   </div>
-                ) : (
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center ring-4 ring-background shadow-md">
-                    <IconBuildingStore className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+                  {merchant.description && (
+                    <p className="text-sm md:text-base text-muted-foreground/80 mt-2 leading-relaxed line-clamp-2">{merchant.description}</p>
+                  )}
+                  {(merchant.address || merchant.phone) && (
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      {merchant.address && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/70 rounded-full px-2.5 py-1 truncate max-w-full">
+                          <IconMapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate max-w-[160px] md:max-w-[240px]">{merchant.address}</span>
+                        </span>
+                      )}
+                      {merchant.phone && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/70 rounded-full px-2.5 py-1">
+                          <IconPhone className="w-3 h-3 flex-shrink-0" />
+                          {merchant.phone}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {merchant.socialLinks?.length > 0 && (
+                  <div className="flex-shrink-0 flex flex-row gap-2">
+                    {merchant.socialLinks.map(link => (
+                      <a
+                        key={link.platform}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group w-8 h-8 md:w-9 md:h-9 rounded-full bg-muted/60 hover:bg-primary/10 text-muted-foreground hover:text-primary flex items-center justify-center transition-all duration-200 hover:shadow-sm hover:shadow-primary/10"
+                      >
+                        <SocialIcon platform={link.platform} className="w-4 h-4" />
+                      </a>
+                    ))}
                   </div>
                 )}
               </div>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{merchant.name}</h1>
-                  <Badge variant="secondary" className="text-[10px] md:text-xs font-mono px-2 py-0 rounded-full">
-                    @{merchant.slug}
-                  </Badge>
+
+              {/* Stats row */}
+              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-primary/[0.06]">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground font-mono tabular-nums">{services?.length || 0}</span>
+                  Layanan
                 </div>
-                {merchant.description && (
-                  <p className="text-sm md:text-base text-muted-foreground/80 mt-2 leading-relaxed">{merchant.description}</p>
+                {groups && groups.length > 0 && (
+                  <>
+                    <span className="text-muted-foreground/30">·</span>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="font-semibold text-foreground font-mono tabular-nums">{groups.length}</span>
+                      Kategori
+                    </div>
+                  </>
                 )}
-                {(merchant.address || merchant.phone) && (
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
-                    {merchant.address && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/70 rounded-full px-2.5 py-1">
-                        <IconMapPin className="w-3 h-3 flex-shrink-0" />
-                        {merchant.address}
-                      </span>
-                    )}
-                    {merchant.phone && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/70 rounded-full px-2.5 py-1">
-                        <IconPhone className="w-3 h-3 flex-shrink-0" />
-                        {merchant.phone}
-                      </span>
-                    )}
-                  </div>
-                )}
+                <span className="text-muted-foreground/30">·</span>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Buka
+                </div>
               </div>
-              {merchant.socialLinks?.length > 0 && (
-                <div className="flex-shrink-0 pt-1 flex flex-row gap-1.5">
-                  {merchant.socialLinks.map(link => (
-                    <a
-                      key={link.platform}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary flex items-center justify-center transition-colors"
-                    >
-                      <SocialIcon platform={link.platform} className="w-full h-full" />
-                    </a>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
@@ -267,7 +299,8 @@ export function MerchantClient({ slug }: { slug: string }) {
           <AnimatePresence>
             {activeQ && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                <Link href={`/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-primary/[0.04] border border-primary/15 rounded-2xl overflow-hidden hover:bg-primary/[0.06] transition-colors group">
+                <Link href={`/queue/${activeQ.queueId}`} className="relative flex items-stretch bg-gradient-to-r from-primary/[0.06] to-primary/[0.02] border border-primary/15 rounded-2xl overflow-hidden hover:from-primary/[0.08] hover:to-primary/[0.04] transition-all group">
+                  <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-1 bg-primary/30 rounded-l-2xl" />
                   <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
                     <div className="relative w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
                       <IconBell className="w-4 h-4 text-primary" />
@@ -286,7 +319,7 @@ export function MerchantClient({ slug }: { slug: string }) {
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60">No.</p>
                       <p className="font-mono text-lg font-bold text-primary tabular-nums leading-none">{activeQ.number}</p>
                     </div>
-                    <IconArrowRight className="w-4 h-4 text-primary/40 group-hover:text-primary/70 transition-colors flex-shrink-0" />
+                    <IconArrowRight className="w-4 h-4 text-primary/40 group-hover:text-primary/70 transition-all flex-shrink-0 group-hover:translate-x-0.5" />
                   </div>
                 </Link>
               </motion.div>
@@ -295,20 +328,22 @@ export function MerchantClient({ slug }: { slug: string }) {
 
           {/* Filter Grup */}
           {groupOptions.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide -mx-4 px-4">
-              {groupOptions.map(opt => (
-                <button
-                  key={opt.id}
-                  onClick={() => setSelectedGroup(opt.id)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                    selectedGroup === opt.id
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div className="relative">
+              <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide -mx-4 px-4">
+                {groupOptions.map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setSelectedGroup(opt.id)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                      selectedGroup === opt.id
+                        ? 'bg-primary text-primary-foreground shadow-xs scale-[1.02]'
+                        : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -322,11 +357,15 @@ export function MerchantClient({ slug }: { slug: string }) {
                     <h2 className="text-sm md:text-base font-bold text-foreground">{group.name}</h2>
                     <span className="text-[11px] text-muted-foreground/50 font-mono">({group.serviceIds.length})</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {group.serviceIds.map(renderService)}
+                  <div className="flex overflow-x-auto scrollbar-hide gap-4 px-1 pb-1">
+                    {group.serviceIds.map(service => (
+                      <div key={service._id} className="w-[180px] flex-shrink-0">
+                        {renderService(service)}
+                      </div>
+                    ))}
                   </div>
-                </motion.div>
-              ))}
+                 </motion.div>
+               ))}
 
               {showGroupless && grouplessServices.length > 0 && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -335,16 +374,20 @@ export function MerchantClient({ slug }: { slug: string }) {
                     <h2 className="text-sm md:text-base font-bold text-foreground">Lainnya</h2>
                     <span className="text-[11px] text-muted-foreground/50 font-mono">({grouplessServices.length})</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {grouplessServices.map(renderService)}
+                  <div className="flex overflow-x-auto scrollbar-hide gap-4 px-1 pb-1">
+                    {grouplessServices.map(service => (
+                      <div key={service._id} className="w-[180px] flex-shrink-0">
+                        {renderService(service)}
+                      </div>
+                    ))}
                   </div>
                 </motion.div>
               )}
 
               {noGroupsAtAll && (
-                <div className="bg-card border border-dashed border-border rounded-2xl p-10 text-center">
-                  <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <IconCreditCard className="w-7 h-7 text-muted-foreground/30" />
+                <div className="bg-gradient-to-br from-card to-muted/30 border border-dashed border-border rounded-2xl p-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <IconBuildingStore className="w-8 h-8 text-muted-foreground/20" />
                   </div>
                   <h3 className="text-base font-semibold text-foreground mb-1">Belum Ada Layanan</h3>
                   <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
@@ -352,41 +395,97 @@ export function MerchantClient({ slug }: { slug: string }) {
               )}
             </motion.div>
           ) : (
-            <div className="bg-card border border-dashed border-border rounded-2xl p-10 text-center">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <IconCreditCard className="w-7 h-7 text-muted-foreground/30" />
+            <div className="bg-gradient-to-br from-card to-muted/30 border border-dashed border-border rounded-2xl p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <IconBuildingStore className="w-8 h-8 text-muted-foreground/20" />
               </div>
               <h3 className="text-base font-semibold text-foreground mb-1">Belum Ada Layanan</h3>
               <p className="text-muted-foreground text-sm">Silakan hubungi admin untuk menambah layanan</p>
             </div>
           )}
+            </div>
 
-          {/* Separator */}
-          <Separator className="opacity-40" />
+            {/* Right column */}
+            <div className="md:col-span-2 space-y-4 md:sticky md:top-6 md:self-start">
 
-          {/* Cara Pakai */}
-          <div className="relative bg-gradient-to-br from-primary/[0.04] to-transparent border border-primary/[0.08] rounded-2xl p-5 md:p-6">
-            <h4 className="font-semibold text-sm md:text-base text-foreground mb-5 flex items-center gap-2">
-              <IconSparkles className="w-4 h-4 text-primary" />
-              Cara Pakai
-            </h4>
-            <div className="relative grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-5">
-              <div className="hidden md:block absolute top-[18px] left-[12.5%] right-[12.5%] border-t border-dashed border-primary/20 -z-0" />
-              {[
-                { icon: IconPlus, label: 'Pilih Layanan', desc: 'Tap + pada layanan yang diinginkan' },
-                { icon: IconShoppingCart, label: 'Buka Keranjang', desc: 'Tap ikon keranjang di bawah' },
-                { icon: IconWavesElectricity, label: 'Ambil Antrian', desc: 'Isi data diri & submit' },
-                { icon: IconMapPin, label: 'Pantau Real-time', desc: 'Lihat posisi antrianmu' },
-              ].map(({ icon: Icon, label, desc }, i) => (
-                <div key={i} className="relative text-center">
-                  <div className="relative w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-2 text-xs font-bold font-mono shadow-xs">
-                    {i + 1}
-                  </div>
-                  <Icon className="w-3.5 h-3.5 text-primary/60 mx-auto mb-1" />
-                  <p className="text-xs md:text-sm font-semibold text-foreground">{label}</p>
-                  <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
+               {/* Cart Summary */}
+               <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                 <div className="p-4 border-b border-border">
+                   <div className="flex items-center gap-2">
+                     <IconShoppingCart className="w-4 h-4 text-primary" />
+                     <h3 className="font-semibold text-sm text-foreground">Keranjang</h3>
+                     {itemCount() > 0 && (
+                       <span className="text-[11px] text-muted-foreground/50 font-mono">({itemCount()})</span>
+                     )}
+                   </div>
+                 </div>
+                 <div className="p-4 space-y-2.5">
+                   {items.length === 0 ? (
+                     <div className="text-center py-4">
+                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                         <IconShoppingCart className="w-5 h-5 text-muted-foreground/30" />
+                       </div>
+                       <p className="text-xs text-muted-foreground">Belum ada item</p>
+                       <p className="text-[10px] text-muted-foreground/60 mt-1">Pilih layanan untuk mulai</p>
+                     </div>
+                   ) : (
+                     <>
+                       {items.slice(0, 5).map((item) => (
+                         <div key={item._id} className="flex items-center justify-between text-sm">
+                           <span className="text-foreground truncate mr-2">{item.name} <span className="font-mono text-muted-foreground/60">x{item.quantity}</span></span>
+                           <span className="text-xs font-semibold text-foreground tabular-nums whitespace-nowrap">
+                             {item.price > 0 ? `Rp${(item.price * item.quantity).toLocaleString('id-ID')}` : 'Gratis'}
+                           </span>
+                         </div>
+                       ))}
+                       {items.length > 5 && (
+                         <p className="text-xs text-center text-muted-foreground">+{items.length - 5} lainnya</p>
+                       )}
+                       <Separator className="my-1" />
+                       <div className="flex items-center justify-between pt-1">
+                         <span className="text-sm font-medium text-foreground">Total</span>
+                         <span className="text-sm font-bold text-foreground tabular-nums">
+                           {totalPrice() > 0 ? `Rp${totalPrice().toLocaleString('id-ID')}` : 'Gratis'}
+                         </span>
+                       </div>
+                       <Link
+                         href="/cart"
+                         className="mt-3 w-full inline-flex items-center justify-center h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all gap-1.5"
+                       >
+                         Pesan Sekarang
+                         <IconArrowRight className="w-3.5 h-3.5" />
+                       </Link>
+                     </>
+                   )}
+                 </div>
+               </div>
+
+              {/* Cara Pakai */}
+              <div className="relative bg-gradient-to-br from-primary/[0.04] to-transparent border border-primary/[0.08] rounded-2xl p-5 md:p-6">
+                <h4 className="font-semibold text-sm md:text-base text-foreground mb-5 flex items-center gap-2">
+                  <IconSparkles className="w-4 h-4 text-primary" />
+                  Cara Pakai
+                </h4>
+                <div className="relative grid grid-cols-2 gap-3">
+                  {[
+                    { icon: IconPlus, label: 'Pilih Layanan', desc: 'Tap + pada layanan yang diinginkan' },
+                    { icon: IconShoppingCart, label: 'Buka Keranjang', desc: 'Tap ikon keranjang di bawah' },
+                    { icon: IconWavesElectricity, label: 'Ambil Antrian', desc: 'Isi data diri & submit' },
+                    { icon: IconMapPin, label: 'Pantau Real-time', desc: 'Lihat posisi antrianmu' },
+                  ].map(({ icon: Icon, label, desc }, i) => (
+                    <div key={i} className="relative group cursor-default">
+                      <div className="relative flex flex-col items-center p-3.5 rounded-xl bg-background/50 hover:bg-background/80 border border-transparent hover:border-primary/[0.06] transition-all duration-200 hover:-translate-y-0.5">
+                        <div className="relative w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-2 text-xs font-bold font-mono shadow-xs">
+                          {i + 1}
+                        </div>
+                        <Icon className="w-4 h-4 text-primary/60 mb-1" />
+                        <p className="text-xs md:text-sm font-semibold text-foreground text-center">{label}</p>
+                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 leading-relaxed text-center">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </motion.div>
@@ -403,10 +502,13 @@ export function MerchantClient({ slug }: { slug: string }) {
             className="fixed bottom-3 left-3 right-3 z-40"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 bg-card/95 backdrop-blur-lg border border-border rounded-2xl shadow-lg p-3 md:p-4">
+            <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 bg-card/80 backdrop-blur-xl border border-border/80 rounded-2xl shadow-lg shadow-primary/5 p-3 md:p-4">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="relative w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <IconShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center font-mono">
+                    {itemCount()}
+                  </span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">
@@ -418,14 +520,17 @@ export function MerchantClient({ slug }: { slug: string }) {
                   </p>
                 </div>
               </div>
-              <Link href="/cart" className="inline-flex items-center justify-center h-9 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-xs gap-2">
+              <Link
+                href="/cart"
+                className="inline-flex items-center justify-center h-9 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-xs gap-2 flex-shrink-0"
+              >
                 Pesan
-                <IconShoppingCart className="w-4 h-4" />
+                <IconArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
-    </div>
-  );
+       </AnimatePresence>
+     </div>
+   );
 }

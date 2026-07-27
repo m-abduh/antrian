@@ -1,11 +1,11 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from 'next-themes';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ReactNode, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAccessToken } from '@/lib/auth-token';
+import { ThemeProvider } from '@/lib/theme';
 
 function TokenSync({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
@@ -48,7 +48,7 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider>
       <SessionProvider>
         <QueryClientProvider client={queryClient}>
           <TokenSync>

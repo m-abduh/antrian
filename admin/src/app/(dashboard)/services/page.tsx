@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconPlus, IconPencil, IconTrash, IconX, IconLoader2, IconCreditCard,
-  IconLayoutDashboard, IconAlertCircle, IconWavesElectricity, IconUpload,
+  IconAlertCircle, IconUpload,
 } from '@tabler/icons-react';
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '@/lib/hooks/useAdmin';
 import { adminApi } from '@/lib/api/admin';
@@ -16,8 +16,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorAlert } from '@/components/ErrorAlert';
 
 interface ServiceForm {
   name: string;
@@ -99,58 +100,53 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 pl-10 lg:pl-0">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
-              >
-                <IconLayoutDashboard className="w-5 h-5 text-white" />
-              </button>
-              <div>
-                <h1 className="text-lg font-bold text-foreground">Layanan</h1>
-                <p className="text-xs text-muted-foreground">Kelola layanan merchant</p>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Layanan</h1>
+            <p className="text-sm text-muted-foreground mt-1">Kelola layanan merchant</p>
+          </div>
+          <Button onClick={openCreate} className="rounded-xl">
+            <IconPlus className="w-4 h-4 mr-2" />
+            Tambah Layanan
+          </Button>
+        </div>
+
+        <Separator />
+
+        <ErrorAlert message={serviceError} onClose={() => setServiceError('')} />
+
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="rounded-2xl p-4">
+                <CardContent className="p-0">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="w-12 h-12 rounded-xl" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-48" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : !services || services.length === 0 ? (
+          <Card className="rounded-2xl border-dashed">
+            <CardContent className="p-12 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                <IconCreditCard className="w-8 h-8 text-muted-foreground/40" />
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={openCreate}>
+              <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada layanan</h3>
+              <p className="text-sm text-muted-foreground mb-4">Tambahkan layanan pertama Anda</p>
+              <Button onClick={openCreate} className="rounded-xl">
                 <IconPlus className="w-4 h-4 mr-2" />
                 Tambah Layanan
               </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-        {serviceError && (
-          <Alert variant="destructive" className="mb-4">
-            <IconAlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <AlertDescription>{serviceError}</AlertDescription>
-          </Alert>
-        )}
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : !services || services.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-20"
-          >
-            <IconWavesElectricity className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada layanan</h3>
-            <p className="text-muted-foreground mb-6">Tambahkan layanan pertama Anda</p>
-            <Button onClick={openCreate}>
-              <IconPlus className="w-4 h-4 mr-2" />
-              Tambah Layanan
-            </Button>
-          </motion.div>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
@@ -164,75 +160,72 @@ export default function ServicesPage() {
                   transition={{ delay: i * 0.03 }}
                 >
                   <Card className="rounded-2xl hover:shadow-md transition-all relative group">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                      <IconCreditCard className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openEdit(s)}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                      >
-                        <IconPencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(s._id)}
-                        className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                      >
-                        <IconTrash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {s.image && (
-                    <div className="w-full aspect-square rounded-xl overflow-hidden mb-3 bg-muted">
-                      <img src={imageUrl(s.image)} alt={s.name} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <h4 className="font-semibold text-foreground mb-1">{s.name}</h4>
-                  {s.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{s.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-auto">
-                    <span className="font-medium text-foreground">
-                      {s.price > 0 ? `Rp${s.price.toLocaleString('id-ID')}` : 'Gratis'}
-                    </span>
-                    {!s.isActive && (
-                      <span className="text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">Nonaktif</span>
-                    )}
-                  </div>
-
-                  {deleteConfirm === s._id && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="absolute inset-0 bg-card/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-5"
-                    >
-                      <p className="text-sm font-medium text-foreground">Hapus layanan ini?</p>
-                      <div className="flex gap-2">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-3 right-3">
                         <button
-                          onClick={() => handleDelete(s._id)}
-                          disabled={deleteService.isPending}
-                          className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 transition-all"
+                          onClick={() => openEdit(s)}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         >
-                          {deleteService.isPending ? <IconLoader2 className="w-4 h-4 animate-spin" /> : 'Hapus'}
+                          <IconPencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => setDeleteConfirm(null)}
-                          className="px-4 py-2 bg-muted text-foreground text-sm font-medium rounded-xl hover:bg-muted/80 transition-colors"
+                          onClick={() => setDeleteConfirm(s._id)}
+                          className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                         >
-                          Batal
+                          <IconTrash className="w-4 h-4" />
                         </button>
                       </div>
-                    </motion.div>
-                  )}
-                </Card>
+
+                      {s.image && (
+                        <div className="w-full aspect-square rounded-xl overflow-hidden mb-3 bg-muted">
+                          <img src={imageUrl(s.image)} alt={s.name} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <h4 className="font-semibold text-foreground mb-1">{s.name}</h4>
+                      {s.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{s.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 text-sm mt-auto">
+                        <span className="font-medium text-foreground">
+                          {s.price > 0 ? `Rp${s.price.toLocaleString('id-ID')}` : 'Gratis'}
+                        </span>
+                        {!s.isActive && (
+                          <span className="text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">Nonaktif</span>
+                        )}
+                      </div>
+
+                      {deleteConfirm === s._id && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="absolute inset-0 bg-card/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-5"
+                        >
+                          <p className="text-sm font-medium text-foreground">Hapus layanan ini?</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleDelete(s._id)}
+                              disabled={deleteService.isPending}
+                              className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 transition-all"
+                            >
+                              {deleteService.isPending ? <IconLoader2 className="w-4 h-4 animate-spin" /> : 'Hapus'}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              className="px-4 py-2 bg-muted text-foreground text-sm font-medium rounded-xl hover:bg-muted/80 transition-colors"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         )}
-      </main>
+      </div>
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -252,20 +245,21 @@ export default function ServicesPage() {
 
             <form onSubmit={handleSubmit(editId ? handleUpdate : handleCreate)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Nama Layanan</label>
-                <input
+                <Label>Nama Layanan</Label>
+                <Input
                   {...register('name', { required: 'Nama layanan wajib diisi' })}
-                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                   placeholder="Nama layanan"
+                  className="mt-1.5"
                 />
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Foto Produk</label>
-                <div className="flex items-center gap-3">
-                  <button
+                <Label>Foto Produk</Label>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={async () => {
                       const input = document.createElement('input');
                       input.type = 'file';
@@ -286,11 +280,11 @@ export default function ServicesPage() {
                       input.click();
                     }}
                     disabled={uploading}
-                    className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors text-sm"
+                    className="rounded-xl"
                   >
-                    {uploading ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <IconUpload className="w-4 h-4" />}
+                    {uploading ? <IconLoader2 className="w-4 h-4 animate-spin mr-2" /> : <IconUpload className="w-4 h-4 mr-2" />}
                     {uploading ? 'Mengupload...' : 'Pilih Gambar'}
-                  </button>
+                  </Button>
                   <input type="hidden" {...register('image')} />
                 </div>
                 {watch('image') && (
@@ -301,40 +295,41 @@ export default function ServicesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Deskripsi</label>
+                <Label>Deskripsi</Label>
                 <textarea
                   {...register('description')}
-                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-20 resize-none text-sm"
+                  className="w-full mt-1.5 px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-20 resize-none text-sm"
                   placeholder="Deskripsi layanan (opsional)"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Harga (Rp)</label>
-                <input
+                <Label>Harga (Rp)</Label>
+                <Input
                   type="number"
                   {...register('price', { required: true, min: { value: 0, message: 'Minimal Rp 0' } })}
-                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                  className="mt-1.5"
                 />
                 {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price.message}</p>}
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => { setModalOpen(false); reset(); }}
-                  className="flex-1 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors"
+                  className="flex-1 rounded-xl"
                 >
                   Batal
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={createService.isPending || updateService.isPending}
-                  className="flex-1 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-sm"
+                  className="flex-1 rounded-xl"
                 >
-                  {(createService.isPending || updateService.isPending) && <IconLoader2 className="w-4 h-4 animate-spin" />}
+                  {(createService.isPending || updateService.isPending) && <IconLoader2 className="w-4 h-4 animate-spin mr-2" />}
                   Simpan
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>

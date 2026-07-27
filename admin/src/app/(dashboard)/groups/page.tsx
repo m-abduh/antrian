@@ -6,14 +6,16 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconPlus, IconPencil, IconTrash, IconX, IconLoader2, IconLayoutKanban,
-  IconAlertCircle, IconWavesElectricity, IconGripVertical,
+  IconGripVertical,
 } from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
 import { useServices } from '@/lib/hooks/useAdmin';
 import type { Group } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorAlert } from '@/components/ErrorAlert';
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -102,55 +104,51 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 pl-10 lg:pl-0">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
-              >
-                <IconLayoutKanban className="w-5 h-5 text-white" />
-              </button>
-              <div>
-                <h1 className="text-lg font-bold text-foreground">Grup</h1>
-                <p className="text-xs text-muted-foreground">Kelompokkan layanan</p>
-              </div>
-            </div>
-            <button
-              onClick={openCreate}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
-            >
-              <IconPlus className="w-4 h-4" />
-              Buat Grup
-            </button>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Grup</h1>
+            <p className="text-sm text-muted-foreground mt-1">Kelompokkan layanan</p>
           </div>
+          <Button onClick={openCreate} className="rounded-xl">
+            <IconPlus className="w-4 h-4 mr-2" />
+            Buat Grup
+          </Button>
         </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <IconAlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        <Separator />
+
+        <ErrorAlert message={error} onClose={() => setError('')} />
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="rounded-2xl p-4">
+                <CardContent className="p-0">
+                  <Skeleton className="h-5 w-32 mb-3" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : groups.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <IconLayoutKanban className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada grup</h3>
-            <p className="text-muted-foreground mb-6">Kelompokkan layanan agar pelanggan mudah memilih</p>
-            <Button onClick={openCreate}>
-              <IconPlus className="w-4 h-4 mr-2" />
-              Buat Grup
-            </Button>
-          </motion.div>
+          <Card className="rounded-2xl border-dashed">
+            <CardContent className="p-12 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                <IconLayoutKanban className="w-8 h-8 text-muted-foreground/40" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada grup</h3>
+              <p className="text-sm text-muted-foreground mb-4">Kelompokkan layanan agar pelanggan mudah memilih</p>
+              <Button onClick={openCreate} className="rounded-xl">
+                <IconPlus className="w-4 h-4 mr-2" />
+                Buat Grup
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -162,70 +160,72 @@ export default function GroupsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                 >
-                  <Card>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <IconGripVertical className="w-4 h-4 text-muted-foreground/40" />
-                      <h3 className="font-semibold text-foreground">{g.name}</h3>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                        {g.serviceIds.length} layanan
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => openEdit(g)}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                      >
-                        <IconPencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(g._id)}
-                        className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                      >
-                        <IconTrash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  {g.serviceIds.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {g.serviceIds.map((s) => (
-                        <span key={s._id} className="text-xs bg-muted text-foreground px-2.5 py-1 rounded-full">
-                          {s.name}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Belum ada layanan di grup ini</p>
-                  )}
+                  <Card className="rounded-2xl">
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <IconGripVertical className="w-4 h-4 text-muted-foreground/40" />
+                          <h3 className="font-semibold text-foreground">{g.name}</h3>
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {g.serviceIds.length} layanan
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => openEdit(g)}
+                            className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                          >
+                            <IconPencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(g._id)}
+                            className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                          >
+                            <IconTrash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {g.serviceIds.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {g.serviceIds.map((s) => (
+                            <span key={s._id} className="text-xs bg-muted text-foreground px-2.5 py-1 rounded-full">
+                              {s.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Belum ada layanan di grup ini</p>
+                      )}
 
-                  {deleteId === g._id && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="mt-3 pt-3 border-t border-border flex items-center gap-3"
-                    >
-                      <p className="text-sm text-muted-foreground">Hapus grup ini?</p>
-                      <button
-                        onClick={() => handleDelete(g._id)}
-                        className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:opacity-90 transition-all"
-                      >
-                        Hapus
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(null)}
-                        className="px-3 py-1.5 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
-                      >
-                        Batal
-                      </button>
-                    </motion.div>
-                  )}
-                </Card>
+                      {deleteId === g._id && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="mt-3 pt-3 border-t border-border flex items-center gap-3"
+                        >
+                          <p className="text-sm text-muted-foreground">Hapus grup ini?</p>
+                          <button
+                            onClick={() => handleDelete(g._id)}
+                            className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:opacity-90 transition-all"
+                          >
+                            Hapus
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(null)}
+                            className="px-3 py-1.5 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
+                          >
+                            Batal
+                          </button>
+                        </motion.div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         )}
-      </main>
+      </div>
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -285,21 +285,22 @@ export default function GroupsPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setModalOpen(false)}
-                  className="flex-1 py-2.5 border border-border text-foreground font-medium rounded-xl hover:bg-muted transition-colors"
+                  className="flex-1 rounded-xl"
                 >
                   Batal
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleSave}
                   disabled={saving || !formName.trim()}
-                  className="flex-1 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-sm"
+                  className="flex-1 rounded-xl"
                 >
-                  {saving && <IconLoader2 className="w-4 h-4 animate-spin" />}
+                  {saving && <IconLoader2 className="w-4 h-4 animate-spin mr-2" />}
                   Simpan
-                </button>
+                </Button>
               </div>
             </div>
           </motion.div>

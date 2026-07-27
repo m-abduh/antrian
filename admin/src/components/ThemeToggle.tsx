@@ -1,12 +1,12 @@
 'use client';
 
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/lib/theme';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { IconSun, IconMoon } from '@tabler/icons-react';
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolved } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -17,11 +17,11 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(resolved === 'dark' ? 'light' : 'dark')}
       aria-label="Toggle theme"
       className="rounded-xl"
     >
-      {theme === 'dark' ? <IconSun className="w-4 h-4" /> : <IconMoon className="w-4 h-4" />}
+      {resolved === 'dark' ? <IconSun className="w-4 h-4" /> : <IconMoon className="w-4 h-4" />}
     </Button>
   );
 }

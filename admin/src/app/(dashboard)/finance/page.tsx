@@ -5,15 +5,16 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {
-  IconLoader2, IconUsers, IconCircleCheck, IconClock, IconPlayerSkipForward, IconWavesElectricity,
+  IconLoader2, IconUsers, IconCircleCheck, IconClock, IconPlayerSkipForward,
 } from '@tabler/icons-react';
 import { useStats } from '@/lib/hooks/useAdmin';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function FinancePage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { data: stats, isLoading } = useStats();
 
   useEffect(() => {
@@ -30,37 +31,37 @@ export default function FinancePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 pl-10 lg:pl-0">
-              <Button variant="ghost" size="icon" className="w-10 h-10 bg-primary hover:bg-primary/90" onClick={() => router.push('/dashboard')}>
-                <IconWavesElectricity className="w-5 h-5 text-white" />
-              </Button>
-              <div>
-                <h1 className="text-lg font-bold text-foreground">Rekap Antrian</h1>
-                <p className="text-xs text-muted-foreground">Statistik hari ini</p>
-              </div>
-            </div>
-          </div>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Rekap Antrian</h1>
+          <p className="text-sm text-muted-foreground mt-1">Statistik hari ini</p>
         </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+        <Separator />
+
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="rounded-2xl p-4">
+                <CardContent className="p-0">
+                  <Skeleton className="h-4 w-20 mb-3" />
+                  <Skeleton className="h-8 w-16" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : stats ? (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {statCards.map((s) => (
-                <Card key={s.label}>
+                <Card key={s.label} className="rounded-2xl border border-border">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm text-muted-foreground">{s.label}</p>
-                      <s.icon className={`w-4 h-4 p-0.5 rounded-full text-white ${s.color}`} />
+                      <div className={`w-8 h-8 rounded-lg ${s.color} flex items-center justify-center`}>
+                        <s.icon className="w-4 h-4 text-white" />
+                      </div>
                     </div>
                     <p className="text-3xl font-bold text-foreground">{s.value}</p>
                   </CardContent>
@@ -68,42 +69,46 @@ export default function FinancePage() {
               ))}
             </div>
 
-            <Card className="mt-8">
-              <CardContent className="p-6">
-              <h3 className="font-semibold text-foreground mb-4">Ringkasan</h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'Rata-rata waktu tunggu', value: stats.avgWaitTime ? `${stats.avgWaitTime} menit` : '-' },
-                  { label: 'Tanggal', value: stats.date },
-                  { label: 'Peak hour', value: stats.peakHours?.length ? stats.peakHours.map((p: any) => `${p.hour} (${p.count})`).join(', ') : '-' },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-                    <span className="text-sm font-medium text-foreground">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-            </Card>
+            <Separator />
 
-            {stats.servicesBreakdown?.length > 0 && (
-              <Card className="mt-4">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-foreground mb-4">Per Layanan</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card className="rounded-2xl">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold text-foreground mb-4">Ringkasan</h3>
                   <div className="space-y-3">
-                    {stats.servicesBreakdown.map((service: any) => (
-                      <div key={service.name} className="flex items-center justify-between">
-                        <span className="text-sm text-foreground">{service.name}</span>
-                        <span className="text-sm font-medium text-foreground bg-muted px-3 py-1 rounded-full">{service.count}</span>
+                    {[
+                      { label: 'Rata-rata waktu tunggu', value: stats.avgWaitTime ? `${stats.avgWaitTime} menit` : '-' },
+                      { label: 'Tanggal', value: stats.date },
+                      { label: 'Peak hour', value: stats.peakHours?.length ? stats.peakHours.map((p: any) => `${p.hour} (${p.count})`).join(', ') : '-' },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <span className="text-sm text-muted-foreground">{item.label}</span>
+                        <span className="text-sm font-medium text-foreground">{item.value}</span>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-            )}
+
+              {stats.servicesBreakdown?.length > 0 && (
+                <Card className="rounded-2xl">
+                  <CardContent className="p-5">
+                    <h3 className="font-semibold text-foreground mb-4">Per Layanan</h3>
+                    <div className="space-y-3">
+                      {stats.servicesBreakdown.map((service: any) => (
+                        <div key={service.name} className="flex items-center justify-between">
+                          <span className="text-sm text-foreground">{service.name}</span>
+                          <span className="text-sm font-medium text-foreground bg-muted px-3 py-1 rounded-full">{service.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </motion.div>
         ) : null}
-      </main>
+      </div>
     </div>
   );
 }

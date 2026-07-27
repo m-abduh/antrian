@@ -12,6 +12,12 @@ import {
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '@/lib/hooks/useAdmin';
 import { adminApi } from '@/lib/api/admin';
 import { imageUrl } from '@/lib/imageUrl';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ServiceForm {
   name: string;
@@ -110,13 +116,10 @@ export default function ServicesPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={openCreate}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
-              >
-                <IconPlus className="w-4 h-4" />
+              <Button onClick={openCreate}>
+                <IconPlus className="w-4 h-4 mr-2" />
                 Tambah Layanan
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -124,10 +127,10 @@ export default function ServicesPage() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {serviceError && (
-          <div className="mb-4 flex items-center gap-2 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-            <IconAlertCircle className="w-4 h-4 flex-shrink-0" />
-            {serviceError}
-          </div>
+          <Alert variant="destructive" className="mb-4">
+            <IconAlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <AlertDescription>{serviceError}</AlertDescription>
+          </Alert>
         )}
 
         {isLoading ? (
@@ -143,13 +146,10 @@ export default function ServicesPage() {
             <IconWavesElectricity className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada layanan</h3>
             <p className="text-muted-foreground mb-6">Tambahkan layanan pertama Anda</p>
-            <button
-              onClick={openCreate}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
-            >
-              <IconPlus className="w-4 h-4" />
+            <Button onClick={openCreate}>
+              <IconPlus className="w-4 h-4 mr-2" />
               Tambah Layanan
-            </button>
+            </Button>
           </motion.div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -162,8 +162,8 @@ export default function ServicesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.03 }}
-                  className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-all relative group"
                 >
+                  <Card className="rounded-2xl hover:shadow-md transition-all relative group">
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                       <IconCreditCard className="w-6 h-6 text-primary" />
@@ -226,6 +226,7 @@ export default function ServicesPage() {
                       </div>
                     </motion.div>
                   )}
+                </Card>
                 </motion.div>
               ))}
             </AnimatePresence>

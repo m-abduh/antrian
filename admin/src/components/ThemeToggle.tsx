@@ -2,6 +2,7 @@
 
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { IconSun, IconMoon } from '@tabler/icons-react';
 
 export function ThemeToggle() {
@@ -13,12 +14,14 @@ export function ThemeToggle() {
   if (!mounted) return <div className="w-9 h-9" />;
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="w-9 h-9 flex items-center justify-center rounded-xl bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
       aria-label="Toggle theme"
+      className="rounded-xl"
     >
       {theme === 'dark' ? <IconSun className="w-4 h-4" /> : <IconMoon className="w-4 h-4" />}
-    </button>
+    </Button>
   );
 }

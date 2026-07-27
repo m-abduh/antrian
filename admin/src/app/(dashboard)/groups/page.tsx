@@ -11,6 +11,9 @@ import {
 import { adminApi } from '@/lib/api/admin';
 import { useServices } from '@/lib/hooks/useAdmin';
 import type { Group } from '@/lib/types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -128,10 +131,10 @@ export default function GroupsPage() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {error && (
-          <div className="mb-4 flex items-center gap-2 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-            <IconAlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
-          </div>
+          <Alert variant="destructive" className="mb-4">
+            <IconAlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {loading ? (
@@ -143,13 +146,10 @@ export default function GroupsPage() {
             <IconLayoutKanban className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-1">Belum ada grup</h3>
             <p className="text-muted-foreground mb-6">Kelompokkan layanan agar pelanggan mudah memilih</p>
-            <button
-              onClick={openCreate}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:opacity-90 transition-all shadow-sm"
-            >
-              <IconPlus className="w-4 h-4" />
+            <Button onClick={openCreate}>
+              <IconPlus className="w-4 h-4 mr-2" />
               Buat Grup
-            </button>
+            </Button>
           </motion.div>
         ) : (
           <div className="space-y-3">
@@ -161,8 +161,8 @@ export default function GroupsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-card border border-border rounded-2xl p-5"
                 >
+                  <Card>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <IconGripVertical className="w-4 h-4 text-muted-foreground/40" />
@@ -219,6 +219,7 @@ export default function GroupsPage() {
                       </button>
                     </motion.div>
                   )}
+                </Card>
                 </motion.div>
               ))}
             </AnimatePresence>

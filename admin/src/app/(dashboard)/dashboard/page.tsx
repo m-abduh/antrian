@@ -13,6 +13,10 @@ import { useNotification } from '@/lib/hooks/useNotification';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { getAdminSocket, disconnectAdminSocket } from '@/lib/socket';
 import { useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const statusConfig: Record<string, { label: string; color: string; dot: string }> = {
   waiting: { label: 'Menunggu', color: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400', dot: 'bg-blue-500' },
@@ -94,17 +98,16 @@ export default function DashboardPage() {
                 <p className="text-xs text-muted-foreground hidden sm:block">{session?.user?.name}</p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => router.push('/finance')}
-                  className="hidden sm:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
-                >
-                  <IconChartBar className="w-4 h-4" />
+                <Button variant="ghost" size="sm" className="hidden sm:flex" onClick={() => router.push('/finance')}>
+                  <IconChartBar className="w-4 h-4 mr-1.5" />
                   Statistik
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={subscribe}
                   disabled={permission === 'denied'}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
+                  className={`rounded-xl ${
                     permission === 'granted'
                       ? 'text-green-600 dark:text-green-400 hover:bg-green-500/10'
                       : permission === 'denied'
@@ -114,7 +117,7 @@ export default function DashboardPage() {
                   title={permission === 'granted' ? 'Notifikasi aktif' : 'Aktifkan notifikasi'}
                 >
                   <IconBell className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -124,40 +127,43 @@ export default function DashboardPage() {
           <ErrorAlert message={actionError} onClose={() => setActionError('')} />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {statCards.map((s) => (
-              <div key={s.label} className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <s.icon className={`w-4 h-4 p-0.5 rounded-full text-white ${s.color}`} />
-                </div>
-                <p className="text-2xl font-bold text-foreground">{s.value}</p>
-              </div>
+              <Card key={s.label}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <s.icon className={`w-4 h-4 p-0.5 rounded-full text-white ${s.color}`} />
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
           <div className="flex gap-3">
             <div className="relative flex-1">
               <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
+              <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari nama..."
-                className="w-full pl-9 pr-8 py-2 text-sm bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="pl-9 pr-8"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="icon" onClick={() => setSearch('')} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7">
                   <IconX className="w-4 h-4" />
-                </button>
+                </Button>
               )}
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-sm bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
-              <option value="">Semua</option>
-              {Object.entries(statusConfig).map(([key, cfg]) => (
-                <option key={key} value={key}>{cfg.label}</option>
-              ))}
-            </select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Semua" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Semua</SelectItem>
+                {Object.entries(statusConfig).map(([key, cfg]) => (
+                  <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </header>
@@ -179,7 +185,7 @@ export default function DashboardPage() {
               <p className="text-muted-foreground">Belum ada antrian untuk hari ini</p>
             </motion.div>
           ) : (
-            <div className="space-y-3">
+            <motion.div className="space-y-3">
               {filtered.map((q, i) => (
                 <motion.div
                   key={q._id}
@@ -188,8 +194,8 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -16 }}
                   transition={{ delay: i * 0.02 }}
-                  className="bg-card border border-border rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow"
                 >
+                  <Card className="bg-card border border-border rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center flex-shrink-0">
                       <span className="text-lg font-bold text-foreground">{q.queueNumber}</span>
@@ -215,50 +221,59 @@ export default function DashboardPage() {
 
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {q.status === 'waiting' && (
-                        <button
+                        <Button
+                          variant="default"
+                          size="sm"
                           onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'call' }))}
                           disabled={updateStatus.isPending}
-                          className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-xl disabled:opacity-50 hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
+                          className="shadow-sm"
                         >
-                          {updateStatus.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                           Panggil
-                        </button>
+                        </Button>
                       )}
                       {q.status === 'called' && (
-                        <button
+                        <Button
+                          variant="default"
+                          size="sm"
                           onClick={() => handleMutation(() => startServing.mutateAsync(q._id))}
                           disabled={startServing.isPending}
-                          className="px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-xl disabled:opacity-50 hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
+                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-sm"
                         >
-                          {startServing.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {startServing.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                           Mulai
-                        </button>
+                        </Button>
                       )}
                       {q.status === 'serving' && (
-                        <button
+                        <Button
+                          variant="default"
+                          size="sm"
                           onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'done' }))}
                           disabled={updateStatus.isPending}
-                          className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-xl disabled:opacity-50 hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
+                          className="bg-green-500 hover:bg-green-600 text-white shadow-sm"
                         >
-                          {updateStatus.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                           Selesai
-                        </button>
+                        </Button>
                       )}
                       {(q.status === 'waiting' || q.status === 'called') && (
-                        <button
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'skip' }))}
                           disabled={updateStatus.isPending}
-                          className="px-4 py-2 bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium rounded-xl hover:bg-red-500/20 transition-all flex items-center gap-1.5"
+                          className="bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
                         >
-                          {updateStatus.isPending ? <IconLoader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                           Lewati
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
+                </Card>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </main>

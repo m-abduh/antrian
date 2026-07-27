@@ -8,6 +8,8 @@ import {
   IconLoader2, IconUsers, IconCircleCheck, IconClock, IconPlayerSkipForward, IconWavesElectricity,
 } from '@tabler/icons-react';
 import { useStats } from '@/lib/hooks/useAdmin';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function FinancePage() {
   const router = useRouter();
@@ -33,12 +35,9 @@ export default function FinancePage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 pl-10 lg:pl-0">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-sm"
-              >
+              <Button variant="ghost" size="icon" className="w-10 h-10 bg-primary hover:bg-primary/90" onClick={() => router.push('/dashboard')}>
                 <IconWavesElectricity className="w-5 h-5 text-white" />
-              </button>
+              </Button>
               <div>
                 <h1 className="text-lg font-bold text-foreground">Rekap Antrian</h1>
                 <p className="text-xs text-muted-foreground">Statistik hari ini</p>
@@ -57,17 +56,20 @@ export default function FinancePage() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {statCards.map((s) => (
-                <div key={s.label} className="bg-card border border-border rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm text-muted-foreground">{s.label}</p>
-                    <s.icon className={`w-4 h-4 p-0.5 rounded-full text-white ${s.color}`} />
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">{s.value}</p>
-                </div>
+                <Card key={s.label}>
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm text-muted-foreground">{s.label}</p>
+                      <s.icon className={`w-4 h-4 p-0.5 rounded-full text-white ${s.color}`} />
+                    </div>
+                    <p className="text-3xl font-bold text-foreground">{s.value}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
 
-            <div className="mt-8 bg-card border border-border rounded-2xl p-6">
+            <Card className="mt-8">
+              <CardContent className="p-6">
               <h3 className="font-semibold text-foreground mb-4">Ringkasan</h3>
               <div className="space-y-3">
                 {[
@@ -81,20 +83,23 @@ export default function FinancePage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </CardContent>
+            </Card>
 
             {stats.servicesBreakdown?.length > 0 && (
-              <div className="mt-4 bg-card border border-border rounded-2xl p-6">
-                <h3 className="font-semibold text-foreground mb-4">Per Layanan</h3>
-                <div className="space-y-3">
-                  {stats.servicesBreakdown.map((service: any) => (
-                    <div key={service.name} className="flex items-center justify-between">
-                      <span className="text-sm text-foreground">{service.name}</span>
-                      <span className="text-sm font-medium text-foreground bg-muted px-3 py-1 rounded-full">{service.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Card className="mt-4">
+                <CardContent className="p-6">
+                  <h3 className="font-semibold text-foreground mb-4">Per Layanan</h3>
+                  <div className="space-y-3">
+                    {stats.servicesBreakdown.map((service: any) => (
+                      <div key={service.name} className="flex items-center justify-between">
+                        <span className="text-sm text-foreground">{service.name}</span>
+                        <span className="text-sm font-medium text-foreground bg-muted px-3 py-1 rounded-full">{service.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </motion.div>
         ) : null}

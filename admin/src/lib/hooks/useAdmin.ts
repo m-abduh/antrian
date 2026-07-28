@@ -48,10 +48,12 @@ export function useStartServing() {
 }
 
 export function useStats(date?: string) {
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = !date || date === today;
   return useQuery<Stats>({
     queryKey: [...statsKeys.all, date],
     queryFn: () => adminApi.getStats(date),
-    refetchInterval: date === new Date().toISOString().split('T')[0] ? 30000 : Infinity,
+    refetchInterval: isToday ? 30_000 : Infinity,
   });
 }
 

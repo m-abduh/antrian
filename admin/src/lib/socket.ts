@@ -11,7 +11,12 @@ export function getAdminSocket(): Socket | null {
   if (adminSocket) return adminSocket;
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   adminSocket = io(baseUrl, { auth: { token }, transports: ['websocket', 'polling'] });
-  adminSocket.on('disconnect', () => { adminSocket = null; });
+  adminSocket.on('connect_error', (err) => {
+    if (err.message === 'Invalid token') {
+      disconnectAdminSocket();
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
+  });
   return adminSocket;
 }
 

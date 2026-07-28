@@ -10,7 +10,6 @@ export function getCustomerSocket(slug: string): Socket {
   if (customerSocket) customerSocket.disconnect();
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   customerSocket = io(baseUrl, { query: { slug }, transports: ['websocket', 'polling'] });
-  customerSocket.on('disconnect', () => { customerSocket = null; currentSlug = null; });
   currentSlug = slug;
   return customerSocket;
 }

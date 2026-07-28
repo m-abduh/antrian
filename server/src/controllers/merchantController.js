@@ -108,6 +108,7 @@ export async function createQueue(req, res, next) {
     });
 
     const io = req.app.get('io');
+    console.log('[queue:new] io available:', !!io, 'slug:', merchant.slug);
     if (io) {
       const publicQueue = {
         _id: queue._id,
@@ -118,7 +119,11 @@ export async function createQueue(req, res, next) {
         estimatedStartTime: queue.estimatedStartTime,
         createdAt: queue.createdAt,
       };
-      io.to(`merchant:${merchant.slug}`).emit('queue:new', { queue: publicQueue });
+      const room = `merchant:${merchant.slug}`;
+      const sockets = await io.in(room).fetchSockets();
+      console.log('[queue:new] room:', room, 'sockets:', sockets.length,
+        sockets.map(s => ({ id: s.id.slice(0, 6), admin: !!s.admin, slug: !!s.slug })));
+      io.to(room).emit('queue:new', { queue: publicQueue });
     }
 
     return success(res, {

@@ -59,11 +59,13 @@ export function initSocket(httpServer, app) {
         const merchant = await Merchant.findById(socket.admin.merchantId).select('slug');
         if (merchant) {
           socket.join(`merchant:${merchant.slug}`);
+          logger.info(`[Socket] Admin connected: ${socket.admin.name} id=${socket.id.slice(0, 6)} joined=merchant:${merchant.slug}`);
+        } else {
+          logger.warn(`[Socket] Admin merchant not found: ${socket.admin.merchantId}`);
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        logger.error(`[Socket] Admin merchant lookup failed: ${err.message}`);
       }
-      logger.info(`[Socket] Admin connected: ${socket.admin.name} (${socket.admin.merchantId})`);
     }
 
     socket.on('disconnect', () => {

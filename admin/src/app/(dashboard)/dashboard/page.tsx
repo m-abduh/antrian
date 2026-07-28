@@ -78,7 +78,8 @@ export default function DashboardPage() {
     const socket = getAdminSocket();
     if (!socket) return;
 
-    const handleQueueEvent = () => {
+    const handleQueueEvent = (payload?: any) => {
+      console.log('[WS Admin] received queue:new/status', payload);
       queryClient.invalidateQueries({ queryKey: queueKeys.all });
       queryClient.invalidateQueries({ queryKey: statsKeys.all });
     };

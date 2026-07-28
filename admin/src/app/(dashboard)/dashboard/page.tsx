@@ -114,18 +114,19 @@ function QueueActions({
         <button
           onClick={() => togglePayment.mutate(queue._id)}
           disabled={togglePayment.isPending}
-          className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+          className={`h-9 rounded-xl flex items-center gap-1.5 px-3 flex-shrink-0 transition-all text-xs font-medium ${
             queue.isPaid
               ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-              : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
+              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
           }`}
           title={queue.isPaid ? 'Sudah Dibayar' : 'Tandai Sudah Bayar'}
         >
           {togglePayment.isPending ? (
-            <IconLoader2 className="w-4 h-4 animate-spin" />
+            <IconLoader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <IconCreditCard className="w-4 h-4" />
+            <IconCreditCard className="w-3.5 h-3.5" />
           )}
+          {queue.isPaid ? 'Lunas' : 'Bayar'}
         </button>
       )}
     </>
@@ -233,7 +234,8 @@ export default function DashboardPage() {
   if (status !== 'authenticated' || !session?.user) return null;
 
   const filtered = queues?.filter((q) => {
-    if (!statusFilter && (q.status === 'done' || q.status === 'skipped') && q.isPaid) return false;
+    if (!statusFilter && q.status === 'skipped') return false;
+    if (!statusFilter && q.status === 'done' && q.isPaid) return false;
     return q.customerName.toLowerCase().includes(search.toLowerCase());
   }) ?? [];
 

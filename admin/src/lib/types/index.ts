@@ -100,3 +100,14 @@ export interface ApiResponse<T> {
   data: T;
   error?: string;
 }
+
+export interface Customer {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerToken: string;
+  totalKunjungan: number;
+  totalBelanja: number;
+  terakhirAntri: string;
+  ratingRata: number | null;
+}

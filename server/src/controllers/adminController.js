@@ -624,6 +624,65 @@ export async function getStats(req, res, next) {
     next(err);
   }
 }
+
+export async function getCustomers(req, res, next) {
+  try {
+    const { search } = req.query;
+    const match: Record<string, any> = { merchantId: req.admin.merchantId };
+
+    if (search) {
+      match.$or = [
+        { customerName: { $regex: search, $options: 'i' } },
+        { customerPhone: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const customers = await Queue.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: { $ifNull: ['$customerPhone', '$customerToken'] },
+          customerName: { $last: '$customerName' },
+          customerPhone: { $last: '$customerPhone' },
+          customerToken: { $last: '$customerToken' },
+          totalKunjungan: { $sum: 1 },
+          totalBelanja: {
+            $sum: {
+              $sum: {
+                $map: {
+                  input: '$services',
+                  as: 's',
+                  in: { $multiply: ['$$s.price', '$$s.quantity'] },
+                },
+              },
+            },
+          },
+          terakhirAntri: { $max: '$createdAt' },
+          ratingRata: { $avg: '$rating' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          customerName: 1,
+          customerPhone: 1,
+          customerToken: 1,
+          totalKunjungan: 1,
+          totalBelanja: { $ifNull: ['$totalBelanja', 0] },
+          terakhirAntri: 1,
+          ratingRata: { $ifNull: ['$ratingRata', null] },
+        },
+      },
+      { $sort: { terakhirAntri: -1 } },
+    ]);
+
+    return success(res, customers);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getServices(req, res, next) {
   try {
     const services = await Service.find({ merchantId: req.admin.merchantId }).sort({ category: 1, name: 1 });

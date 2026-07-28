@@ -11,7 +11,7 @@ import {
 import {
   IconLayoutDashboard, IconChartBar, IconSettings, IconLogout,
   IconLayoutKanban, IconReportAnalytics, IconWavesElectricity, IconVocabulary,
-  IconShoppingCart,
+  IconShoppingCart, IconUsers,
 } from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
@@ -26,6 +26,7 @@ const navItems = [
   { label: 'Laporan', icon: IconReportAnalytics, href: '/finance' },
   { label: 'Mode Panggilan', icon: IconVocabulary, href: '/call-mode' },
   { label: 'Field Checkout', icon: IconShoppingCart, href: '/checkout-field' },
+  { label: 'Pelanggan', icon: IconUsers, href: '/customers' },
   { label: 'Pengaturan', icon: IconSettings, href: '/settings' },
 ];
 

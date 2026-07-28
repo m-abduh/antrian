@@ -15,6 +15,7 @@ import {
   updateQueueStatus,
   startServing,
   togglePayment,
+  getCustomers,
   getStats,
   getServices,
   createService,
@@ -49,6 +50,7 @@ router.patch('/queues/:id/start', startServing);
 router.patch('/queues/:id/payment', togglePayment);
 
 router.get('/stats', getStats);
+router.get('/customers', getCustomers);
 
 router.get('/services', getServices);
 router.post('/services', createService);

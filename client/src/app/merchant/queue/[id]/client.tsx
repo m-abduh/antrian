@@ -37,7 +37,8 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
   const { data: fetchedQueue, isLoading: queueLoading } = useQuery<Queue>({
     queryKey: ['queue', slug, queueId],
     queryFn: () => merchantApi.getQueue(slug, queueId),
-    enabled: !currentQueue,
+    staleTime: 0,
+    refetchInterval: 15_000,
   });
   const [called, setCalled] = useState(false);
   const [rating, setRating] = useState(0);
@@ -48,6 +49,8 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
 
   const myQueue = liveData?.waiting?.find((q) => q._id === queueId)
     || (liveData?.current?._id === queueId ? liveData.current : null);
+
+  const validCurrent = currentQueue && (currentQueue._id === queueId || (currentQueue as any).id === queueId);
 
   if (!slug) {
     return (
@@ -60,7 +63,7 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
     );
   }
 
-  const queue = currentQueue || myQueue || fetchedQueue;
+  const queue = validCurrent ? currentQueue : (myQueue || fetchedQueue);
   const statusInfo = queue ? statusConfig[queue.status] : statusConfig.waiting;
 
   useEffect(() => {

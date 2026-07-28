@@ -3,5 +3,5 @@ import { QueueClient } from './client';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const [slug, { id }] = await Promise.all([getMerchantSlugServer(), params]);
-  return <QueueClient slug={slug} queueId={id} />;
+  return <QueueClient key={id} slug={slug} queueId={id} />;
 }

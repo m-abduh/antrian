@@ -115,18 +115,22 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
     }
   }, [called]);
 
-  const handleRating = useCallback(async (value: number) => {
+  const handleRating = useCallback((value: number) => {
     setRating(value);
+  }, []);
+
+  const submitRating = useCallback(async () => {
+    if (!rating) return;
     setRatingLoading(true);
     try {
-      await api.post(`/merchant/${slug}/queue/${queueId}/rating`, { rating: value, comment: ratingComment });
+      await api.post(`/merchant/${slug}/queue/${queueId}/rating`, { rating, comment: ratingComment });
       setRatingSent(true);
     } catch {
       setRating(0);
     } finally {
       setRatingLoading(false);
     }
-  }, [slug, queueId, ratingComment]);
+  }, [slug, queueId, rating, ratingComment]);
 
   const progressPercent = totalInLine > 0
     ? Math.round(((totalInLine - positionInLine) / totalInLine) * 100)
@@ -399,13 +403,26 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
                   ))}
                 </div>
                 {rating > 0 && (
-                  <textarea
-                    value={ratingComment}
-                    onChange={(e) => setRatingComment(e.target.value)}
-                    placeholder="Tulis komentar (opsional)..."
-                    rows={2}
-                    className="mt-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
+                  <>
+                    <textarea
+                      value={ratingComment}
+                      onChange={(e) => setRatingComment(e.target.value)}
+                      placeholder="Tulis komentar (opsional)..."
+                      rows={2}
+                      className="mt-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <button
+                      onClick={submitRating}
+                      disabled={ratingLoading}
+                      className="mt-2 w-full h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {ratingLoading ? (
+                        <><IconLoader2 className="w-4 h-4 animate-spin" /> Mengirim...</>
+                      ) : (
+                        'Kirim Penilaian'
+                      )}
+                    </button>
+                  </>
                 )}
                 {ratingLoading && <IconLoader2 className="w-5 h-5 animate-spin text-primary mx-auto mt-2" />}
               </CardContent>

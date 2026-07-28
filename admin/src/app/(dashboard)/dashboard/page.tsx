@@ -8,6 +8,9 @@ import {
   IconUsers, IconClock, IconCircleCheck, IconPlayerSkipForward, IconLoader2,
   IconBrandWhatsapp, IconSearch, IconX, IconAlertCircle, IconChartBar,
 } from '@tabler/icons-react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
+} from '@/components/ui/dialog';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
 import type { Queue } from '@/lib/types';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -54,6 +57,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [actionError, setActionError] = useState('');
+  const [skipConfirm, setSkipConfirm] = useState<Queue | null>(null);
   const updateStatus = useUpdateQueueStatus();
   const startServing = useStartServing();
 
@@ -286,18 +290,18 @@ export default function DashboardPage() {
                                 Selesai
                               </Button>
                             )}
-                            {(q.status === 'waiting' || q.status === 'called') && (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'skip' }))}
-                                disabled={updateStatus.isPending}
-                                className="rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
-                              >
-                                {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                Lewati
-                              </Button>
-                            )}
+            {(q.status === 'waiting' || q.status === 'called') && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setSkipConfirm(q)}
+                disabled={updateStatus.isPending}
+                className="rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
+              >
+                {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                Lewati
+              </Button>
+            )}
                           </div>
                         </div>
                       </CardContent>
@@ -309,6 +313,38 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!skipConfirm} onOpenChange={(open) => !open && setSkipConfirm(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Lewati Antrian</DialogTitle>
+            <DialogDescription>
+              Yakin ingin melewatkan antrian <strong>{skipConfirm?.queueNumber} ({skipConfirm?.customerName})</strong>?
+              <br />
+              Tindakan ini tidak bisa dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" size="sm" className="rounded-xl">Batal</Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (skipConfirm) {
+                  handleMutation(() => updateStatus.mutateAsync({ id: skipConfirm._id, action: 'skip' }));
+                }
+                setSkipConfirm(null);
+              }}
+              className="rounded-xl"
+            >
+              {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              Ya, Lewati
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

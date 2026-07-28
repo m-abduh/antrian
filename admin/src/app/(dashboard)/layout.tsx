@@ -28,9 +28,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const socket = getAdminSocket();
     if (!socket) return;
 
-    const handleNew = () => setNewOrderCount((c) => c + 1);
+    const handleNew = (payload: any) => {
+      if (payload?.queue?.status === 'waiting') setNewOrderCount((c) => c + 1);
+    };
+    const handleStatus = (payload: any) => {
+      if (payload?.action === 'done' || payload?.action === 'skip') {
+        setNewOrderCount((c) => Math.max(0, c - 1));
+      }
+    };
     socket.on('queue:new', handleNew);
-    return () => { socket.off('queue:new', handleNew); };
+    socket.on('queue:status', handleStatus);
+    return () => {
+      socket.off('queue:new', handleNew);
+      socket.off('queue:status', handleStatus);
+    };
   }, [status]);
 
   const handleSubscribe = useCallback(async () => {
@@ -44,26 +55,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <SidebarProvider>
         <AdminSidebar />
         <SidebarInset>
-          <header className="border-b border-border h-14 flex items-center px-4 gap-4 bg-card sticky top-0 z-10">
+          <header className={`border-b h-14 flex items-center px-4 gap-4 sticky top-0 z-10 transition-colors ${newOrderCount > 0 ? 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800' : 'bg-card border-border'}`}>
             <SidebarTrigger />
             <div className="flex-1" />
             <Button
               variant="ghost"
-              size="icon"
               onClick={handleSubscribe}
               disabled={permission === 'denied' || notifLoading}
               suppressHydrationWarning
-              className="relative rounded-xl"
+              className="relative rounded-xl gap-2"
             >
               {notifLoading ? (
                 <IconLoader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <IconBell className="w-4 h-4" />
               )}
-              {newOrderCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center font-mono">
-                  {newOrderCount}
+              {newOrderCount > 0 ? (
+                  <span className="text-xs font-medium">
+                  {newOrderCount} pesanan baru
                 </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">Notifikasi</span>
               )}
             </Button>
           </header>

@@ -8,7 +8,8 @@ let adminSocket: Socket | null = null;
 export function getAdminSocket(): Socket | null {
   const token = getAccessToken();
   if (!token) return null;
-  if (adminSocket) return adminSocket;
+  if (adminSocket?.connected) return adminSocket;
+  if (adminSocket) { adminSocket.disconnect(); adminSocket = null; }
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   adminSocket = io(baseUrl, { auth: { token }, transports: ['websocket', 'polling'] });
   adminSocket.on('connect_error', (err) => {

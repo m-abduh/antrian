@@ -275,6 +275,15 @@ export default function LoginPage() {
                 </>
               )}
             </motion.button>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Belum punya akun?{' '}
+                <Button variant="link" className="p-0 h-auto" onClick={() => router.push('/register')}>
+                  Daftar
+                </Button>
+              </p>
+            </div>
           </CardContent>
         </Card>
         </motion.div>

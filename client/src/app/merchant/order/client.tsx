@@ -9,6 +9,7 @@ import { IconUser, IconPhone, IconLoader2, IconArrowLeft, IconAlertCircle, IconX
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 import { saveActiveQueue } from '@/lib/activeQueue';
+import { getCustomerToken, setCustomerToken } from '@/lib/customerToken';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -48,11 +49,14 @@ export function OrderClient({ slug }: { slug: string }) {
   const onSubmit = useCallback(async (data: { customerName: string; customerPhone: string; serviceId: string }) => {
     setError('');
     try {
+      const existingToken = getCustomerToken();
       const result = await createQueue.mutateAsync({
         serviceIds: [data.serviceId],
         customerName: data.customerName,
         customerPhone: data.customerPhone,
+        customerToken: existingToken || undefined,
       });
+      if (result.customerToken) setCustomerToken(result.customerToken);
       setQueue(result.queue as never);
       saveActiveQueue(slug, { queueId: result.queue.id, number: result.queue.queueNumber, status: 'waiting' });
       router.push(`/queue/${result.queue.id}`);

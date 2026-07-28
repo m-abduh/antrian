@@ -8,6 +8,7 @@ export function useCreateQueue(slug: string) {
     customerName: string;
     customerPhone: string;
     note?: string;
+    customerToken?: string;
   }>({
     mutationFn: (data) => merchantApi.createQueue(slug, data),
   });

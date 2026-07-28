@@ -35,5 +35,6 @@ export function useLiveQueue(slug: string, enabled = true) {
     queryFn: () => merchantApi.getLiveQueue(slug) as Promise<LiveQueueResponse>,
     enabled: enabled && !!slug,
     staleTime: 0,
+    refetchInterval: 15_000,
   });
 }

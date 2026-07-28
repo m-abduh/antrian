@@ -2,6 +2,7 @@ import Merchant from '../models/Merchant.js';
 import Service from '../models/Service.js';
 import Queue from '../models/Queue.js';
 import PushSubscription from '../models/PushSubscription.js';
+import crypto from 'crypto';
 import { generateQueueNumber, calculateEstimatedTime } from '../utils/queueNumber.js';
 import { success, error } from '../utils/response.js';
 
@@ -41,7 +42,7 @@ export async function createQueue(req, res, next) {
       return error(res, 'Merchant tidak ditemukan', 404);
     }
 
-    const { serviceIds, customerName, customerPhone, note } = req.body;
+    const { serviceIds, customerName, customerPhone, note, customerToken } = req.body;
 
     if (!serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
       return error(res, 'Pilih minimal 1 layanan');
@@ -58,7 +59,14 @@ export async function createQueue(req, res, next) {
       return error(res, 'Format nomor telepon tidak valid');
     }
 
-    const uniqueIds = [...new Set(serviceIds.map(id => id.toString()))];
+    const token = customerToken || crypto.randomUUID();
+
+    const counts = serviceIds.reduce((acc, id) => {
+      const k = id.toString();
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {});
+    const uniqueIds = Object.keys(counts);
 
     const services = await Service.find({
       _id: { $in: uniqueIds },
@@ -77,8 +85,10 @@ export async function createQueue(req, res, next) {
       status: { $in: ['waiting', 'called'] },
     });
 
-    const estimatedMinutes = calculateEstimatedTime(queuesAhead, 0);
+    const estimatedMinutes = calculateEstimatedTime(queuesAhead);
     const estimatedStartTime = queuesAhead > 0 ? new Date(Date.now() + estimatedMinutes * 60000) : null;
+
+    const totalPrice = services.reduce((sum, s) => sum + s.price * (counts[s._id.toString()] || 1), 0);
 
     const queue = await Queue.create({
       merchantId: merchant._id,
@@ -86,11 +96,13 @@ export async function createQueue(req, res, next) {
         serviceId: s._id,
         name: s.name,
         price: s.price,
+        quantity: counts[s._id.toString()] || 1,
       })),
       note: note || '',
       queueNumber,
       customerName: sanitizedName,
       customerPhone: customerPhone || '',
+      customerToken: token,
       status: 'waiting',
       estimatedStartTime,
     });
@@ -98,6 +110,7 @@ export async function createQueue(req, res, next) {
     const io = req.app.get('io');
     if (io) {
       const publicQueue = {
+        _id: queue._id,
         id: queue._id,
         queueNumber: queue.queueNumber,
         services: queue.services,
@@ -117,7 +130,10 @@ export async function createQueue(req, res, next) {
         estimatedStartTime: queue.estimatedStartTime,
         estimatedMinutes,
         queuesAhead,
+        totalPrice,
+        services: queue.services,
       },
+      customerToken: token,
     }, 201);
   } catch (err) {
     next(err);
@@ -166,6 +182,28 @@ export async function getLiveQueue(req, res, next) {
   }
 }
 
+export async function getMyQueues(req, res, next) {
+  try {
+    const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true });
+    if (!merchant) {
+      return error(res, 'Merchant tidak ditemukan', 404);
+    }
+
+    const { token } = req.query;
+    if (!token) {
+      return error(res, 'Token diperlukan', 400);
+    }
+
+    const queues = await Queue.find({ merchantId: merchant._id, customerToken: token })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    return success(res, queues);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function submitRating(req, res, next) {
   try {
     const { slug, id } = req.params;
@@ -208,7 +246,7 @@ export async function subscribePush(req, res, next) {
     await PushSubscription.findOneAndUpdate(
       { merchantId: merchant._id, endpoint },
       { merchantId: merchant._id, subscriptionType: 'customer', endpoint, keys, userAgent: req.headers['user-agent'] || '' },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
 
     return success(res, { message: 'Subscription saved' });

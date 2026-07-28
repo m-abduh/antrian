@@ -8,6 +8,7 @@ const queueServiceSchema = new mongoose.Schema({
   },
   name: { type: String, required: true },
   price: { type: Number, required: true },
+  quantity: { type: Number, required: true, min: 1, default: 1 },
 }, { _id: false });
 
 const queueSchema = new mongoose.Schema({
@@ -35,6 +36,11 @@ const queueSchema = new mongoose.Schema({
     trim: true,
     default: '',
     match: [/^\+?[0-9]{10,15}$/, 'Format nomor telepon tidak valid'],
+  },
+  customerToken: {
+    type: String,
+    index: true,
+    default: '',
   },
   status: {
     type: String,

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import { getMerchant, getServices, createQueue, getQueue, getLiveQueue, submitRating, subscribePush, unsubscribePush } from '../controllers/merchantController.js';
+import { getMerchant, getServices, createQueue, getQueue, getLiveQueue, getMyQueues, submitRating, subscribePush, unsubscribePush } from '../controllers/merchantController.js';
 import { getMerchantGroups } from '../controllers/groupController.js';
 
 const router = Router();
@@ -17,6 +17,7 @@ router.get('/:slug/services', getServices);
 router.get('/:slug/groups', getMerchantGroups);
 router.post('/:slug/queue', queueRateLimiter, createQueue);
 router.get('/:slug/queue/live', getLiveQueue);
+router.get('/:slug/queue/my', getMyQueues);
 router.get('/:slug/queue/:id', getQueue);
 router.post('/:slug/queue/:id/rating', submitRating);
 router.post('/:slug/subscribe', subscribePush);

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   IconCreditCard, IconMapPin, IconPhone, IconShoppingCart, IconBuildingStore,
@@ -9,14 +9,16 @@ import {
   IconArrowRight, IconCircleCheck, IconAlertTriangle, IconX, IconUsers,
 } from '@tabler/icons-react';
 import { useMerchant, useServices, useGroups, useLiveQueue } from '@/lib/hooks/useMerchant';
+import { useMyQueues } from '@/lib/hooks/useMyQueues';
 import { useCartStore } from '@/lib/store/cartStore';
 import { imageUrl } from '@/lib/imageUrl';
-import { getActiveQueue, updateActiveQueueStatus, clearActiveQueue } from '@/lib/activeQueue';
+import { getActiveQueue, clearActiveQueue } from '@/lib/activeQueue';
+import { getCustomerToken } from '@/lib/customerToken';
 import { getCustomerSocket } from '@/lib/socket';
 import { SocialIcon } from '@/components/SocialIcon';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { Service } from '@/lib/types';
+import type { Service, Queue, QueueService } from '@/lib/types';
 
 function Skeleton({ className }: { className: string }) {
   return <div className={`bg-muted rounded-2xl animate-pulse ${className}`} />;
@@ -34,41 +36,42 @@ export function MerchantClient({ slug }: { slug: string }) {
   const { data: services, isLoading: servicesLoading } = useServices(slug);
   const { data: groups } = useGroups(slug);
   const { items, addItem, updateQuantity, totalPrice, itemCount } = useCartStore();
-  const [activeQ, setActiveQ] = useState<{ queueId: string; number: string; status: string } | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const queryClient = useQueryClient();
   const { data: liveData } = useLiveQueue(slug);
 
-  const activeQRef = useRef(activeQ);
-  activeQRef.current = activeQ;
+  const token = getCustomerToken();
+  const { data: myQueues } = useMyQueues(slug, token);
 
-  useEffect(() => {
-    const aq = getActiveQueue(slug);
-    setActiveQ(aq ? { queueId: aq.queueId, number: aq.number, status: aq.status } : null);
-  }, [slug]);
+  const DISMISSED_KEY = `antriin-dismissed-${slug}`;
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const raw = localStorage.getItem(DISMISSED_KEY);
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
+  });
 
-  useEffect(() => {
-    if (!activeQ || !liveData) return;
-    const match = liveData.waiting?.find(q => q._id === activeQ.queueId)
-      || (liveData.current?._id === activeQ.queueId ? liveData.current : null);
-    if (match && match.status !== activeQ.status) {
-      setActiveQ(prev => prev ? { ...prev, status: match.status } : null);
-      updateActiveQueueStatus(slug, match.status);
-    }
-  }, [liveData, activeQ?.queueId, slug]);
+  const saveDismissed = useCallback((ids: Set<string>) => {
+    try { localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids])); } catch { /* */ }
+  }, [DISMISSED_KEY]);
+
+  const visibleQueues = useMemo(() => {
+    if (!myQueues) return [];
+    return myQueues.filter((q) => !dismissedIds.has(q._id));
+  }, [myQueues, dismissedIds]);
+
+  const legacyActiveQ = !token ? getActiveQueue(slug) : null;
 
   useEffect(() => {
     const socket = getCustomerSocket(slug);
-    const handler = (data: { queue: { _id: string; status: string; queueNumber?: string }; action: string }) => {
-      const cur = activeQRef.current;
-      if (cur && cur.queueId === data.queue._id) {
-        setActiveQ({ ...cur, status: data.queue.status });
-        updateActiveQueueStatus(slug, data.queue.status);
-      }
+    const handler = () => {
       queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });
+      queryClient.invalidateQueries({ queryKey: ['myQueues', slug] });
     };
     socket.on('queue:status', handler);
-    return () => { socket.off('queue:status', handler); };
+    socket.on('queue:new', handler);
+    return () => { socket.off('queue:status', handler); socket.off('queue:new', handler); };
   }, [slug, queryClient]);
 
   const getQty = (id: string) => items.find((i) => i._id === id)?.quantity || 0;
@@ -323,113 +326,31 @@ export function MerchantClient({ slug }: { slug: string }) {
           </div>
 
           {/* Antrian aktif */}
-          <AnimatePresence>
-            {activeQ && (
-              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                <Link href={`/queue/${activeQ.queueId}`} className={`relative flex items-stretch border rounded-2xl overflow-hidden transition-all group ${
-                  activeQ.status === 'done' ? 'bg-gradient-to-r from-emerald-500/[0.06] to-transparent border-emerald-500/15'
-                  : activeQ.status === 'skipped' ? 'bg-gradient-to-r from-red-500/[0.06] to-transparent border-red-500/15'
-                  : activeQ.status === 'called' ? 'bg-gradient-to-r from-amber-500/[0.06] to-transparent border-amber-500/15'
-                  : activeQ.status === 'serving' ? 'bg-gradient-to-r from-purple-500/[0.06] to-transparent border-purple-500/15'
-                  : 'bg-gradient-to-r from-primary/[0.06] to-primary/[0.02] border-primary/15'
-                }`}>
-                  <div className={`hidden md:flex absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${
-                    activeQ.status === 'done' ? 'bg-emerald-400'
-                    : activeQ.status === 'skipped' ? 'bg-red-400'
-                    : activeQ.status === 'called' ? 'bg-amber-400'
-                    : activeQ.status === 'serving' ? 'bg-purple-400'
-                    : 'bg-primary/30'
-                  }`} />
-                  <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
-                    <div className={`relative w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      activeQ.status === 'done' ? 'bg-emerald-500/15'
-                      : activeQ.status === 'skipped' ? 'bg-red-500/15'
-                      : activeQ.status === 'called' ? 'bg-amber-500/15'
-                      : activeQ.status === 'serving' ? 'bg-purple-500/15'
-                      : 'bg-primary/15'
-                    }`}>
-                      {activeQ.status === 'done' ? (
-                        <IconCircleCheck className="w-4 h-4 text-emerald-500" />
-                      ) : activeQ.status === 'skipped' ? (
-                        <IconAlertTriangle className="w-4 h-4 text-red-500" />
-                      ) : activeQ.status === 'called' ? (
-                        <>
-                          <IconBell className="w-4 h-4 text-amber-500" />
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500" />
-                        </>
-                      ) : activeQ.status === 'serving' ? (
-                        <IconUsers className="w-4 h-4 text-purple-500" />
-                      ) : (
-                        <>
-                          <IconBell className="w-4 h-4 text-primary" />
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary" />
-                        </>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">
-                        {activeQ.status === 'done' ? 'Selesai'
-                        : activeQ.status === 'skipped' ? 'Dilewati'
-                        : activeQ.status === 'called' ? 'Dipanggil!'
-                        : activeQ.status === 'serving' ? 'Sedang Dilayani'
-                        : 'Antrian Aktif'} — tap untuk lihat
-                      </p>
-                      <p className={`text-sm font-semibold truncate ${
-                        activeQ.status === 'done' ? 'text-emerald-600 dark:text-emerald-400'
-                        : activeQ.status === 'skipped' ? 'text-red-600 dark:text-red-400'
-                        : activeQ.status === 'called' ? 'text-amber-600 dark:text-amber-400'
-                        : activeQ.status === 'serving' ? 'text-purple-600 dark:text-purple-400'
-                        : 'text-foreground'
-                      }`}>
-                        {activeQ.status === 'done' ? 'Sudah selesai'
-                        : activeQ.status === 'skipped' ? 'Dilewati'
-                        : activeQ.status === 'called' ? 'Silakan menuju loket'
-                        : activeQ.status === 'serving' ? 'Sedang dilayani'
-                        : 'Sedang berjalan'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`relative flex items-center gap-2.5 px-4 border-l border-dashed ${
-                    activeQ.status === 'done' ? 'border-emerald-500/20'
-                    : activeQ.status === 'skipped' ? 'border-red-500/20'
-                    : activeQ.status === 'called' ? 'border-amber-500/20'
-                    : activeQ.status === 'serving' ? 'border-purple-500/20'
-                    : 'border-primary/20'
-                  }`}>
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
-                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-background" />
-                    <div className="text-center">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60">No.</p>
-                      <p className={`font-mono text-lg font-bold tabular-nums leading-none ${
-                        activeQ.status === 'done' ? 'text-emerald-500'
-                        : activeQ.status === 'skipped' ? 'text-red-500'
-                        : activeQ.status === 'called' ? 'text-amber-500'
-                        : activeQ.status === 'serving' ? 'text-purple-500'
-                        : 'text-primary'
-                      }`}>{activeQ.number}</p>
-                    </div>
-                    <IconArrowRight className={`w-4 h-4 transition-all flex-shrink-0 group-hover:translate-x-0.5 ${
-                      activeQ.status === 'done' ? 'text-emerald-400/40 group-hover:text-emerald-400/70'
-                      : activeQ.status === 'skipped' ? 'text-red-400/40 group-hover:text-red-400/70'
-                      : activeQ.status === 'called' ? 'text-amber-400/40 group-hover:text-amber-400/70'
-                      : activeQ.status === 'serving' ? 'text-purple-400/40 group-hover:text-purple-400/70'
-                      : 'text-primary/40 group-hover:text-primary/70'
-                    }`} />
-                  </div>
-                  {(activeQ.status === 'done' || activeQ.status === 'skipped') && (
-                    <button
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearActiveQueue(slug); setActiveQ(null); }}
-                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-background/60 hover:bg-background border border-border/50 hover:border-border flex items-center justify-center transition-all z-10"
-                    >
-                      <IconX className="w-3 h-3 text-muted-foreground/60 hover:text-muted-foreground" />
-                    </button>
-                  )}
-                </Link>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {visibleQueues.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                Antrianku ({visibleQueues.length})
+              </h3>
+              <AnimatePresence initial={false}>
+                {visibleQueues.map((q, i) => (
+                  <QueueCard
+                    key={q._id}
+                    queue={q}
+                    index={i}
+                    onDismiss={(id) => {
+                      const next = new Set(dismissedIds);
+                      next.add(id);
+                      setDismissedIds(next);
+                      saveDismissed(next);
+                    }}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+          {legacyActiveQ && visibleQueues.length === 0 && (
+            <LegacyQueueCard slug={slug} legacyActiveQ={legacyActiveQ} />
+          )}
 
           {/* Filter Grup */}
           {groupOptions.length > 1 && (
@@ -644,4 +565,94 @@ export function MerchantClient({ slug }: { slug: string }) {
        </AnimatePresence>
      </div>
    );
+}
+
+const statusColors: Record<string, { dot: string; bg: string; text: string; label: string }> = {
+  waiting: { dot: 'bg-primary', bg: 'bg-primary/[0.04] border-primary/15', text: 'text-foreground', label: 'Menunggu' },
+  called: { dot: 'bg-amber-500', bg: 'bg-amber-500/[0.06] border-amber-500/20', text: 'text-amber-600 dark:text-amber-400', label: 'Dipanggil' },
+  serving: { dot: 'bg-purple-500', bg: 'bg-purple-500/[0.06] border-purple-500/20', text: 'text-purple-600 dark:text-purple-400', label: 'Dilayani' },
+  done: { dot: 'bg-emerald-500', bg: 'bg-emerald-500/[0.06] border-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400', label: 'Selesai' },
+  skipped: { dot: 'bg-red-500', bg: 'bg-red-500/[0.06] border-red-500/20', text: 'text-red-600 dark:text-red-400', label: 'Dilewati' },
+};
+
+function QueueCard({ queue, index, onDismiss }: { queue: Queue; index: number; onDismiss: (id: string) => void }) {
+  const sc = statusColors[queue.status] || statusColors.waiting;
+  const isDone = queue.status === 'done' || queue.status === 'skipped';
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
+      transition={{ delay: index * 0.03 }}
+    >
+      <Link href={`/queue/${queue._id}`} className={`relative flex items-stretch border rounded-2xl overflow-hidden transition-all group ${sc.bg}`}>
+        <div className="flex items-center gap-3 flex-1 min-w-0 p-3.5">
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${sc.dot.replace('bg-', 'bg-').replace('500', '500/15')}`}>
+            <span className="font-bold text-sm">{queue.queueNumber.replace(/^A/, '')}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-xs font-semibold ${sc.text}`}>{sc.label}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} ${queue.status === 'waiting' || queue.status === 'called' ? 'animate-pulse' : ''}`} />
+            </div>
+            <p className="text-sm font-medium text-foreground truncate">{queue.customerName}</p>
+            {queue.services?.length > 0 && (
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {queue.services.map((s: QueueService) => s.quantity > 1 ? `${s.name} (×${s.quantity})` : s.name).join(', ')}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 px-3 border-l border-dashed border-border/50">
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60">No.</p>
+            <p className="font-mono text-base font-bold tabular-nums leading-none text-foreground">{queue.queueNumber}</p>
+          </div>
+          <IconArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-all flex-shrink-0" />
+        </div>
+        {isDone && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDismiss(queue._id); }}
+            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-background/60 hover:bg-background border border-border/50 hover:border-border flex items-center justify-center transition-all z-10"
+            title="Sembunyikan"
+          >
+            <IconX className="w-2.5 h-2.5 text-muted-foreground/60 hover:text-muted-foreground" />
+          </button>
+        )}
+      </Link>
+    </motion.div>
+  );
+}
+
+function LegacyQueueCard({ slug, legacyActiveQ }: { slug: string; legacyActiveQ: NonNullable<ReturnType<typeof getActiveQueue>> }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+      <Link href={`/queue/${legacyActiveQ.queueId}`} className="relative flex items-stretch border border-primary/15 rounded-2xl overflow-hidden transition-all group bg-gradient-to-r from-primary/[0.06] to-primary/[0.02]">
+        <div className="flex items-center gap-3 flex-1 min-w-0 p-4">
+          <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <IconBell className="w-4 h-4 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Antrian Aktif — tap untuk lihat</p>
+            <p className="text-sm font-semibold text-foreground truncate">Sedang berjalan</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 px-4 border-l border-dashed border-primary/20">
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60">No.</p>
+            <p className="font-mono text-lg font-bold tabular-nums leading-none text-primary">{legacyActiveQ.number}</p>
+          </div>
+          <IconArrowRight className="w-4 h-4 text-primary/40 group-hover:text-primary/70 transition-all flex-shrink-0" />
+        </div>
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearActiveQueue(slug); }}
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-background/60 hover:bg-background border border-border/50 hover:border-border flex items-center justify-center transition-all z-10"
+        >
+          <IconX className="w-3 h-3 text-muted-foreground/60 hover:text-muted-foreground" />
+        </button>
+      </Link>
+    </motion.div>
+  );
 }

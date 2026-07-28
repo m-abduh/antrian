@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useMerchant } from '@/lib/hooks/useMerchant';
 import { imageUrl } from '@/lib/imageUrl';
 import { saveActiveQueue } from '@/lib/activeQueue';
+import { getCustomerToken, setCustomerToken } from '@/lib/customerToken';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,12 +68,15 @@ export function CartClient({ slug }: { slug: string }) {
     setError('');
     try {
       const serviceIds = items.flatMap((i) => Array(i.quantity).fill(i._id));
+      const existingToken = getCustomerToken();
       const result = await createQueue.mutateAsync({
         serviceIds,
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         note: note || undefined,
+        customerToken: existingToken || undefined,
       });
+      if (result.customerToken) setCustomerToken(result.customerToken);
       saveCustomerData(data.customerName, data.customerPhone);
       clearCart();
       saveActiveQueue(slug, { queueId: result.queue.id, number: result.queue.queueNumber, status: 'waiting' });

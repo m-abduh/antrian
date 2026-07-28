@@ -8,13 +8,15 @@ export async function generateQueueNumber(merchantId) {
   const counter = await Counter.findOneAndUpdate(
     { merchantId, date: today },
     { $inc: { seq: 1 } },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
 
   const prefix = 'A';
   return `${prefix}${String(counter.seq).padStart(3, '0')}`;
 }
 
-export function calculateEstimatedTime(queuesAhead, serviceDuration) {
-  return queuesAhead * serviceDuration;
+const AVG_SERVICE_DURATION_MINUTES = 10;
+
+export function calculateEstimatedTime(queuesAhead) {
+  return queuesAhead * AVG_SERVICE_DURATION_MINUTES;
 }

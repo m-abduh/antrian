@@ -19,6 +19,7 @@ export const merchantApi = {
     customerName: string;
     customerPhone: string;
     note?: string;
+    customerToken?: string;
   }) => api.post(`/merchant/${slug}/queue`, data).then(handleResponse) as Promise<CreateQueueResponse>,
 
   getLiveQueue: (slug: string) =>
@@ -26,4 +27,7 @@ export const merchantApi = {
 
   getQueue: (slug: string, id: string) =>
     api.get(`/merchant/${slug}/queue/${id}`).then(handleResponse) as Promise<Queue>,
+
+  getMyQueues: (slug: string, token: string) =>
+    api.get(`/merchant/${slug}/queue/my`, { params: { token } }).then(handleResponse) as Promise<Queue[]>,
 };

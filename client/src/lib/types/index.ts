@@ -39,6 +39,7 @@ export interface QueueService {
   serviceId: string;
   name: string;
   price: number;
+  quantity: number;
 }
 
 export interface Group {
@@ -76,7 +77,10 @@ export interface CreateQueueResponse {
     estimatedStartTime: string | null;
     estimatedMinutes: number;
     queuesAhead: number;
+    totalPrice: number;
+    services: { serviceId: string; name: string; price: number; quantity: number }[];
   };
+  customerToken: string;
 }
 
 export interface LiveQueueResponse {

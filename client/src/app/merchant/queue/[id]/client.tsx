@@ -8,9 +8,9 @@ import { useLiveQueue } from '@/lib/hooks/useMerchant';
 import { useClientStore } from '@/lib/store/clientStore';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { merchantApi } from '@/lib/api/merchant';
-import { getCustomerSocket, disconnectCustomerSocket } from '@/lib/socket';
+import { getCustomerSocket } from '@/lib/socket';
 import api from '@/lib/axios';
-import type { Queue } from '@/lib/types';
+import type { Queue, QueueService } from '@/lib/types';
 import { updateActiveQueueStatus } from '@/lib/activeQueue';
 import {
   IconClock, IconCircleCheck, IconLoader2, IconUsers, IconArrowLeft,
@@ -77,7 +77,8 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
     const socket = getCustomerSocket(slug);
 
     socket.on('queue:status', (data: { queue: Queue; action: string }) => {
-      if (data.queue._id === queueId) {
+      const qid = (data.queue as any).id ?? data.queue._id;
+      if (qid === queueId) {
         setQueue(data.queue);
         if (data.queue.status === 'done' || data.queue.status === 'skipped') {
           updateActiveQueueStatus(slug, data.queue.status);
@@ -93,7 +94,6 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
     return () => {
       socket.off('queue:status');
       socket.off('queue:new');
-      disconnectCustomerSocket();
     };
   }, [slug, queueId, setQueue, queryClient]);
 
@@ -341,8 +341,8 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
                               {q.customerName}
                               {isMe && <span className="text-[10px] md:text-xs ml-1.5 text-primary">(Kamu)</span>}
                             </p>
-                            {q.services?.length > 0 && (
-                              <p className="text-xs md:text-sm text-muted-foreground truncate">{q.services.map((s: any) => s.name).join(', ')}</p>
+                              {q.services?.length > 0 && (
+                              <p className="text-xs md:text-sm text-muted-foreground truncate">{q.services.map((s: QueueService) => s.quantity > 1 ? `${s.name} (×${s.quantity})` : s.name).join(', ')}</p>
                             )}
                           </div>
                           <IconChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />

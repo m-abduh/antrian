@@ -21,8 +21,8 @@ export async function subscribe(req, res, next) {
 
     await PushSubscription.findOneAndUpdate(
       { merchantId: req.admin?.merchantId, endpoint },
-      { endpoint, keys, userAgent: req.headers['user-agent'] || '' },
-      { upsert: true, new: true },
+      { merchantId: req.admin?.merchantId, subscriptionType: 'admin', endpoint, keys, userAgent: req.headers['user-agent'] || '' },
+      { upsert: true, returnDocument: 'after' },
     );
 
     return success(res, { message: 'Subscription saved' });

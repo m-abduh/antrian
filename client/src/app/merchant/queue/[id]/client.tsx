@@ -42,6 +42,7 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
   });
   const [called, setCalled] = useState(false);
   const [rating, setRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
   const [ratingSent, setRatingSent] = useState(false);
   const [ratingLoading, setRatingLoading] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -118,14 +119,14 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
     setRating(value);
     setRatingLoading(true);
     try {
-      await api.post(`/merchant/${slug}/queue/${queueId}/rating`, { rating: value });
+      await api.post(`/merchant/${slug}/queue/${queueId}/rating`, { rating: value, comment: ratingComment });
       setRatingSent(true);
     } catch {
       setRating(0);
     } finally {
       setRatingLoading(false);
     }
-  }, [slug, queueId]);
+  }, [slug, queueId, ratingComment]);
 
   const progressPercent = totalInLine > 0
     ? Math.round(((totalInLine - positionInLine) / totalInLine) * 100)
@@ -397,6 +398,15 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
                     </motion.button>
                   ))}
                 </div>
+                {rating > 0 && (
+                  <textarea
+                    value={ratingComment}
+                    onChange={(e) => setRatingComment(e.target.value)}
+                    placeholder="Tulis komentar (opsional)..."
+                    rows={2}
+                    className="mt-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                )}
                 {ratingLoading && <IconLoader2 className="w-5 h-5 animate-spin text-primary mx-auto mt-2" />}
               </CardContent>
             </Card>

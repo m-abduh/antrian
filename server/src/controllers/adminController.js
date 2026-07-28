@@ -683,6 +683,19 @@ export async function getCustomers(req, res, next) {
   }
 }
 
+export async function getRatings(req, res, next) {
+  try {
+    const queue = await Queue.find({ merchantId: req.admin.merchantId, rating: { $ne: null } })
+      .select('queueNumber customerName customerPhone services rating ratingComment createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return success(res, queue);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getServices(req, res, next) {
   try {
     const services = await Service.find({ merchantId: req.admin.merchantId }).sort({ category: 1, name: 1 });

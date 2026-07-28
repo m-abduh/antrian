@@ -220,7 +220,7 @@ export async function getMyQueues(req, res, next) {
 export async function submitRating(req, res, next) {
   try {
     const { slug, id } = req.params;
-    const { rating } = req.body;
+    const { rating, comment } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
       return error(res, 'Rating harus antara 1-5');
@@ -238,6 +238,9 @@ export async function submitRating(req, res, next) {
     }
 
     queue.rating = Math.round(rating);
+    if (comment && comment.trim()) {
+      queue.ratingComment = comment.trim();
+    }
     await queue.save();
 
     return success(res, { message: 'Terima kasih atas penilaiannya!', rating: queue.rating });

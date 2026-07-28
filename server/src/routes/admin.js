@@ -16,6 +16,7 @@ import {
   startServing,
   togglePayment,
   getCustomers,
+  getRatings,
   getStats,
   getServices,
   createService,
@@ -51,6 +52,7 @@ router.patch('/queues/:id/payment', togglePayment);
 
 router.get('/stats', getStats);
 router.get('/customers', getCustomers);
+router.get('/ratings', getRatings);
 
 router.get('/services', getServices);
 router.post('/services', createService);

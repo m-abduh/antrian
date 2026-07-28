@@ -53,6 +53,7 @@ const queueSchema = new mongoose.Schema({
     default: null,
   },
   isPaid: { type: Boolean, default: false },
+  ratingComment: { type: String, default: '' },
   estimatedStartTime: { type: Date, default: null },
   startedAt: { type: Date, default: null },
   finishedAt: { type: Date, default: null },

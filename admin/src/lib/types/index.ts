@@ -101,6 +101,18 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+
+
+export interface Rating {
+  _id: string;
+  queueNumber: string;
+  customerName: string;
+  customerPhone: string;
+  services: { name: string }[];
+  rating: number;
+  ratingComment: string;
+  createdAt: string;
+}
 export interface Customer {
   id: string;
   customerName: string;

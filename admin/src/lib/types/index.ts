@@ -43,7 +43,7 @@ export interface Group {
 }
 
 export interface SocialLink {
-  platform: 'instagram' | 'tiktok' | 'youtube' | 'facebook';
+  platform: 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'whatsapp' | 'telegram' | 'x' | 'threads';
   url: string;
 }
 

@@ -6,10 +6,9 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconUsers, IconClock, IconCircleCheck, IconPlayerSkipForward, IconLoader2,
-  IconBrandWhatsapp, IconSearch, IconX, IconAlertCircle, IconBell, IconChartBar,
+  IconBrandWhatsapp, IconSearch, IconX, IconAlertCircle, IconChartBar,
 } from '@tabler/icons-react';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
-import { useNotification } from '@/lib/hooks/useNotification';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { getAdminSocket, disconnectAdminSocket } from '@/lib/socket';
 import { useQueryClient } from '@tanstack/react-query';
@@ -56,7 +55,6 @@ export default function DashboardPage() {
   const [actionError, setActionError] = useState('');
   const updateStatus = useUpdateQueueStatus();
   const startServing = useStartServing();
-  const { permission, subscribe } = useNotification();
 
   const handleMutation = async (fn: () => Promise<any>) => {
     setActionError('');
@@ -121,16 +119,6 @@ export default function DashboardPage() {
               <Button variant="outline" size="sm" onClick={() => router.push('/finance')} className="rounded-xl">
                 <IconChartBar className="w-4 h-4 mr-1.5" />
                 Statistik
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={subscribe}
-                disabled={permission === 'denied'}
-                className="rounded-xl"
-                title={permission === 'granted' ? 'Notifikasi aktif' : 'Aktifkan notifikasi'}
-              >
-                <IconBell className="w-4 h-4" />
               </Button>
             </div>
           </div>

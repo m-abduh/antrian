@@ -628,7 +628,7 @@ export async function getStats(req, res, next) {
 export async function getCustomers(req, res, next) {
   try {
     const { search } = req.query;
-    const match: Record<string, any> = { merchantId: req.admin.merchantId };
+    const match = { merchantId: req.admin.merchantId };
 
     if (search) {
       match.$or = [

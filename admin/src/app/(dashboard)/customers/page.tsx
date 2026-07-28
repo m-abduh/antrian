@@ -4,10 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import {
   IconUsers, IconSearch, IconX, IconLoader2, IconBrandWhatsapp,
-  IconStar, IconStarFilled, IconCurrencyRupiah,
+  IconStarFilled,
 } from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,7 +52,7 @@ export default function CustomersPage() {
   if (status !== 'authenticated') return null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -86,17 +85,7 @@ export default function CustomersPage() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="rounded-2xl p-4">
-                <CardContent className="p-0">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="w-10 h-10 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-48" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <Skeleton key={i} className="h-14 w-full rounded-xl" />
             ))}
           </div>
         ) : !customers || customers.length === 0 ? (
@@ -110,68 +99,56 @@ export default function CustomersPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
-            {customers.map((c, i) => (
-              <motion.div
-                key={c.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
-              >
-                <Card className="rounded-2xl border border-border hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 sm:p-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-primary">{c.customerName.charAt(0).toUpperCase()}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-semibold text-foreground truncate">{c.customerName}</h4>
-                          {c.customerPhone && (
-                            <a
-                              href={`https://wa.me/${c.customerPhone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400 hover:underline"
-                            >
-                              <IconBrandWhatsapp className="w-3 h-3" />
-                              {c.customerPhone}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-4 gap-4 sm:gap-6 text-right">
-                        <div>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Kunjungan</p>
-                          <p className="text-sm font-bold text-foreground tabular-nums">{c.totalKunjungan}x</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Belanja</p>
-                          <p className="text-sm font-bold text-foreground tabular-nums">{formatRupiah(c.totalBelanja)}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Rating</p>
-                          <p className="text-sm font-bold text-foreground tabular-nums flex items-center justify-end gap-0.5">
-                            {c.ratingRata ? (
-                              <>
-                                {c.ratingRata.toFixed(1)}
-                                <IconStarFilled className="w-3.5 h-3.5 text-yellow-400" />
-                              </>
-                            ) : (
-                              <span className="text-muted-foreground/50">-</span>
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Terakhir</p>
-                          <p className="text-xs font-medium text-foreground tabular-nums">{formatDate(c.terakhirAntri)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+          <div className="overflow-x-auto rounded-2xl border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50 border-b border-border">
+                  <th className="text-left py-3 px-4 font-semibold text-foreground whitespace-nowrap">Nama</th>
+                  <th className="text-left py-3 px-4 font-semibold text-foreground whitespace-nowrap">Telepon</th>
+                  <th className="text-right py-3 px-4 font-semibold text-foreground whitespace-nowrap">Kunjungan</th>
+                  <th className="text-right py-3 px-4 font-semibold text-foreground whitespace-nowrap">Total Belanja</th>
+                  <th className="text-right py-3 px-4 font-semibold text-foreground whitespace-nowrap">Rating</th>
+                  <th className="text-right py-3 px-4 font-semibold text-foreground whitespace-nowrap">Terakhir Antri</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((c) => (
+                  <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                    <td className="py-3 px-4">
+                      <span className="font-medium text-foreground">{c.customerName}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      {c.customerPhone ? (
+                        <a
+                          href={`https://wa.me/${c.customerPhone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 hover:underline"
+                        >
+                          <IconBrandWhatsapp className="w-3.5 h-3.5" />
+                          {c.customerPhone}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground/50">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right tabular-nums font-medium text-foreground">{c.totalKunjungan}x</td>
+                    <td className="py-3 px-4 text-right tabular-nums font-medium text-foreground">{formatRupiah(c.totalBelanja)}</td>
+                    <td className="py-3 px-4 text-right">
+                      {c.ratingRata ? (
+                        <span className="inline-flex items-center gap-1 tabular-nums font-medium text-foreground">
+                          {c.ratingRata.toFixed(1)}
+                          <IconStarFilled className="w-3.5 h-3.5 text-yellow-400" />
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right tabular-nums text-muted-foreground text-xs">{formatDate(c.terakhirAntri)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

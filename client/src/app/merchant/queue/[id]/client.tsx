@@ -76,7 +76,7 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
   useEffect(() => {
     const socket = getCustomerSocket(slug);
 
-    socket.on('queue:status', (data: { queue: Queue; action: string }) => {
+    const handleStatus = (data: { queue: Queue; action: string }) => {
       const qid = (data.queue as any).id ?? data.queue._id;
       if (qid === queueId) {
         setQueue(data.queue);
@@ -85,15 +85,18 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
         }
       }
       queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });
-    });
+    };
 
-    socket.on('queue:new', () => {
+    const handleNew = () => {
       queryClient.invalidateQueries({ queryKey: ['liveQueue', slug] });
-    });
+    };
+
+    socket.on('queue:status', handleStatus);
+    socket.on('queue:new', handleNew);
 
     return () => {
-      socket.off('queue:status');
-      socket.off('queue:new');
+      socket.off('queue:status', handleStatus);
+      socket.off('queue:new', handleNew);
     };
   }, [slug, queueId, setQueue, queryClient]);
 

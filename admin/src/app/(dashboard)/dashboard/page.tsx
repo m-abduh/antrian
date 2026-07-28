@@ -10,7 +10,7 @@ import {
 } from '@tabler/icons-react';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
 import { ErrorAlert } from '@/components/ErrorAlert';
-import { getAdminSocket, disconnectAdminSocket } from '@/lib/socket';
+import { getAdminSocket } from '@/lib/socket';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,7 +89,6 @@ export default function DashboardPage() {
     return () => {
       socket.off('queue:new', handleQueueEvent);
       socket.off('queue:status', handleQueueEvent);
-      disconnectAdminSocket();
     };
   }, [queryClient, status]);
 

@@ -13,6 +13,7 @@ import {
   IconLayoutKanban, IconReportAnalytics, IconWavesElectricity,
 } from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
+import { setAccessToken } from '@/lib/auth-token';
 import { imageUrl } from '@/lib/imageUrl';
 import type { Merchant } from '@/lib/types';
 import { ThemeToggle } from './ThemeToggle';
@@ -86,7 +87,11 @@ export function AdminSidebar() {
           <ThemeToggle />
         </div>
         <button
-          onClick={() => signOut({ redirect: false }).then(() => window.location.href = '/login')}
+          onClick={async () => {
+            try { await adminApi.logout(); } catch {}
+            setAccessToken(null);
+            signOut({ redirect: false }).then(() => window.location.href = '/login');
+          }}
           className="mx-4 mb-3 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-xl py-2 transition-colors"
         >
           <IconLogout className="w-4 h-4" />

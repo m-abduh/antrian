@@ -97,6 +97,7 @@ export default function LoginPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ credential: idToken }),
+                credentials: 'include',
               });
             } else if (accessToken) {
               const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -111,6 +112,7 @@ export default function LoginPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ accessToken, email: user.email, name: user.name }),
+                credentials: 'include',
               });
             } else {
               setLoginError('Gagal mendapatkan token Google');

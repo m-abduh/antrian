@@ -6,10 +6,11 @@ let customerSocket: Socket | null = null;
 let currentSlug: string | null = null;
 
 export function getCustomerSocket(slug: string): Socket {
-  if (customerSocket?.connected && currentSlug === slug) return customerSocket;
+  if (customerSocket && currentSlug === slug) return customerSocket;
   if (customerSocket) customerSocket.disconnect();
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   customerSocket = io(baseUrl, { query: { slug }, transports: ['websocket', 'polling'] });
+  customerSocket.on('disconnect', () => { customerSocket = null; currentSlug = null; });
   currentSlug = slug;
   return customerSocket;
 }

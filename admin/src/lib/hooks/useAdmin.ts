@@ -20,6 +20,7 @@ export function useQueues(params?: { date?: string; status?: string }) {
     queryKey: queueKeys.list(params),
     queryFn: () => adminApi.getQueues(params),
     staleTime: 5000,
+    refetchInterval: 15_000,
   });
 }
 

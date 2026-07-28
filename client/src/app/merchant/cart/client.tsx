@@ -45,6 +45,7 @@ export function CartClient({ slug }: { slug: string }) {
   const { items, note, addItem, updateQuantity, removeItem, clearCart, setNote, totalPrice } = useCartStore();
   const createQueue = useCreateQueue(slug);
   const [error, setError] = useState('');
+  const [customValues, setCustomValues] = useState<Record<string, string>>({});
 
   const {
     register,
@@ -75,6 +76,7 @@ export function CartClient({ slug }: { slug: string }) {
         customerPhone: data.customerPhone,
         note: note || undefined,
         customerToken: existingToken || undefined,
+        customFieldValues: customValues,
       });
       if (result.customerToken) setCustomerToken(result.customerToken);
       saveCustomerData(data.customerName, data.customerPhone);
@@ -197,7 +199,7 @@ export function CartClient({ slug }: { slug: string }) {
                           </button>
                         </div>
                       </motion.div>
-                    ))}
+                   ))}
                   </AnimatePresence>
                 </CardContent>
               </Card>
@@ -263,46 +265,71 @@ export function CartClient({ slug }: { slug: string }) {
               <Card className="rounded-2xl">
                 <CardContent className="p-4 space-y-4">
                   <h2 className="text-sm font-semibold text-foreground">Data Diri</h2>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">
-                      Nama Lengkap <span className="text-destructive">*</span>
-                    </label>
-                    <div className="relative">
-                      <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  {(() => {
+                    const nameField = merchant?.customFieldsConfig?.find(f => f.key === 'customerName' && f.label.trim());
+                    const phoneField = merchant?.customFieldsConfig?.find(f => f.key === 'customerPhone' && f.label.trim());
+                    const otherFields = merchant?.customFieldsConfig?.filter(f => f.key !== 'customerName' && f.key !== 'customerPhone' && f.label.trim()) || [];
+                    return (<>
+                    {nameField && (
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">
+                        {nameField.label}{nameField.required && <span className="text-destructive"> *</span>}
+                      </label>
+                      <div className="relative">
+                        <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        <Input
+                          {...register('customerName', {
+                            required: nameField.required ? 'Nama wajib diisi' : false,
+                            maxLength: { value: 100, message: 'Nama maksimal 100 karakter' },
+                          })}
+                          className="pl-9 rounded-xl"
+                          placeholder={nameField.placeholder || 'Masukkan nama Anda'}
+                          disabled={createQueue.isPending}
+                        />
+                      </div>
+                      {errors.customerName && (
+                        <p className="mt-1 text-xs text-destructive">{errors.customerName.message}</p>
+                      )}
+                    </div>
+                  )}
+                  {phoneField && (
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{phoneField.label}{phoneField.required && <span className="text-destructive"> *</span>}</label>
+                      <div className="relative">
+                        <IconPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        <Input
+                          {...register('customerPhone', {
+                            required: phoneField.required ? 'Nomor telepon wajib diisi' : false,
+                            pattern: {
+                              value: /^\+?[0-9]{10,15}$/,
+                              message: 'Format nomor tidak valid (10-15 digit)',
+                            },
+                          })}
+                          className="pl-9 rounded-xl"
+                          placeholder={phoneField.placeholder || '08xxxxxxxxxx'}
+                          disabled={createQueue.isPending}
+                        />
+                      </div>
+                      {errors.customerPhone && (
+                        <p className="mt-1 text-xs text-destructive">{errors.customerPhone.message}</p>
+                      )}
+                    </div>
+                  )}
+                  {otherFields.map((field) => (
+                    <div key={field.key}>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">
+                        {field.label}
+                        {field.required && <span className="text-destructive"> *</span>}
+                      </label>
                       <Input
-                        {...register('customerName', {
-                          required: 'Nama wajib diisi',
-                          maxLength: { value: 100, message: 'Nama maksimal 100 karakter' },
-                        })}
-                        className="pl-9 rounded-xl"
-                        placeholder="Masukkan nama Anda"
+                        value={customValues[field.key] || ''}
+                        onChange={(e) => setCustomValues({ ...customValues, [field.key]: e.target.value })}
+                        placeholder={field.placeholder || `Masukkan ${field.label.toLowerCase()}`}
+                        className="rounded-xl"
                         disabled={createQueue.isPending}
                       />
                     </div>
-                    {errors.customerName && (
-                      <p className="mt-1 text-xs text-destructive">{errors.customerName.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">Nomor Telepon</label>
-                    <div className="relative">
-                      <IconPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                      <Input
-                        {...register('customerPhone', {
-                          pattern: {
-                            value: /^\+?[0-9]{10,15}$/,
-                            message: 'Format nomor tidak valid (10-15 digit)',
-                          },
-                        })}
-                        className="pl-9 rounded-xl"
-                        placeholder="08xxxxxxxxxx"
-                        disabled={createQueue.isPending}
-                      />
-                    </div>
-                    {errors.customerPhone && (
-                      <p className="mt-1 text-xs text-destructive">{errors.customerPhone.message}</p>
-                    )}
-                  </div>
+                  ))}</>);})()}
 
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <Button

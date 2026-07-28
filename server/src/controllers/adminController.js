@@ -239,7 +239,7 @@ export async function getMerchant(req, res, next) {
 
 export async function updateMerchant(req, res, next) {
   try {
-    const { name, address, phone, image, banner, description, bank, socialLinks } = req.body;
+    const { name, address, phone, image, banner, description, bank, socialLinks, statusConfig, customFieldsConfig } = req.body;
     const update = {};
 
     if (name !== undefined) {
@@ -278,6 +278,45 @@ export async function updateMerchant(req, res, next) {
           return error(res, 'URL sosial media wajib diisi');
       }
       update.socialLinks = socialLinks.map(l => ({ platform: l.platform, url: l.url }));
+    }
+
+    if (statusConfig !== undefined) {
+      if (!Array.isArray(statusConfig) || statusConfig.length < 2)
+        return error(res, 'statusConfig harus berupa array dengan minimal 2 status');
+      for (const s of statusConfig) {
+        if (!s.key || !s.key.trim())
+          return error(res, 'Setiap status harus memiliki key');
+        if (!s.label || !s.label.trim())
+          return error(res, 'Setiap status harus memiliki label');
+        if (s.label.trim().length > 50)
+          return error(res, `Label "${s.key}" maksimal 50 karakter`);
+      }
+      if (statusConfig[0].key !== 'waiting')
+        return error(res, 'Status pertama harus "waiting"');
+      if (statusConfig[statusConfig.length - 1].key !== 'done')
+        return error(res, 'Status terakhir harus "done"');
+      if (new Set(statusConfig.map(s => s.key)).size !== statusConfig.length)
+        return error(res, 'Key status tidak boleh duplikat');
+      update.statusConfig = statusConfig.map(s => ({ key: s.key.trim(), label: s.label.trim() }));
+    }
+
+    if (customFieldsConfig !== undefined) {
+      if (!Array.isArray(customFieldsConfig))
+        return error(res, 'customFieldsConfig harus berupa array');
+      for (const f of customFieldsConfig) {
+        if (!f.key || !f.key.trim())
+          return error(res, 'Key custom field wajib diisi');
+        if (!f.label || !f.label.trim())
+          return error(res, 'Label custom field wajib diisi');
+        if (f.label.trim().length > 100)
+          return error(res, 'Label custom field maksimal 100 karakter');
+      }
+      update.customFieldsConfig = customFieldsConfig.map(f => ({
+        key: f.key.trim(),
+        label: f.label.trim(),
+        placeholder: (f.placeholder || '').trim(),
+        required: !!f.required,
+      }));
     }
 
     const merchant = await Merchant.findByIdAndUpdate(req.admin.merchantId, update, { returnDocument: 'after', runValidators: true });
@@ -327,7 +366,7 @@ export async function logout(req, res) {
 
 export async function getQueues(req, res, next) {
   try {
-    const { date, status } = req.query;
+    const { date, status, excludeStatus } = req.query;
     const filter = { merchantId: req.admin.merchantId };
 
     if (date) {
@@ -346,6 +385,9 @@ export async function getQueues(req, res, next) {
 
     if (status && ['waiting', 'called', 'serving', 'done', 'skipped'].includes(status)) {
       filter.status = status;
+    } else if (excludeStatus) {
+      const excluded = excludeStatus.split(',');
+      filter.status = { $nin: excluded };
     }
 
     const queues = await Queue.find(filter)
@@ -360,10 +402,11 @@ export async function getQueues(req, res, next) {
 export async function updateQueueStatus(req, res, next) {
   try {
     const { id } = req.params;
-    const { action } = req.body;
+    const { action, status: targetStatus } = req.body;
 
-    if (!['call', 'skip', 'done'].includes(action)) {
-      return error(res, 'Aksi tidak valid. Gunakan: call, skip, atau done');
+    const validActions = ['call', 'skip', 'done', 'set'];
+    if (!validActions.includes(action)) {
+      return error(res, 'Aksi tidak valid. Gunakan: call, skip, done, atau set');
     }
 
     const queue = await Queue.findOne({ _id: id, merchantId: req.admin.merchantId });
@@ -371,27 +414,36 @@ export async function updateQueueStatus(req, res, next) {
       return error(res, 'Antrean tidak ditemukan', 404);
     }
 
-    switch (action) {
-      case 'call':
-        if (queue.status !== 'waiting') {
-          return error(res, `Antrean sudah ${queue.status}`, 400);
-        }
-        queue.status = 'called';
-        notifyCustomer(queue).catch(() => {});
-        break;
-      case 'skip':
-        if (!['waiting', 'called'].includes(queue.status)) {
-          return error(res, `Antrean sudah ${queue.status}`, 400);
-        }
-        queue.status = 'skipped';
-        break;
-      case 'done':
-        if (queue.status !== 'serving') {
-          return error(res, `Antrean sedang ${queue.status}`, 400);
-        }
-        queue.status = 'done';
-        queue.finishedAt = new Date();
-        break;
+    if (action === 'set') {
+      if (!targetStatus) {
+        return error(res, 'Status target tidak valid');
+      }
+      queue.status = targetStatus;
+      if (targetStatus === 'done') queue.finishedAt = new Date();
+      if (targetStatus === 'called') notifyCustomer(queue).catch(() => {});
+    } else {
+      switch (action) {
+        case 'call':
+          if (queue.status !== 'waiting') {
+            return error(res, `Antrean sudah ${queue.status}`, 400);
+          }
+          queue.status = 'called';
+          notifyCustomer(queue).catch(() => {});
+          break;
+        case 'skip':
+          if (!['waiting', 'called'].includes(queue.status)) {
+            return error(res, `Antrean sudah ${queue.status}`, 400);
+          }
+          queue.status = 'skipped';
+          break;
+        case 'done':
+          if (queue.status !== 'serving') {
+            return error(res, `Antrean sedang ${queue.status}`, 400);
+          }
+          queue.status = 'done';
+          queue.finishedAt = new Date();
+          break;
+      }
     }
 
     await queue.save();
@@ -458,6 +510,42 @@ export async function startServing(req, res, next) {
           createdAt: queue.createdAt,
         };
         io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: publicQueue, action: 'serve' });
+      }
+    }
+
+    return success(res, queue);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function togglePayment(req, res, next) {
+  try {
+    const { id } = req.params;
+    const queue = await Queue.findOne({ _id: id, merchantId: req.admin.merchantId });
+    if (!queue) {
+      return error(res, 'Antrean tidak ditemukan', 404);
+    }
+    queue.isPaid = !queue.isPaid;
+    await queue.save();
+
+    const io = req.app.get('io');
+    if (io) {
+      const merchant = await Merchant.findById(queue.merchantId).select('slug');
+      if (merchant) {
+        const publicQueue = {
+          _id: queue._id,
+          id: queue._id,
+          queueNumber: queue.queueNumber,
+          services: queue.services,
+          status: queue.status,
+          isPaid: queue.isPaid,
+          estimatedStartTime: queue.estimatedStartTime,
+          startedAt: queue.startedAt,
+          finishedAt: queue.finishedAt,
+          createdAt: queue.createdAt,
+        };
+        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: publicQueue, action: 'payment' });
       }
     }
 
@@ -536,7 +624,6 @@ export async function getStats(req, res, next) {
     next(err);
   }
 }
-
 export async function getServices(req, res, next) {
   try {
     const services = await Service.find({ merchantId: req.admin.merchantId }).sort({ category: 1, name: 1 });

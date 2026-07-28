@@ -9,6 +9,7 @@ export function useCreateQueue(slug: string) {
     customerPhone: string;
     note?: string;
     customerToken?: string;
+    customFieldValues?: Record<string, string>;
   }>({
     mutationFn: (data) => merchantApi.createQueue(slug, data),
   });

@@ -14,6 +14,7 @@ import {
   getQueues,
   updateQueueStatus,
   startServing,
+  togglePayment,
   getStats,
   getServices,
   createService,
@@ -45,6 +46,7 @@ router.post('/merchant/setup', setupMerchant);
 router.get('/queues', getQueues);
 router.patch('/queues/:id/status', updateQueueStatus);
 router.patch('/queues/:id/start', startServing);
+router.patch('/queues/:id/payment', togglePayment);
 
 router.get('/stats', getStats);
 

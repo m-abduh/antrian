@@ -44,10 +44,6 @@ const queueSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: {
-      values: ['waiting', 'called', 'serving', 'done', 'skipped'],
-      message: 'Status antrean tidak valid',
-    },
     default: 'waiting',
   },
   rating: {
@@ -56,9 +52,15 @@ const queueSchema = new mongoose.Schema({
     max: 5,
     default: null,
   },
+  isPaid: { type: Boolean, default: false },
   estimatedStartTime: { type: Date, default: null },
   startedAt: { type: Date, default: null },
   finishedAt: { type: Date, default: null },
+  customFieldValues: {
+    type: Map,
+    of: String,
+    default: {},
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

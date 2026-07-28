@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/sidebar';
 import {
   IconLayoutDashboard, IconChartBar, IconSettings, IconLogout,
-  IconLayoutKanban, IconReportAnalytics, IconWavesElectricity,
+  IconLayoutKanban, IconReportAnalytics, IconWavesElectricity, IconVocabulary,
+  IconShoppingCart,
 } from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
@@ -23,6 +24,8 @@ const navItems = [
   { label: 'Layanan', icon: IconChartBar, href: '/services' },
   { label: 'Kategori', icon: IconLayoutKanban, href: '/groups' },
   { label: 'Laporan', icon: IconReportAnalytics, href: '/finance' },
+  { label: 'Mode Panggilan', icon: IconVocabulary, href: '/call-mode' },
+  { label: 'Field Checkout', icon: IconShoppingCart, href: '/checkout-field' },
   { label: 'Pengaturan', icon: IconSettings, href: '/settings' },
 ];
 

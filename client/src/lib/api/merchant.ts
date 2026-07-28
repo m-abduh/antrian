@@ -20,6 +20,7 @@ export const merchantApi = {
     customerPhone: string;
     note?: string;
     customerToken?: string;
+    customFieldValues?: Record<string, string>;
   }) => api.post(`/merchant/${slug}/queue`, data).then(handleResponse) as Promise<CreateQueueResponse>,
 
   getLiveQueue: (slug: string) =>

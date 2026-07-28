@@ -596,6 +596,11 @@ function QueueCard({ queue, index, onDismiss }: { queue: Queue; index: number; o
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-xs font-semibold ${sc.text}`}>{sc.label}</span>
               <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} ${queue.status === 'waiting' || queue.status === 'called' ? 'animate-pulse' : ''}`} />
+              {queue.isPaid && (
+                <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                  Dibayar
+                </span>
+              )}
             </div>
             <p className="text-sm font-medium text-foreground truncate">{queue.customerName}</p>
             {queue.services?.length > 0 && (

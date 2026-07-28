@@ -4,7 +4,7 @@ import type { Queue, Service, Stats } from '../types';
 
 export const queueKeys = {
   all: ['admin', 'queues'] as const,
-  list: (params?: { date?: string; status?: string }) => ['admin', 'queues', params] as const,
+  list: (params?: { date?: string; status?: string; excludeStatus?: string }) => ['admin', 'queues', params] as const,
 };
 
 export const serviceKeys = {
@@ -15,7 +15,7 @@ export const statsKeys = {
   all: ['admin', 'stats'] as const,
 };
 
-export function useQueues(params?: { date?: string; status?: string }) {
+export function useQueues(params?: { date?: string; status?: string; excludeStatus?: string }) {
   return useQuery<Queue[]>({
     queryKey: queueKeys.list(params),
     queryFn: () => adminApi.getQueues(params),
@@ -27,8 +27,8 @@ export function useQueues(params?: { date?: string; status?: string }) {
 export function useUpdateQueueStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, action }: { id: string; action: 'call' | 'skip' | 'done' }) =>
-      adminApi.updateQueueStatus(id, action),
+    mutationFn: ({ id, action, status }: { id: string; action: 'call' | 'skip' | 'done' | 'set'; status?: string }) =>
+      adminApi.updateQueueStatus(id, action, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queueKeys.all });
       queryClient.invalidateQueries({ queryKey: statsKeys.all });

@@ -210,6 +210,13 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
             {statusInfo.label}
           </motion.div>
 
+          {queue.isPaid && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-xs font-medium mb-5">
+              <IconCircleCheck className="w-3.5 h-3.5" />
+              Sudah Dibayar
+            </div>
+          )}
+
           {/* Queue number */}
           <motion.div
             className="text-6xl md:text-7xl lg:text-8xl font-bold text-foreground mb-3 tracking-tight"

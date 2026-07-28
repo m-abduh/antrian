@@ -14,9 +14,11 @@ export interface Queue {
   customerPhone: string;
   status: 'waiting' | 'called' | 'serving' | 'done' | 'skipped';
   rating: number | null;
+  isPaid: boolean;
   estimatedStartTime: string | null;
   startedAt: string | null;
   finishedAt: string | null;
+  customFieldValues?: Record<string, string>;
   createdAt: string;
 }
 
@@ -63,6 +65,8 @@ export interface Merchant {
     holder: string;
   };
   socialLinks: SocialLink[];
+  statusConfig?: { key: string; label: string }[];
+  customFieldsConfig?: { key: string; label: string; placeholder: string; required: boolean }[];
   createdAt: string;
   updatedAt: string;
 }

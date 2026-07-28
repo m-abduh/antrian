@@ -1,21 +1,22 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconUsers, IconClock, IconCircleCheck, IconPlayerSkipForward, IconLoader2,
-  IconBrandWhatsapp, IconSearch, IconX, IconAlertCircle, IconChartBar,
+  IconBrandWhatsapp, IconSearch, IconX, IconAlertCircle, IconChartBar, IconCreditCard,
 } from '@tabler/icons-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
+import { adminApi } from '@/lib/api/admin';
 import type { Queue } from '@/lib/types';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { getAdminSocket } from '@/lib/socket';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,12 +27,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; cls: string }> = {
-  waiting: { label: 'Menunggu', variant: 'secondary', cls: '' },
-  called: { label: 'Dipanggil', variant: 'default', cls: 'bg-blue-500 text-white dark:bg-blue-600' },
-  serving: { label: 'Dilayani', variant: 'default', cls: 'bg-purple-500 text-white dark:bg-purple-600' },
-  done: { label: 'Selesai', variant: 'secondary', cls: 'bg-green-500 text-white dark:bg-green-600' },
-  skipped: { label: 'Dilewati', variant: 'destructive', cls: '' },
+const STATUS_VARIANTS: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; cls: string }> = {
+  waiting: { variant: 'secondary', cls: '' },
+  called: { variant: 'default', cls: 'bg-blue-500 text-white dark:bg-blue-600' },
+  serving: { variant: 'default', cls: 'bg-purple-500 text-white dark:bg-purple-600' },
+  done: { variant: 'secondary', cls: 'bg-green-500 text-white dark:bg-green-600' },
+  skipped: { variant: 'destructive', cls: '' },
 };
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: any; color: string }) {
@@ -50,6 +51,87 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
   );
 }
 
+const DEFAULT_LABELS: Record<string, string> = {
+  waiting: 'Menunggu', called: 'Dipanggil', serving: 'Dilayani',
+  done: 'Selesai', skipped: 'Dilewati',
+};
+
+function QueueActions({
+  queue, activeStatuses, statusLabels,
+  updateStatus, startServing, onSkip, handleMutation, togglePayment,
+}: {
+  queue: Queue; activeStatuses: string[]; statusLabels: Record<string, string>;
+  updateStatus: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
+  startServing: { isPending: boolean; mutateAsync: (id: string) => Promise<any> };
+  onSkip: () => void; handleMutation: (fn: () => Promise<any>) => Promise<void>;
+  togglePayment: { isPending: boolean; mutate: (id: string) => void };
+}) {
+  const currentIdx = activeStatuses.indexOf(queue.status);
+  if (currentIdx === -1) return null;
+
+  const isLastBeforeDone = currentIdx === activeStatuses.length - 2;
+  const nextStatus = activeStatuses[currentIdx + 1];
+  const nextLabel = nextStatus ? (statusLabels[nextStatus] || nextStatus) : '';
+  const isPending = updateStatus.isPending || startServing.isPending;
+  const showSkip = queue.status === 'waiting' && activeStatuses.includes('skipped');
+  const showPayment = queue.status !== 'waiting' && queue.status !== 'skipped';
+
+  const advance = () => {
+    if (nextStatus) {
+      handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'set', status: nextStatus }));
+    }
+  };
+
+  return (
+    <>
+      {queue.status !== 'done' && queue.status !== 'skipped' && nextStatus && (
+        <Button
+          variant={isLastBeforeDone ? 'default' : 'default'}
+          size="sm"
+          onClick={advance}
+          disabled={isPending}
+          className={`rounded-xl shadow-sm ${
+            isLastBeforeDone ? 'bg-green-500 hover:bg-green-600 text-white' : ''
+          }`}
+        >
+          {isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+          {nextLabel}
+        </Button>
+      )}
+      {showSkip && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={onSkip}
+          disabled={isPending}
+          className="rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
+        >
+          {isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+          {statusLabels.skipped || 'Lewati'}
+        </Button>
+      )}
+      {showPayment && (
+        <button
+          onClick={() => togglePayment.mutate(queue._id)}
+          disabled={togglePayment.isPending}
+          className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+            queue.isPaid
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+              : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
+          }`}
+          title={queue.isPaid ? 'Sudah Dibayar' : 'Tandai Sudah Bayar'}
+        >
+          {togglePayment.isPending ? (
+            <IconLoader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <IconCreditCard className="w-4 h-4" />
+          )}
+        </button>
+      )}
+    </>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -58,14 +140,35 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [actionError, setActionError] = useState('');
   const [skipConfirm, setSkipConfirm] = useState<Queue | null>(null);
+  const [statusConfig, setStatusConfig] = useState<{ key: string; label: string }[]>([]);
   const updateStatus = useUpdateQueueStatus();
   const startServing = useStartServing();
+  const togglePayment = useMutation({
+    mutationFn: (id: string) => adminApi.togglePayment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queueKeys.all });
+    },
+  });
+
+  const activeStatuses = statusConfig.map(s => s.key);
+  const statusLabels = Object.fromEntries(statusConfig.map(s => [s.key, s.label]));
+
+  const statusBadge = useMemo(() => {
+    const config: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; cls: string }> = {};
+    for (const s of statusConfig) {
+      const v = STATUS_VARIANTS[s.key];
+      config[s.key] = { label: s.label, ...v };
+    }
+    return config;
+  }, [statusConfig]);
 
   const handleMutation = async (fn: () => Promise<any>) => {
     setActionError('');
     try { await fn(); } catch (err: any) { setActionError(err.message || 'Gagal memperbarui status'); }
   };
-  const { data: queues, isLoading } = useQueues({ status: statusFilter || undefined });
+  const { data: queues, isLoading } = useQueues({
+    status: statusFilter || undefined,
+  });
   const { data: stats } = useStats();
 
   useEffect(() => {
@@ -77,6 +180,19 @@ export default function DashboardPage() {
       router.replace('/merchant/setup');
     }
   }, [status, session, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    adminApi.getMerchant()
+      .then((m) => setStatusConfig(m.statusConfig || [
+        { key: 'waiting', label: 'Menunggu' },
+        { key: 'called', label: 'Dipanggil' },
+        { key: 'serving', label: 'Dilayani' },
+        { key: 'done', label: 'Selesai' },
+        { key: 'skipped', label: 'Dilewati' },
+      ]))
+      .catch(() => {});
+  }, [status]);
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -116,9 +232,10 @@ export default function DashboardPage() {
 
   if (status !== 'authenticated' || !session?.user) return null;
 
-  const filtered = queues?.filter((q) =>
-    q.customerName.toLowerCase().includes(search.toLowerCase())
-  ) ?? [];
+  const filtered = queues?.filter((q) => {
+    if (!statusFilter && (q.status === 'done' || q.status === 'skipped') && q.isPaid) return false;
+    return q.customerName.toLowerCase().includes(search.toLowerCase());
+  }) ?? [];
 
   const statCards = [
     { label: 'Total Hari Ini', value: stats?.total ?? 0, icon: IconUsers, color: 'bg-blue-500' },
@@ -177,8 +294,8 @@ export default function DashboardPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Semua</SelectItem>
-                {Object.entries(statusConfig).map(([key, cfg]) => (
-                  <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                {activeStatuses.map((key) => (
+                  <SelectItem key={key} value={key}>{statusLabels[key]}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -231,7 +348,11 @@ export default function DashboardPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="font-semibold text-foreground truncate">{q.customerName}</h4>
-                              <Badge variant={statusConfig[q.status]?.variant as any} className={statusConfig[q.status]?.cls}>{statusConfig[q.status]?.label}</Badge>
+                              {statusBadge[q.status] ? (
+                                <Badge variant={statusBadge[q.status]?.variant as any} className={statusBadge[q.status]?.cls}>{statusBadge[q.status]?.label}</Badge>
+                              ) : (
+                                <Badge variant="outline">{q.status}</Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                               {q.customerPhone && (
@@ -253,56 +374,16 @@ export default function DashboardPage() {
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {q.status === 'waiting' && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'call' }))}
-                                disabled={updateStatus.isPending}
-                                className="rounded-xl shadow-sm"
-                              >
-                                {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                Panggil
-                              </Button>
-                            )}
-                            {q.status === 'called' && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleMutation(() => startServing.mutateAsync(q._id))}
-                                disabled={startServing.isPending}
-                                className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white shadow-sm"
-                              >
-                                {startServing.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                Mulai
-                              </Button>
-                            )}
-                            {q.status === 'serving' && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleMutation(() => updateStatus.mutateAsync({ id: q._id, action: 'done' }))}
-                                disabled={updateStatus.isPending}
-                                className="rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-sm"
-                              >
-                                {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                Selesai
-                              </Button>
-                            )}
-            {(q.status === 'waiting' || q.status === 'called') && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setSkipConfirm(q)}
-                disabled={updateStatus.isPending}
-                className="rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
-              >
-                {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                Lewati
-              </Button>
-            )}
-                          </div>
+                          <QueueActions
+                            queue={q}
+                            activeStatuses={activeStatuses}
+                            statusLabels={statusLabels}
+                            updateStatus={updateStatus}
+                            startServing={startServing}
+                            onSkip={() => setSkipConfirm(q)}
+                            handleMutation={handleMutation}
+                            togglePayment={togglePayment}
+                          />
                         </div>
                       </CardContent>
                     </Card>

@@ -58,6 +58,31 @@ const merchantSchema = new mongoose.Schema({
     }],
     default: [],
   },
+  statusConfig: {
+    type: [{
+      key: { type: String, required: true },
+      label: { type: String, required: true },
+    }],
+    default: [
+      { key: 'waiting', label: 'Menunggu' },
+      { key: 'called', label: 'Dipanggil' },
+      { key: 'serving', label: 'Dilayani' },
+      { key: 'done', label: 'Selesai' },
+      { key: 'skipped', label: 'Dilewati' },
+    ],
+  },
+  customFieldsConfig: {
+    type: [{
+      key: { type: String, required: true },
+      label: { type: String, required: true },
+      placeholder: { type: String, default: '' },
+      required: { type: Boolean, default: false },
+    }],
+    default: [
+      { key: 'customerName', label: 'Nama Lengkap', placeholder: 'Masukkan nama Anda', required: true },
+      { key: 'customerPhone', label: 'Nomor Telepon', placeholder: '08xxxxxxxxxx', required: false },
+    ],
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

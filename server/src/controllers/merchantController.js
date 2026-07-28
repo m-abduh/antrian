@@ -42,19 +42,25 @@ export async function createQueue(req, res, next) {
       return error(res, 'Merchant tidak ditemukan', 404);
     }
 
-    const { serviceIds, customerName, customerPhone, note, customerToken } = req.body;
+    const { serviceIds, customerName, customerPhone, note, customerToken, customFieldValues } = req.body;
 
     if (!serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
       return error(res, 'Pilih minimal 1 layanan');
     }
 
-    if (!customerName || !customerName.trim()) {
+    const nameCfg = merchant.customFieldsConfig?.find(f => f.key === 'customerName');
+    const phoneCfg = merchant.customFieldsConfig?.find(f => f.key === 'customerPhone');
+
+    if (nameCfg && nameCfg.required && (!customerName || !customerName.trim())) {
       return error(res, 'Nama pelanggan wajib diisi');
     }
-    if (customerName.trim().length > 100) {
+    if (customerName && customerName.trim().length > 100) {
       return error(res, 'Nama maksimal 100 karakter');
     }
-    const sanitizedName = customerName.trim().replace(/<[^>]*>/g, '');
+    const sanitizedName = customerName ? customerName.trim().replace(/<[^>]*>/g, '') : '';
+    if (phoneCfg && phoneCfg.required && (!customerPhone || !customerPhone.trim())) {
+      return error(res, 'Nomor telepon wajib diisi');
+    }
     if (customerPhone && !/^\+?[0-9]{10,15}$/.test(customerPhone)) {
       return error(res, 'Format nomor telepon tidak valid');
     }
@@ -105,6 +111,7 @@ export async function createQueue(req, res, next) {
       customerToken: token,
       status: 'waiting',
       estimatedStartTime,
+      customFieldValues: customFieldValues || {},
     });
 
     const io = req.app.get('io');

@@ -14,7 +14,7 @@ export const adminApi = {
   getMerchant: () =>
     api.get('/admin/merchant').then(handleResponse) as Promise<Merchant>,
 
-  updateMerchant: (data: { name?: string; address?: string; phone?: string; description?: string; image?: string; banner?: string; bank?: { name?: string; account?: string; holder?: string }; socialLinks?: SocialLink[] }) =>
+  updateMerchant: (data: { name?: string; address?: string; phone?: string; description?: string; image?: string; banner?: string; bank?: { name?: string; account?: string; holder?: string }; socialLinks?: SocialLink[]; statusConfig?: { key: string; label: string }[]; customFieldsConfig?: { key: string; label: string; placeholder: string; required: boolean }[] }) =>
     api.put('/admin/merchant', data).then(handleResponse) as Promise<Merchant>,
 
   setupMerchant: (data: { name: string; slug: string }) =>
@@ -26,14 +26,17 @@ export const adminApi = {
   logout: () =>
     api.post('/admin/logout').then(handleResponse) as Promise<{ message: string }>,
 
-  getQueues: (params?: { date?: string; status?: string }) =>
+  getQueues: (params?: { date?: string; status?: string; excludeStatus?: string }) =>
     api.get('/admin/queues', { params }).then(handleResponse) as Promise<Queue[]>,
 
-  updateQueueStatus: (id: string, action: 'call' | 'skip' | 'done') =>
-    api.patch(`/admin/queues/${id}/status`, { action }).then(handleResponse),
+  updateQueueStatus: (id: string, action: 'call' | 'skip' | 'done' | 'set', status?: string) =>
+    api.patch(`/admin/queues/${id}/status`, { action, status }).then(handleResponse),
 
   startServing: (id: string) =>
     api.patch(`/admin/queues/${id}/start`).then(handleResponse),
+
+  togglePayment: (id: string) =>
+    api.patch(`/admin/queues/${id}/payment`).then(handleResponse) as Promise<Queue>,
 
   getStats: (date?: string) =>
     api.get('/admin/stats', { params: { date } }).then(handleResponse) as Promise<Stats>,

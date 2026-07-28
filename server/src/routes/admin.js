@@ -4,6 +4,7 @@ import {
   login,
   register,
   googleAuth,
+  googleTokenLogin,
 
   logout,
   getMe,
@@ -31,6 +32,7 @@ const router = Router();
 router.post('/login', login);
 router.post('/register', register);
 router.post('/auth/google', googleAuth);
+router.post('/auth/google-token', googleTokenLogin);
 
 router.post('/logout', logout);
 

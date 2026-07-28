@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { connectDB, isDBConnected } from './config/db.js';
@@ -21,7 +22,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.set('trust proxy', 1);
+
+app.use(compression());
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://accounts.google.com"],
+      frameSrc: ["'self'", "https://accounts.google.com"],
+      connectSrc: ["'self'", env.API_URL, "https://www.googleapis.com", "https://accounts.google.com"],
+      imgSrc: ["'self'", "data:", env.API_URL],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  },
+}));
 app.use(helmet.xssFilter());
 app.use(helmet.frameguard({ action: 'deny' }));
 app.use(helmet.hidePoweredBy());
@@ -59,30 +79,10 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
+  skip: (req) => req.path === '/api/health',
 });
 
 app.use(limiter);
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
-});
-
-app.use('/api/admin/login', loginLimiter);
-
-const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 3,
-  message: { error: 'Terlalu banyak percobaan daftar. Silakan coba lagi nanti.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use('/api/admin/register', registerLimiter);
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false }));
@@ -105,10 +105,12 @@ app.get('/api/health', (_req, res) => {
   const dbOk = isDBConnected();
   const status = dbOk ? 'ok' : 'degraded';
   res.json({ status, db: dbOk ? 'connected' : 'disconnected', timestamp: new Date().toISOString() });
-  logger.info('Health check', { status, db: dbOk ? 'connected' : 'disconnected' });
 });
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads'), {
+  maxAge: '30d',
+  immutable: true,
+}));
 
 app.use('/api/upload', authenticate, uploadRoutes);
 app.use('/api/merchant', merchantRoutes);
@@ -123,6 +125,23 @@ async function start() {
 
   const server = http.createServer(app);
   initSocket(server, app);
+
+  server.timeout = 30000;
+
+  const shutdown = async (signal) => {
+    logger.info(`${signal} received. Starting graceful shutdown...`);
+    server.close(() => {
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000).unref();
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 
   server.listen(env.PORT, () => {
     logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);

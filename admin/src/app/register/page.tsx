@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { IconLoader2, IconUserPlus, IconEye, IconEyeOff, IconWavesElectricity, IconBrandGoogle } from '@tabler/icons-react';
 import { useState, useEffect, useRef } from 'react';
+import { signIn } from 'next-auth/react';
 import { adminApi } from '@/lib/api/admin';
 import { setAccessToken } from '@/lib/auth-token';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -71,6 +72,11 @@ export default function RegisterPage() {
           const password = Math.random().toString(36).slice(-12) + 'Aa1!';
           const result = await adminApi.register({ name: user.name || user.email.split('@')[0], email: user.email, password });
           setAccessToken(result.token ?? null);
+          const si = await signIn('credentials', { token: result.token, redirect: false });
+          if (si?.error) {
+            setRegisterError('Gagal sync session. Silakan login manual.');
+            return;
+          }
           router.push('/merchant/setup');
         } catch (err: unknown) {
           setRegisterError(err instanceof Error ? err.message : 'Gagal mendaftar dengan Google');
@@ -86,6 +92,11 @@ export default function RegisterPage() {
     try {
       const result = await adminApi.register(data);
       setAccessToken(result.token ?? null);
+      const si = await signIn('credentials', { token: result.token, redirect: false });
+      if (si?.error) {
+        setRegisterError('Gagal sync session. Silakan login manual.');
+        return;
+      }
       router.push('/merchant/setup');
     } catch (err: unknown) {
       setRegisterError(err instanceof Error ? err.message : 'Gagal mendaftar');

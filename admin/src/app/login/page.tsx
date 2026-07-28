@@ -57,7 +57,11 @@ export default function LoginPage() {
     try {
       const result = await adminApi.login(data.email, data.password);
       setAccessToken(result.token ?? null);
-      signIn('credentials', { email: data.email, password: data.password, redirect: false }).catch(() => {});
+      const si = await signIn('credentials', { token: result.token, redirect: false });
+      if (si?.error) {
+        setLoginError('Gagal sync session. Silakan coba lagi.');
+        return;
+      }
       router.push(result.admin?.merchantId ? '/dashboard' : '/merchant/setup');
     } catch (err: unknown) {
       setLoginError(err instanceof Error ? err.message : 'Email atau password salah');
@@ -77,7 +81,6 @@ export default function LoginPage() {
       });
       if (!window.google?.accounts?.oauth2) {
         setLoginError('Google Identity Services tidak tersedia');
-        setGoogleLoading(false);
         return;
       }
       const client = window.google.accounts.oauth2.initTokenClient({
@@ -85,32 +88,50 @@ export default function LoginPage() {
         scope: 'openid email profile',
         callback: async (response: any) => {
           try {
-            if (!response?.id_token) {
+            const idToken = response?.id_token;
+            const accessToken = response?.access_token;
+
+            let expressRes;
+            if (idToken) {
+              expressRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: idToken }),
+              });
+            } else if (accessToken) {
+              const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              if (!userRes.ok) {
+                setLoginError('Gagal verifikasi akun Google');
+                return;
+              }
+              const user = await userRes.json();
+              expressRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessToken, email: user.email, name: user.name }),
+              });
+            } else {
               setLoginError('Gagal mendapatkan token Google');
-              setGoogleLoading(false);
               return;
             }
-            const expressRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/google`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ credential: response.id_token }),
-            });
+
             const expressData = await expressRes.json();
             if (!expressData.success) {
               setLoginError(expressData.error || 'Gagal login');
-              setGoogleLoading(false);
               return;
             }
             setAccessToken(expressData.data.token);
             const si = await signIn('credentials', { token: expressData.data.token, redirect: false });
             if (si?.error) {
               setLoginError('Gagal sync session');
-              setGoogleLoading(false);
               return;
             }
             router.push(expressData.data.admin.merchantId ? '/dashboard' : '/merchant/setup');
           } catch {
             setLoginError('Gagal login dengan Google');
+          } finally {
             setGoogleLoading(false);
           }
         },

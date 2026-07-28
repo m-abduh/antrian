@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+const VALID_CALLBACK_PATHS = ['/dashboard', '/services', '/merchant', '/settings', '/finance'];
+
+function isValidCallbackPath(path: string): boolean {
+  return VALID_CALLBACK_PATHS.some(p => path === p || path.startsWith(p + '/'));
+}
+
 export async function proxy(req: NextRequest) {
   const token = await getToken({ req });
   const isProtected =
@@ -12,7 +18,10 @@ export async function proxy(req: NextRequest) {
 
   if (isProtected && !token) {
     const signInUrl = new URL('/login', req.nextUrl);
-    signInUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
+    const callbackPath = req.nextUrl.pathname;
+    if (isValidCallbackPath(callbackPath)) {
+      signInUrl.searchParams.set('callbackUrl', callbackPath);
+    }
     return NextResponse.redirect(signInUrl);
   }
 

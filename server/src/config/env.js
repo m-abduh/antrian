@@ -3,7 +3,7 @@ dotenv.config();
 
 const DEFAULT_SECRETS = ['your-secret-key-min-16-chars'];
 
-const required = ['MONGODB_URI', 'JWT_SECRET'];
+const required = ['MONGODB_URI', 'JWT_SECRET', 'API_URL'];
 
 for (const key of required) {
   if (!process.env[key]) {
@@ -36,7 +36,7 @@ const env = {
   VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '',
   VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',
   VAPID_SUBJECT: process.env.VAPID_SUBJECT || 'mailto:admin@antriin.com',
-  API_URL: process.env.API_URL || `http://localhost:${process.env.PORT || 4000}`,
+  API_URL: process.env.API_URL,
 };
 
 export default env;

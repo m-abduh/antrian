@@ -236,7 +236,7 @@ export default function DashboardPage() {
                                   {q.customerPhone}
                                 </a>
                               )}
-                              <span>{q.services?.map((s: any) => s.name).join(', ') || '-'}</span>
+                              <span>{q.services?.map((s: any) => s.quantity > 1 ? `${s.name} (×${s.quantity})` : s.name).join(', ') || '-'}</span>
                             </div>
                             {q.note && (
                               <p className="text-xs text-muted-foreground/70 mt-1 italic truncate">

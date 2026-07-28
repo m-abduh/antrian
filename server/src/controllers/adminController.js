@@ -175,7 +175,45 @@ export async function googleAuth(req, res, next) {
   }
 }
 
+export async function googleTokenLogin(req, res, next) {
+  try {
+    const { accessToken, email, name } = req.body;
+    if (!accessToken || !email) return error(res, 'Data tidak lengkap');
 
+    const verifyRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
+    if (!verifyRes.ok) return error(res, 'Token Google tidak valid', 401);
+    const tokenInfo = await verifyRes.json();
+    if (tokenInfo.email !== email) return error(res, 'Email tidak cocok', 401);
+
+    const cleanEmail = email.toLowerCase().trim();
+    const admin = await Admin.findOne({ email: cleanEmail }).select('+password');
+    if (!admin) return error(res, 'Email Google belum terdaftar. Silakan daftar di halaman register.', 401);
+    if (admin.role !== 'admin') return error(res, 'Akun ini bukan admin', 403);
+
+    const token = jwt.sign(
+      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
+    );
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    };
+
+    res.cookie('token', token, cookieOptions);
+
+    return success(res, {
+      admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role, merchantId: admin.merchantId },
+      token,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
 
 export async function getMe(req, res) {
   return success(res, {
@@ -242,7 +280,7 @@ export async function updateMerchant(req, res, next) {
       update.socialLinks = socialLinks.map(l => ({ platform: l.platform, url: l.url }));
     }
 
-    const merchant = await Merchant.findByIdAndUpdate(req.admin.merchantId, update, { new: true, runValidators: true });
+    const merchant = await Merchant.findByIdAndUpdate(req.admin.merchantId, update, { returnDocument: 'after', runValidators: true });
     if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
     return success(res, merchant);
   } catch (err) {
@@ -363,6 +401,7 @@ export async function updateQueueStatus(req, res, next) {
       const merchant = await Merchant.findById(queue.merchantId).select('slug');
       if (merchant) {
         const publicQueue = {
+          _id: queue._id,
           id: queue._id,
           queueNumber: queue.queueNumber,
           services: queue.services,
@@ -407,6 +446,7 @@ export async function startServing(req, res, next) {
       const merchant = await Merchant.findById(queue.merchantId).select('slug');
       if (merchant) {
         const publicQueue = {
+          _id: queue._id,
           id: queue._id,
           queueNumber: queue.queueNumber,
           customerName: queue.customerName,
@@ -554,7 +594,7 @@ export async function updateService(req, res, next) {
     }
     if (isActive !== undefined) update.isActive = isActive;
 
-    const updated = await Service.findByIdAndUpdate(id, update, { new: true, runValidators: true });
+    const updated = await Service.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true });
     return success(res, updated);
   } catch (err) {
     next(err);

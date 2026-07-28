@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import sharp from 'sharp';
 import env from '../config/env.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,9 +35,24 @@ const upload = multer({
 
 const router = Router();
 
-router.post('/', upload.single('image'), (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'File tidak ditemukan' });
-  res.json({ url: `${env.API_URL}/uploads/${req.file.filename}` });
+
+  try {
+    const ext = path.extname(req.file.filename);
+    const resizedName = `${path.basename(req.file.filename, ext)}-optimized${ext}`;
+    const resizedPath = path.join(uploadDir, resizedName);
+
+    await sharp(req.file.path)
+      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+      .toFile(resizedPath);
+
+    fs.unlink(req.file.path, () => {});
+
+    res.json({ url: `${env.API_URL}/uploads/${resizedName}` });
+  } catch {
+    res.json({ url: `${env.API_URL}/uploads/${req.file.filename}` });
+  }
 });
 
 export default router;

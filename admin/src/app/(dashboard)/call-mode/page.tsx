@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {
   IconLoader2, IconVocabulary, IconClock, IconPhoneCall, IconUserCheck,
-  IconCircleCheck, IconPlayerSkipForward, IconInfoCircle,
+  IconCircleCheck, IconInfoCircle,
   IconPlus, IconTrash, IconChevronUp, IconChevronDown,
 } from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
@@ -23,7 +23,6 @@ const DEFAULT_STATUSES: Record<string, { label: string; desc: string }> = {
   called: { label: 'Dipanggil', desc: 'Pelanggan sedang dipanggil' },
   serving: { label: 'Dilayani', desc: 'Pelanggan sedang dilayani' },
   done: { label: 'Selesai', desc: 'Antrian selesai (wajib)' },
-  skipped: { label: 'Dilewati', desc: 'Antrian dilewati' },
 };
 
 const STATUS_ICONS: Record<string, any> = {
@@ -31,7 +30,6 @@ const STATUS_ICONS: Record<string, any> = {
   called: IconPhoneCall,
   serving: IconUserCheck,
   done: IconCircleCheck,
-  skipped: IconPlayerSkipForward,
 };
 
 interface StatusItem {
@@ -295,7 +293,6 @@ export default function CallModePage() {
                       { key: 'called', label: 'Dipanggil' },
                       { key: 'serving', label: 'Dilayani' },
                       { key: 'done', label: 'Selesai' },
-                      { key: 'skipped', label: 'Dilewati' },
                     ]);
                   }}
                   className="rounded-xl"

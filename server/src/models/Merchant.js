@@ -53,7 +53,7 @@ const merchantSchema = new mongoose.Schema({
   },
   socialLinks: {
     type: [{
-      platform: { type: String, required: true, enum: ['instagram', 'tiktok', 'youtube', 'facebook'] },
+      platform: { type: String, required: true, enum: ['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp', 'telegram', 'x', 'threads'] },
       url: { type: String, required: true, trim: true },
     }],
     default: [],

@@ -391,6 +391,10 @@ export default function SettingsPage() {
                         <option value="tiktok">TikTok</option>
                         <option value="youtube">YouTube</option>
                         <option value="facebook">Facebook</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="x">X (Twitter)</option>
+                        <option value="threads">Threads</option>
                       </select>
                       <Input
                         value={link.url}
@@ -421,7 +425,7 @@ export default function SettingsPage() {
                     variant="outline"
                     onClick={() => {
                       const existingPlatforms = form.socialLinks.map(l => l.platform);
-                      const avail = (['instagram', 'tiktok', 'youtube', 'facebook'] as const).find(p => !existingPlatforms.includes(p));
+                      const avail = (['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp', 'telegram', 'x', 'threads'] as const).find(p => !existingPlatforms.includes(p));
                       setForm({ ...form, socialLinks: [...form.socialLinks, { platform: avail || 'instagram', url: '' }] });
                     }}
                     className="rounded-xl border-dashed w-full"

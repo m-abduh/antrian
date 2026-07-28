@@ -9,6 +9,7 @@ import {
   IconBrandWhatsapp, IconSearch, IconX, IconAlertCircle, IconChartBar,
 } from '@tabler/icons-react';
 import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
+import type { Queue } from '@/lib/types';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { getAdminSocket } from '@/lib/socket';
 import { useQueryClient } from '@tanstack/react-query';
@@ -78,18 +79,34 @@ export default function DashboardPage() {
     const socket = getAdminSocket();
     if (!socket) return;
 
-    const handleQueueEvent = (payload?: any) => {
-      console.log('[WS Admin] received queue:new/status', payload);
-      queryClient.invalidateQueries({ queryKey: queueKeys.all });
+    const handleNew = (payload: any) => {
+      console.log('[WS Admin] queue:new', payload?.queue?.queueNumber);
+      if (payload?.queue) {
+        queryClient.setQueriesData<Queue[]>({ queryKey: queueKeys.all }, (old) => {
+          if (!old) return old;
+          if (old.some(q => q._id === payload.queue._id)) return old;
+          return [payload.queue, ...old];
+        });
+      }
       queryClient.invalidateQueries({ queryKey: statsKeys.all });
     };
 
-    socket.on('queue:new', handleQueueEvent);
-    socket.on('queue:status', handleQueueEvent);
+    const handleStatus = (payload: any) => {
+      console.log('[WS Admin] queue:status', payload?.queue?.queueNumber, payload?.action);
+      if (payload?.queue) {
+        queryClient.setQueriesData<Queue[]>({ queryKey: queueKeys.all }, (old) => {
+          if (!old) return old;
+          return old.map(q => q._id === payload.queue._id ? { ...q, ...payload.queue } : q);
+        });
+      }
+    };
+
+    socket.on('queue:new', handleNew);
+    socket.on('queue:status', handleStatus);
 
     return () => {
-      socket.off('queue:new', handleQueueEvent);
-      socket.off('queue:status', handleQueueEvent);
+      socket.off('queue:new', handleNew);
+      socket.off('queue:status', handleStatus);
     };
   }, [queryClient, status]);
 

@@ -52,8 +52,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               size="icon"
               onClick={handleSubscribe}
               disabled={permission === 'denied' || notifLoading}
+              suppressHydrationWarning
               className="relative rounded-xl"
-              title={permission === 'granted' ? 'Notifikasi aktif' : 'Aktifkan notifikasi'}
             >
               {notifLoading ? (
                 <IconLoader2 className="w-4 h-4 animate-spin" />

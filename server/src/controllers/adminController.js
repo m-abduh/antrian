@@ -19,11 +19,11 @@ async function notifyCustomer(queue) {
   const subs = await PushSubscription.find({ merchantId: queue.merchantId, subscriptionType: 'customer' });
   if (subs.length === 0) return;
   const merchant = await Merchant.findById(queue.merchantId).select('slug');
-  const payload = JSON.stringify({
-    title: 'Nomor antrian Anda dipanggil!',
-    body: `Nomor ${queue.queueNumber} - Silakan menuju ke loket`,
-    url: `/${merchant?.slug || ''}/queue/${queue._id}`,
-  });
+const payload = JSON.stringify({
+      title: 'Antrian Anda Dipanggil!',
+      body: `Nomor antrian ${queue.queueNumber} — ${queue.customerName}, silakan menuju lokasi.`,
+      url: `/${queue.merchantSlug}/queue/${queue._id}`,
+    });
   for (const sub of subs) {
     try {
       await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
@@ -292,13 +292,16 @@ export async function updateMerchant(req, res, next) {
         if (s.label.trim().length > 50)
           return error(res, `Label "${s.key}" maksimal 50 karakter`);
       }
-      if (statusConfig[0].key !== 'waiting')
-        return error(res, 'Status pertama harus "waiting"');
-      if (statusConfig[statusConfig.length - 1].key !== 'done')
-        return error(res, 'Status terakhir harus "done"');
       if (new Set(statusConfig.map(s => s.key)).size !== statusConfig.length)
         return error(res, 'Key status tidak boleh duplikat');
-      update.statusConfig = statusConfig.map(s => ({ key: s.key.trim(), label: s.label.trim() }));
+      const linearStatuses = statusConfig.filter(s => !s.mandiri);
+      if (linearStatuses.length < 2)
+        return error(res, 'Minimal 2 status linear');
+      if (linearStatuses[0].key !== 'waiting')
+        return error(res, 'Status linear pertama harus "waiting"');
+      if (linearStatuses[linearStatuses.length - 1].key !== 'done')
+        return error(res, 'Status linear terakhir harus "done"');
+      update.statusConfig = statusConfig.map(s => ({ key: s.key.trim(), label: s.label.trim(), mandiri: !!s.mandiri, notify: !!s.notify, confirm: !!s.confirm }));
     }
 
     if (customFieldsConfig !== undefined) {
@@ -421,7 +424,6 @@ export async function updateQueueStatus(req, res, next) {
       }
       queue.status = targetStatus;
       if (targetStatus === 'done') queue.finishedAt = new Date();
-      if (targetStatus === 'called') notifyCustomer(queue).catch(() => {});
     } else {
       switch (action) {
         case 'call':
@@ -429,7 +431,6 @@ export async function updateQueueStatus(req, res, next) {
             return error(res, `Antrean sudah ${queue.status}`, 400);
           }
           queue.status = 'called';
-          notifyCustomer(queue).catch(() => {});
           break;
         case 'skip':
           if (!['waiting', 'called'].includes(queue.status)) {
@@ -449,9 +450,17 @@ export async function updateQueueStatus(req, res, next) {
 
     await queue.save();
 
+    // Notify if target status has notify flag
+    const merchant = await Merchant.findById(queue.merchantId).select('statusConfig slug');
+    if (merchant) {
+      const statusCfg = merchant.statusConfig?.find(s => s.key === queue.status);
+      if (statusCfg?.notify) {
+        notifyCustomer(queue).catch(() => {});
+      }
+    }
+
     const io = req.app.get('io');
     if (io) {
-      const merchant = await Merchant.findById(queue.merchantId).select('slug');
       if (merchant) {
         const publicQueue = {
           _id: queue._id,

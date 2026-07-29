@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLiveQueue } from '@/lib/hooks/useMerchant';
+import { useMerchant, useLiveQueue } from '@/lib/hooks/useMerchant';
 import { useClientStore } from '@/lib/store/clientStore';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { merchantApi } from '@/lib/api/merchant';
@@ -15,14 +15,14 @@ import { updateActiveQueueStatus } from '@/lib/activeQueue';
 import {
   IconClock, IconCircleCheck, IconLoader2, IconUsers, IconArrowLeft,
   IconAlertTriangle, IconChevronRight, IconTrophy, IconStar,
-  IconBell, IconAlarm, IconWavesElectricity,
+  IconBell, IconWavesElectricity,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const statusConfig = {
+const STATUS_FALLBACK: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   waiting: { label: 'Menunggu', color: 'text-foreground', bg: 'bg-muted border-border', icon: IconClock },
   called: { label: 'Dipanggil!', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: IconBell },
   serving: { label: 'Sedang Dilayani', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/50 border-purple-200 dark:border-purple-800', icon: IconUsers },
@@ -33,6 +33,7 @@ const statusConfig = {
 export function QueueClient({ slug, queueId }: { slug: string; queueId: string }) {
   const queryClient = useQueryClient();
   const { currentQueue, setQueue } = useClientStore();
+  const { data: merchant } = useMerchant(slug);
   const { data: liveData, isLoading: liveLoading } = useLiveQueue(slug);
   const { data: fetchedQueue, isLoading: queueLoading } = useQuery<Queue>({
     queryKey: ['queue', slug, queueId],
@@ -40,6 +41,18 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
     staleTime: 0,
     refetchInterval: 15_000,
   });
+
+  const statusConfigDynamic = merchant?.statusConfig?.reduce((acc, s) => {
+    const fb = STATUS_FALLBACK[s.key];
+    acc[s.key] = {
+      label: s.label,
+      color: fb?.color || 'text-foreground',
+      bg: fb?.bg || 'bg-muted border-border',
+      icon: fb?.icon || IconClock,
+    };
+    return acc;
+  }, {} as Record<string, { label: string; color: string; bg: string; icon: any }>) || STATUS_FALLBACK;
+
   const [called, setCalled] = useState(false);
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
@@ -65,7 +78,7 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
   }
 
   const queue = validCurrent ? currentQueue : (myQueue || fetchedQueue);
-  const statusInfo = queue ? statusConfig[queue.status] : statusConfig.waiting;
+  const statusInfo = queue ? (statusConfigDynamic[queue.status] || statusConfigDynamic.waiting) : statusConfigDynamic.waiting;
 
   useEffect(() => {
     if (queue && (queue.status === 'done' || queue.status === 'skipped')) {

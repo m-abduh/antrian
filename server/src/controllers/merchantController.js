@@ -66,6 +66,13 @@ export async function createQueue(req, res, next) {
       return error(res, 'Format nomor telepon tidak valid');
     }
 
+    const otherFields = merchant.customFieldsConfig?.filter(f => f.key !== 'customerName' && f.key !== 'customerPhone' && f.label?.trim()) || [];
+    for (const f of otherFields) {
+      if (f.required && (!customFieldValues || !customFieldValues[f.key]?.trim())) {
+        return error(res, `${f.label} wajib diisi`);
+      }
+    }
+
     const token = customerToken || crypto.randomUUID();
 
     const counts = serviceIds.reduce((acc, id) => {

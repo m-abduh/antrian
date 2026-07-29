@@ -62,13 +62,18 @@ const merchantSchema = new mongoose.Schema({
     type: [{
       key: { type: String, required: true },
       label: { type: String, required: true },
+      mandiri: { type: Boolean, default: false },
+      notify: { type: Boolean, default: false },
+      confirm: { type: Boolean, default: false },
     }],
     default: [
-      { key: 'waiting', label: 'Menunggu' },
-      { key: 'called', label: 'Dipanggil' },
-      { key: 'serving', label: 'Dilayani' },
-      { key: 'done', label: 'Selesai' },
-      { key: 'skipped', label: 'Dilewati' },
+      { key: 'waiting', label: 'Menunggu', mandiri: false, notify: false, confirm: false },
+      { key: 'confirmed', label: 'Dikonfirmasi', mandiri: false, notify: false, confirm: false },
+      { key: 'called', label: 'Dipanggil', mandiri: false, notify: true, confirm: false },
+      { key: 'serving', label: 'Dilayani', mandiri: false, notify: false, confirm: false },
+      { key: 'ready', label: 'Siap', mandiri: false, notify: false, confirm: false },
+      { key: 'done', label: 'Selesai', mandiri: false, notify: false, confirm: false },
+      { key: 'skipped', label: 'Dilewati', mandiri: true, notify: false, confirm: false },
     ],
   },
   customFieldsConfig: {

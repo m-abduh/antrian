@@ -57,14 +57,17 @@ const DEFAULT_LABELS: Record<string, string> = {
 };
 
 function QueueActions({
-  queue, activeStatuses, statusLabels,
-  updateStatus, startServing, onSkip, handleMutation, togglePayment,
+  queue, activeStatuses, statusLabels, specialStatuses,
+  updateStatus, startServing, handleMutation, togglePayment,
+  confirmStatuses, onConfirmAction,
 }: {
-  queue: Queue; activeStatuses: string[]; statusLabels: Record<string, string>;
+  queue: Queue; activeStatuses: string[]; statusLabels: Record<string, string>; specialStatuses: { key: string; label: string }[];
   updateStatus: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
   startServing: { isPending: boolean; mutateAsync: (id: string) => Promise<any> };
-  onSkip: () => void; handleMutation: (fn: () => Promise<any>) => Promise<void>;
+  handleMutation: (fn: () => Promise<any>) => Promise<void>;
   togglePayment: { isPending: boolean; mutate: (id: string) => void };
+  confirmStatuses: Set<string>;
+  onConfirmAction: (q: Queue, status: string, label: string) => void;
 }) {
   const currentIdx = activeStatuses.indexOf(queue.status);
   if (currentIdx === -1) return null;
@@ -73,18 +76,23 @@ function QueueActions({
   const nextStatus = activeStatuses[currentIdx + 1];
   const nextLabel = nextStatus ? (statusLabels[nextStatus] || nextStatus) : '';
   const isPending = updateStatus.isPending || startServing.isPending;
-  const showSkip = queue.status === 'waiting' && activeStatuses.includes('skipped');
   const showPayment = queue.status !== 'waiting' && queue.status !== 'skipped';
 
   const advance = () => {
     if (nextStatus) {
-      handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'set', status: nextStatus }));
+      if (confirmStatuses.has(nextStatus)) {
+        onConfirmAction(queue, nextStatus, nextLabel);
+      } else {
+        handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'set', status: nextStatus }));
+      }
     }
   };
 
+  const isTerminal = queue.status === 'done' || queue.status === 'skipped';
+
   return (
     <>
-      {queue.status !== 'done' && queue.status !== 'skipped' && nextStatus && (
+      {!isTerminal && nextStatus && (
         <Button
           variant={isLastBeforeDone ? 'default' : 'default'}
           size="sm"
@@ -98,18 +106,34 @@ function QueueActions({
           {nextLabel}
         </Button>
       )}
-      {showSkip && (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={onSkip}
-          disabled={isPending}
-          className="rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
-        >
-          {isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-          {statusLabels.skipped || 'Lewati'}
-        </Button>
-      )}
+      {specialStatuses.map((s) => {
+        if (queue.status === s.key) return null;
+        if (queue.status === 'done' || queue.status === 'skipped') return null;
+        if (s.key === 'skipped' && queue.status !== 'waiting') return null;
+        return (
+          <Button
+            key={s.key}
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (confirmStatuses.has(s.key)) {
+                onConfirmAction(queue, s.key, s.label);
+              } else {
+                handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'set', status: s.key }));
+              }
+            }}
+            disabled={isPending}
+            className={`rounded-xl ${
+              s.key === 'skipped' || s.key === 'cancelled'
+                ? 'text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-500/10'
+                : 'text-muted-foreground'
+            }`}
+          >
+            {isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+            {s.label}
+          </Button>
+        );
+      })}
       {showPayment && (
         <button
           onClick={() => togglePayment.mutate(queue._id)}
@@ -140,8 +164,8 @@ export default function DashboardPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [actionError, setActionError] = useState('');
-  const [skipConfirm, setSkipConfirm] = useState<Queue | null>(null);
-  const [statusConfig, setStatusConfig] = useState<{ key: string; label: string }[]>([]);
+  const [confirmAction, setConfirmAction] = useState<{ queue: Queue; status: string; label: string } | null>(null);
+  const [statusConfig, setStatusConfig] = useState<{ key: string; label: string; mandiri?: boolean; notify?: boolean; confirm?: boolean }[]>([]);
   const updateStatus = useUpdateQueueStatus();
   const startServing = useStartServing();
   const togglePayment = useMutation({
@@ -153,6 +177,8 @@ export default function DashboardPage() {
 
   const activeStatuses = statusConfig.map(s => s.key);
   const statusLabels = Object.fromEntries(statusConfig.map(s => [s.key, s.label]));
+  const specialStatuses = statusConfig.filter(s => s.mandiri).map(s => ({ key: s.key, label: s.label }));
+  const confirmStatuses = new Set(statusConfig.filter(s => s.confirm).map(s => s.key));
 
   const statusBadge = useMemo(() => {
     const config: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; cls: string }> = {};
@@ -185,13 +211,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status !== 'authenticated') return;
     adminApi.getMerchant()
-      .then((m) => setStatusConfig(m.statusConfig || [
-        { key: 'waiting', label: 'Menunggu' },
-        { key: 'called', label: 'Dipanggil' },
-        { key: 'serving', label: 'Dilayani' },
-        { key: 'done', label: 'Selesai' },
-        { key: 'skipped', label: 'Dilewati' },
-      ]))
+      .then((m) => setStatusConfig(m.statusConfig || []))
       .catch(() => {});
   }, [status]);
 
@@ -380,11 +400,13 @@ export default function DashboardPage() {
                             queue={q}
                             activeStatuses={activeStatuses}
                             statusLabels={statusLabels}
+                            specialStatuses={specialStatuses}
                             updateStatus={updateStatus}
                             startServing={startServing}
-                            onSkip={() => setSkipConfirm(q)}
                             handleMutation={handleMutation}
                             togglePayment={togglePayment}
+                            confirmStatuses={confirmStatuses}
+                            onConfirmAction={(queue, status, label) => setConfirmAction({ queue, status, label })}
                           />
                         </div>
                       </CardContent>
@@ -397,14 +419,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <Dialog open={!!skipConfirm} onOpenChange={(open) => !open && setSkipConfirm(null)}>
+      <Dialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Konfirmasi Lewati Antrian</DialogTitle>
+            <DialogTitle>Konfirmasi</DialogTitle>
             <DialogDescription>
-              Yakin ingin melewatkan antrian <strong>{skipConfirm?.queueNumber} ({skipConfirm?.customerName})</strong>?
-              <br />
-              Tindakan ini tidak bisa dibatalkan.
+              Yakin ingin mengubah status antrian <strong>{confirmAction?.queue.queueNumber} ({confirmAction?.queue.customerName})</strong> menjadi <strong>{confirmAction?.label}</strong>?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -412,18 +432,18 @@ export default function DashboardPage() {
               <Button variant="outline" size="sm" className="rounded-xl">Batal</Button>
             </DialogClose>
             <Button
-              variant="destructive"
+              variant="default"
               size="sm"
               onClick={() => {
-                if (skipConfirm) {
-                  handleMutation(() => updateStatus.mutateAsync({ id: skipConfirm._id, action: 'skip' }));
+                if (confirmAction) {
+                  handleMutation(() => updateStatus.mutateAsync({ id: confirmAction.queue._id, action: 'set', status: confirmAction.status }));
                 }
-                setSkipConfirm(null);
+                setConfirmAction(null);
               }}
               className="rounded-xl"
             >
               {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-              Ya, Lewati
+              Ya
             </Button>
           </DialogFooter>
         </DialogContent>

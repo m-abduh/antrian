@@ -19,6 +19,7 @@ export interface Merchant {
     holder: string;
   };
   socialLinks: SocialLink[];
+  statusConfig?: { key: string; label: string; mandiri?: boolean; notify?: boolean; confirm?: boolean }[];
   customFieldsConfig?: { key: string; label: string; placeholder: string; required: boolean }[];
   createdAt: string;
   updatedAt: string;
@@ -61,7 +62,7 @@ export interface Queue {
   queueNumber: string;
   customerName: string;
   customerPhone: string;
-  status: 'waiting' | 'called' | 'serving' | 'done' | 'skipped';
+  status: string;
   rating: number | null;
   isPaid: boolean;
   estimatedStartTime: string | null;

@@ -7,10 +7,12 @@ import {
   IconCreditCard, IconMapPin, IconPhone, IconShoppingCart, IconBuildingStore,
   IconWavesElectricity, IconPlus, IconMinus, IconSparkles, IconBell, IconCheck,
   IconArrowRight, IconCircleCheck, IconAlertTriangle, IconX, IconUsers,
+  IconStar, IconLoader2, IconTrophy,
 } from '@tabler/icons-react';
 import { useMerchant, useServices, useGroups, useLiveQueue } from '@/lib/hooks/useMerchant';
 import { useMyQueues } from '@/lib/hooks/useMyQueues';
 import { useCartStore } from '@/lib/store/cartStore';
+import api from '@/lib/axios';
 import { imageUrl } from '@/lib/imageUrl';
 import { getActiveQueue, clearActiveQueue } from '@/lib/activeQueue';
 import { getCustomerToken } from '@/lib/customerToken';
@@ -60,6 +62,29 @@ export function MerchantClient({ slug }: { slug: string }) {
     if (!myQueues) return [];
     return myQueues.filter((q) => !dismissedIds.has(q._id));
   }, [myQueues, dismissedIds]);
+
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
+  const [ratingSent, setRatingSent] = useState(false);
+  const [ratingLoading, setRatingLoading] = useState(false);
+
+  const doneQueueForRating = useMemo(() => {
+    if (!visibleQueues) return null;
+    return visibleQueues.find(q => q.status === 'done') || null;
+  }, [visibleQueues]);
+
+  const submitRating = useCallback(async () => {
+    if (!ratingValue || !doneQueueForRating) return;
+    setRatingLoading(true);
+    try {
+      await api.post(`/merchant/${slug}/queue/${doneQueueForRating._id}/rating`, { rating: ratingValue, comment: ratingComment });
+      setRatingSent(true);
+    } catch {
+      setRatingValue(0);
+    } finally {
+      setRatingLoading(false);
+    }
+  }, [slug, doneQueueForRating, ratingValue, ratingComment]);
 
   const legacyActiveQ = !token ? getActiveQueue(slug) : null;
 
@@ -491,6 +516,71 @@ export function MerchantClient({ slug }: { slug: string }) {
                    )}
                  </div>
                </div>
+
+              {/* Rating */}
+              {doneQueueForRating && (
+                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                  <div className="p-4 md:p-5">
+                    {ratingSent ? (
+                      <div className="text-center py-2">
+                        <IconCircleCheck className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-foreground">Terima kasih!</p>
+                        <p className="text-xs text-muted-foreground mt-1">Penilaian kamu sangat berharga</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 mb-2">
+                          <IconTrophy className="w-4 h-4 text-emerald-500" />
+                          <h4 className="text-xs font-semibold text-foreground">Beri Penilaian</h4>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {doneQueueForRating.queueNumber} — {doneQueueForRating.customerName}
+                        </p>
+                        <div className="flex justify-center gap-1 mb-3">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => setRatingValue(star)}
+                              disabled={ratingLoading}
+                              className="focus:outline-none transition-transform hover:scale-110"
+                            >
+                              <IconStar
+                                className={`w-6 h-6 ${
+                                  star <= ratingValue
+                                    ? 'text-yellow-400 fill-yellow-400 drop-shadow-sm'
+                                    : 'text-muted-foreground/30'
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                        {ratingValue > 0 && (
+                          <>
+                            <textarea
+                              value={ratingComment}
+                              onChange={(e) => setRatingComment(e.target.value)}
+                              placeholder="Komentar (opsional)..."
+                              rows={2}
+                              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 mb-2"
+                            />
+                            <button
+                              onClick={submitRating}
+                              disabled={ratingLoading}
+                              className="w-full h-8 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                            >
+                              {ratingLoading ? (
+                                <><IconLoader2 className="w-3.5 h-3.5 animate-spin" /> Mengirim...</>
+                              ) : (
+                                'Kirim Penilaian'
+                              )}
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Cara Pakai */}
               <div className="relative bg-gradient-to-br from-primary/[0.04] to-transparent border border-primary/[0.08] rounded-2xl p-4 md:p-5">

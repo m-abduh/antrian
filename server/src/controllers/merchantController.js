@@ -1,6 +1,7 @@
 import Merchant from '../models/Merchant.js';
 import Service from '../models/Service.js';
 import Queue from '../models/Queue.js';
+import Rating from '../models/Rating.js';
 import PushSubscription from '../models/PushSubscription.js';
 import crypto from 'crypto';
 import { generateQueueNumber, calculateEstimatedTime } from '../utils/queueNumber.js';
@@ -233,9 +234,18 @@ export async function submitRating(req, res, next) {
     if (!queue) {
       return error(res, 'Antrean tidak ditemukan atau belum selesai', 404);
     }
-    if (queue.rating) {
-      return error(res, 'Sudah memberikan rating', 400);
-    }
+
+    await Rating.create({
+      merchantId: merchant._id,
+      queueId: queue._id,
+      customerToken: queue.customerToken || '',
+      customerPhone: queue.customerPhone || '',
+      customerName: queue.customerName,
+      queueNumber: queue.queueNumber,
+      rating: Math.round(rating),
+      comment: comment && comment.trim() ? comment.trim() : '',
+      services: queue.services || [],
+    });
 
     queue.rating = Math.round(rating);
     if (comment && comment.trim()) {
@@ -243,7 +253,7 @@ export async function submitRating(req, res, next) {
     }
     await queue.save();
 
-    return success(res, { message: 'Terima kasih atas penilaiannya!', rating: queue.rating });
+    return success(res, { message: 'Terima kasih atas penilaiannya!', rating: Math.round(rating) });
   } catch (err) {
     next(err);
   }

@@ -110,7 +110,7 @@ export interface Rating {
   customerPhone: string;
   services: { name: string }[];
   rating: number;
-  ratingComment: string;
+  comment: string;
   createdAt: string;
 }
 export interface Customer {

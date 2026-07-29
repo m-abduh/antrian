@@ -115,10 +115,10 @@ export default function RatingsPage() {
                           {r.services.map((s: any) => s.name).join(', ')}
                         </p>
                       )}
-                      {r.ratingComment && (
+                      {r.comment && (
                         <div className="flex items-start gap-1.5 bg-muted/50 rounded-xl p-3">
                           <IconMessageCircle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                          <p className="text-sm text-foreground/80">{r.ratingComment}</p>
+                          <p className="text-sm text-foreground/80">{r.comment}</p>
                         </div>
                       )}
                       <p className="text-[10px] text-muted-foreground/60">{formatDate(r.createdAt)}</p>

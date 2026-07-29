@@ -3,6 +3,7 @@ import Queue from '../models/Queue.js';
 import Service from '../models/Service.js';
 import Merchant from '../models/Merchant.js';
 import PushSubscription from '../models/PushSubscription.js';
+import Rating from '../models/Rating.js';
 import jwt from 'jsonwebtoken';
 import webpush from 'web-push';
 import { OAuth2Client } from 'google-auth-library';
@@ -658,7 +659,26 @@ export async function getCustomers(req, res, next) {
             },
           },
           terakhirAntri: { $max: '$createdAt' },
-          ratingRata: { $avg: '$rating' },
+          queueIds: { $addToSet: '$_id' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'ratings',
+          localField: 'queueIds',
+          foreignField: 'queueId',
+          as: 'ratingsData',
+        },
+      },
+      {
+        $addFields: {
+          ratingRata: {
+            $cond: {
+              if: { $gt: [{ $size: '$ratingsData' }, 0] },
+              then: { $avg: '$ratingsData.rating' },
+              else: null,
+            },
+          },
         },
       },
       {
@@ -671,7 +691,7 @@ export async function getCustomers(req, res, next) {
           totalKunjungan: 1,
           totalBelanja: { $ifNull: ['$totalBelanja', 0] },
           terakhirAntri: 1,
-          ratingRata: { $ifNull: ['$ratingRata', null] },
+          ratingRata: 1,
         },
       },
       { $sort: { terakhirAntri: -1 } },
@@ -685,12 +705,11 @@ export async function getCustomers(req, res, next) {
 
 export async function getRatings(req, res, next) {
   try {
-    const queue = await Queue.find({ merchantId: req.admin.merchantId, rating: { $ne: null } })
-      .select('queueNumber customerName customerPhone services rating ratingComment createdAt')
+    const ratings = await Rating.find({ merchantId: req.admin.merchantId })
       .sort({ createdAt: -1 })
       .lean();
 
-    return success(res, queue);
+    return success(res, ratings);
   } catch (err) {
     next(err);
   }

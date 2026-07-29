@@ -59,7 +59,7 @@ const DEFAULT_LABELS: Record<string, string> = {
 function QueueActions({
   queue, activeStatuses, statusLabels, specialStatuses,
   updateStatus, startServing, handleMutation, togglePayment,
-  confirmStatuses, onConfirmAction,
+  confirmStatuses, onConfirmAction, paymentConfirm, onConfirmPayment,
 }: {
   queue: Queue; activeStatuses: string[]; statusLabels: Record<string, string>; specialStatuses: { key: string; label: string }[];
   updateStatus: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
@@ -68,6 +68,8 @@ function QueueActions({
   togglePayment: { isPending: boolean; mutate: (id: string) => void };
   confirmStatuses: Set<string>;
   onConfirmAction: (q: Queue, status: string, label: string) => void;
+  paymentConfirm: boolean;
+  onConfirmPayment: (q: Queue, isPay: boolean) => void;
 }) {
   const currentIdx = activeStatuses.indexOf(queue.status);
   if (currentIdx === -1) return null;
@@ -136,7 +138,7 @@ function QueueActions({
       })}
       {showPayment && (
         <button
-          onClick={() => togglePayment.mutate(queue._id)}
+          onClick={() => paymentConfirm ? onConfirmPayment(queue, !queue.isPaid) : togglePayment.mutate(queue._id)}
           disabled={togglePayment.isPending}
           className={`h-9 rounded-xl flex items-center gap-1.5 px-3 flex-shrink-0 transition-all text-xs font-medium ${
             queue.isPaid
@@ -165,7 +167,10 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [actionError, setActionError] = useState('');
   const [confirmAction, setConfirmAction] = useState<{ queue: Queue; status: string; label: string } | null>(null);
-  const [statusConfig, setStatusConfig] = useState<{ key: string; label: string; mandiri?: boolean; notify?: boolean; confirm?: boolean }[]>([]);
+  const [confirmPayment, setConfirmPayment] = useState<{ queue: Queue; isPay: boolean } | null>(null);
+  const [paymentConfirm, setPaymentConfirm] = useState(true);
+  const [statusConfig, setStatusConfig] = useState<{ key: string; label: string; notify?: boolean; confirm?: boolean }[]>([]);
+  const [customFieldsConfig, setCustomFieldsConfig] = useState<{ key: string; label: string }[]>([]);
   const updateStatus = useUpdateQueueStatus();
   const startServing = useStartServing();
   const togglePayment = useMutation({
@@ -177,7 +182,7 @@ export default function DashboardPage() {
 
   const activeStatuses = statusConfig.map(s => s.key);
   const statusLabels = Object.fromEntries(statusConfig.map(s => [s.key, s.label]));
-  const specialStatuses = statusConfig.filter(s => s.mandiri).map(s => ({ key: s.key, label: s.label }));
+  const specialStatuses = statusConfig.filter(s => s.key === 'skipped').map(s => ({ key: s.key, label: s.label }));
   const confirmStatuses = new Set(statusConfig.filter(s => s.confirm).map(s => s.key));
 
   const statusBadge = useMemo(() => {
@@ -211,7 +216,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status !== 'authenticated') return;
     adminApi.getMerchant()
-      .then((m) => setStatusConfig(m.statusConfig || []))
+      .then((m) => {
+        setStatusConfig(m.statusConfig || []);
+        setCustomFieldsConfig(m.customFieldsConfig || []);
+        setPaymentConfirm(m.paymentConfirm !== undefined ? !!m.paymentConfirm : true);
+      })
       .catch(() => {});
   }, [status]);
 
@@ -395,6 +404,14 @@ export default function DashboardPage() {
                                 Catatan: {q.note}
                               </p>
                             )}
+                            {q.customFieldValues && Object.entries(q.customFieldValues).filter(([k]) => k !== 'customerName' && k !== 'customerPhone').map(([k, v]) => {
+                              const label = customFieldsConfig.find(f => f.key === k)?.label || k;
+                              return (
+                                <p key={k} className="text-xs text-muted-foreground/70 mt-1">
+                                  {label}: {v}
+                                </p>
+                              );
+                            })}
                           </div>
                           <QueueActions
                             queue={q}
@@ -407,6 +424,8 @@ export default function DashboardPage() {
                             togglePayment={togglePayment}
                             confirmStatuses={confirmStatuses}
                             onConfirmAction={(queue, status, label) => setConfirmAction({ queue, status, label })}
+                            paymentConfirm={paymentConfirm}
+                            onConfirmPayment={(q, isPay) => setConfirmPayment({ queue: q, isPay })}
                           />
                         </div>
                       </CardContent>
@@ -443,6 +462,37 @@ export default function DashboardPage() {
               className="rounded-xl"
             >
               {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+              Ya
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!confirmPayment} onOpenChange={(open) => !open && setConfirmPayment(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Pembayaran</DialogTitle>
+            <DialogDescription>
+              {confirmPayment?.isPay
+                ? <>Yakin antrian <strong>{confirmPayment.queue.queueNumber} ({confirmPayment.queue.customerName})</strong> sudah bayar?</>
+                : <>Yakin batalkan pembayaran antrian <strong>{confirmPayment?.queue.queueNumber} ({confirmPayment?.queue.customerName})</strong>?</>
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" size="sm" className="rounded-xl">Batal</Button>
+            </DialogClose>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                if (confirmPayment) togglePayment.mutate(confirmPayment.queue._id);
+                setConfirmPayment(null);
+              }}
+              className="rounded-xl"
+            >
+              {togglePayment.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
               Ya
             </Button>
           </DialogFooter>

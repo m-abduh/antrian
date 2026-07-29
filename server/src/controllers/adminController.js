@@ -232,6 +232,7 @@ export async function getMerchant(req, res, next) {
   try {
     const merchant = await Merchant.findById(req.admin.merchantId);
     if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+    if (merchant.paymentConfirm === undefined) merchant.paymentConfirm = true;
     return success(res, merchant);
   } catch (err) {
     next(err);
@@ -240,32 +241,34 @@ export async function getMerchant(req, res, next) {
 
 export async function updateMerchant(req, res, next) {
   try {
-    const { name, address, phone, image, banner, description, bank, socialLinks, statusConfig, customFieldsConfig } = req.body;
-    const update = {};
+    const { name, address, phone, image, banner, description, bank, socialLinks, statusConfig, customFieldsConfig, paymentConfirm } = req.body;
+
+    const merchant = await Merchant.findById(req.admin.merchantId);
+    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
 
     if (name !== undefined) {
       if (!name.trim()) return error(res, 'Nama merchant wajib diisi');
       if (name.trim().length > 100) return error(res, 'Nama maksimal 100 karakter');
-      update.name = name.trim();
+      merchant.name = name.trim();
     }
     if (address !== undefined) {
       if (address.length > 500) return error(res, 'Alamat maksimal 500 karakter');
-      update.address = address;
+      merchant.address = address;
     }
-    if (image !== undefined) update.image = image;
-    if (banner !== undefined) update.banner = banner;
+    if (image !== undefined) merchant.image = image;
+    if (banner !== undefined) merchant.banner = banner;
     if (phone !== undefined) {
       if (phone && !/^\+?[0-9]{10,15}$/.test(phone)) return error(res, 'Format nomor telepon tidak valid');
-      update.phone = phone;
+      merchant.phone = phone;
     }
     if (description !== undefined) {
       if (description.length > 500) return error(res, 'Deskripsi maksimal 500 karakter');
-      update.description = description;
+      merchant.description = description;
     }
     if (bank !== undefined) {
-      if (bank.name !== undefined) update['bank.name'] = bank.name;
-      if (bank.account !== undefined) update['bank.account'] = bank.account;
-      if (bank.holder !== undefined) update['bank.holder'] = bank.holder;
+      if (bank.name !== undefined) merchant.bank.name = bank.name;
+      if (bank.account !== undefined) merchant.bank.account = bank.account;
+      if (bank.holder !== undefined) merchant.bank.holder = bank.holder;
     }
 
     if (socialLinks !== undefined) {
@@ -278,7 +281,7 @@ export async function updateMerchant(req, res, next) {
         if (!link.url || !link.url.trim())
           return error(res, 'URL sosial media wajib diisi');
       }
-      update.socialLinks = socialLinks.map(l => ({ platform: l.platform, url: l.url }));
+      merchant.socialLinks = socialLinks.map(l => ({ platform: l.platform, url: l.url }));
     }
 
     if (statusConfig !== undefined) {
@@ -294,14 +297,12 @@ export async function updateMerchant(req, res, next) {
       }
       if (new Set(statusConfig.map(s => s.key)).size !== statusConfig.length)
         return error(res, 'Key status tidak boleh duplikat');
-      const linearStatuses = statusConfig.filter(s => !s.mandiri);
-      if (linearStatuses.length < 2)
-        return error(res, 'Minimal 2 status linear');
-      if (linearStatuses[0].key !== 'waiting')
-        return error(res, 'Status linear pertama harus "waiting"');
-      if (linearStatuses[linearStatuses.length - 1].key !== 'done')
-        return error(res, 'Status linear terakhir harus "done"');
-      update.statusConfig = statusConfig.map(s => ({ key: s.key.trim(), label: s.label.trim(), mandiri: !!s.mandiri, notify: !!s.notify, confirm: !!s.confirm }));
+      merchant.statusConfig = statusConfig.map(s => ({
+        key: s.key.trim(),
+        label: s.label.trim(),
+        notify: !!s.notify,
+        confirm: !!s.confirm,
+      }));
     }
 
     if (customFieldsConfig !== undefined) {
@@ -315,7 +316,7 @@ export async function updateMerchant(req, res, next) {
         if (f.label.trim().length > 100)
           return error(res, 'Label custom field maksimal 100 karakter');
       }
-      update.customFieldsConfig = customFieldsConfig.map(f => ({
+      merchant.customFieldsConfig = customFieldsConfig.map(f => ({
         key: f.key.trim(),
         label: f.label.trim(),
         placeholder: (f.placeholder || '').trim(),
@@ -323,8 +324,12 @@ export async function updateMerchant(req, res, next) {
       }));
     }
 
-    const merchant = await Merchant.findByIdAndUpdate(req.admin.merchantId, update, { returnDocument: 'after', runValidators: true });
-    if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
+    if (paymentConfirm !== undefined) {
+      merchant.paymentConfirm = !!paymentConfirm;
+    }
+
+    await merchant.save();
+
     return success(res, merchant);
   } catch (err) {
     next(err);

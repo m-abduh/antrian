@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import {
   IconLoader2, IconVocabulary, IconClock, IconPhoneCall, IconUserCheck,
   IconCircleCheck, IconChevronUp, IconChevronDown,
-  IconAlertTriangle, IconStar, IconBell, IconTrash,
+  IconAlertTriangle, IconBell, IconTrash, IconCreditCard,
 } from '@tabler/icons-react';
 import { adminApi } from '@/lib/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,14 +21,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 
-const ALL_STATUSES: Record<string, { label: string; desc: string; icon: any; defaultMandiri: boolean; defaultNotify: boolean; defaultConfirm: boolean }> = {
-  waiting: { label: 'Menunggu', desc: 'Antrian baru yang belum diproses (wajib)', icon: IconClock, defaultMandiri: false, defaultNotify: false, defaultConfirm: false },
-  confirmed: { label: 'Dikonfirmasi', desc: 'Pesanan dikonfirmasi', icon: IconCircleCheck, defaultMandiri: false, defaultNotify: false, defaultConfirm: false },
-  called: { label: 'Dipanggil', desc: 'Pelanggan sedang dipanggil', icon: IconPhoneCall, defaultMandiri: false, defaultNotify: true, defaultConfirm: false },
-  serving: { label: 'Dilayani', desc: 'Pelanggan sedang dilayani', icon: IconUserCheck, defaultMandiri: false, defaultNotify: false, defaultConfirm: false },
-  ready: { label: 'Siap', desc: 'Pesanan siap diambil', icon: IconStar, defaultMandiri: false, defaultNotify: false, defaultConfirm: false },
-  done: { label: 'Selesai', desc: 'Antrian selesai (wajib)', icon: IconCircleCheck, defaultMandiri: false, defaultNotify: false, defaultConfirm: false },
-  skipped: { label: 'Dilewati', desc: 'Antrian dilewati', icon: IconAlertTriangle, defaultMandiri: true, defaultNotify: false, defaultConfirm: false },
+const ALL_STATUSES: Record<string, { label: string; desc: string; icon: any; defaultNotify: boolean; defaultConfirm: boolean }> = {
+  waiting: { label: 'Menunggu', desc: 'Antrian baru yang belum diproses (wajib)', icon: IconClock, defaultNotify: false, defaultConfirm: false },
+  confirmed: { label: 'Dikonfirmasi', desc: 'Pesanan dikonfirmasi', icon: IconCircleCheck, defaultNotify: false, defaultConfirm: false },
+  serving: { label: 'Dilayani', desc: 'Pelanggan sedang dilayani', icon: IconUserCheck, defaultNotify: false, defaultConfirm: false },
+  called: { label: 'Dipanggil', desc: 'Pelanggan sedang dipanggil', icon: IconPhoneCall, defaultNotify: true, defaultConfirm: false },
+  done: { label: 'Selesai', desc: 'Antrian selesai (wajib)', icon: IconCircleCheck, defaultNotify: false, defaultConfirm: false },
+  skipped: { label: 'Dilewati', desc: 'Antrian dilewati', icon: IconAlertTriangle, defaultNotify: false, defaultConfirm: true },
 };
 
 const LOCKED_KEYS = ['waiting', 'done'];
@@ -36,7 +35,6 @@ const LOCKED_KEYS = ['waiting', 'done'];
 interface StatusConfigItem {
   key: string;
   label: string;
-  mandiri: boolean;
   notify: boolean;
   confirm: boolean;
   enabled: boolean;
@@ -51,6 +49,7 @@ export default function CallModePage() {
   const [success, setSuccess] = useState('');
   const [statuses, setStatuses] = useState<StatusConfigItem[]>([]);
   const [confirmKey, setConfirmKey] = useState<string | null>(null);
+  const [paymentConfirm, setPaymentConfirm] = useState(true);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/login');
@@ -62,19 +61,19 @@ export default function CallModePage() {
       .then((m) => {
         const saved = m.statusConfig || [];
         const savedMap = new Map(saved.map((s: any) => [s.key, s]));
-        const merged = Object.keys(ALL_STATUSES).map((key) => {
-          const saved_item = savedMap.get(key);
-          const def = ALL_STATUSES[key];
-          return {
-            key,
-            label: saved_item?.label || def.label,
-            mandiri: saved_item ? !!saved_item.mandiri : def.defaultMandiri,
-            notify: saved_item ? !!saved_item.notify : def.defaultNotify,
-            confirm: saved_item ? !!saved_item.confirm : def.defaultConfirm,
-            enabled: !!saved_item,
-          };
-        });
+          const merged = Object.keys(ALL_STATUSES).map((key) => {
+            const saved_item = savedMap.get(key);
+            const def = ALL_STATUSES[key];
+            return {
+              key,
+              label: saved_item?.label || def.label,
+              notify: saved_item ? !!saved_item.notify : def.defaultNotify,
+              confirm: saved_item ? !!saved_item.confirm : def.defaultConfirm,
+              enabled: !!saved_item,
+            };
+          });
         setStatuses(merged);
+        setPaymentConfirm(m.paymentConfirm !== undefined ? !!m.paymentConfirm : true);
       })
       .catch(() => setError('Gagal memuat data'))
       .finally(() => setLoading(false));
@@ -87,10 +86,6 @@ export default function CallModePage() {
 
   const toggleEnabled = (key: string) => {
     setStatuses(statuses.map((s) => s.key === key ? { ...s, enabled: !s.enabled } : s));
-  };
-
-  const toggleMandiri = (key: string) => {
-    setStatuses(statuses.map((s) => s.key === key ? { ...s, mandiri: !s.mandiri } : s));
   };
 
   const toggleNotify = (key: string) => {
@@ -130,25 +125,29 @@ export default function CallModePage() {
     setSaving(true);
     try {
       const enabled = statuses.filter((s) => s.enabled && s.label.trim());
-      const linear = enabled.filter(s => !s.mandiri);
-      if (linear.length < 2) {
-        setError('Minimal 2 status linear harus aktif');
+      const flow = enabled.filter(s => s.key !== 'skipped');
+      if (flow.length < 2) {
+        setError('Minimal 2 status flow harus aktif');
         setSaving(false);
         return;
       }
-      if (linear[0].key !== 'waiting') {
-        setError('Status linear pertama harus "Menunggu"');
+      if (flow[0].key !== 'waiting') {
+        setError('Status pertama harus "Menunggu"');
         setSaving(false);
         return;
       }
-      if (linear[linear.length - 1].key !== 'done') {
-        setError('Status linear terakhir harus "Selesai"');
+      if (flow[flow.length - 1].key !== 'done') {
+        setError('Status terakhir harus "Selesai"');
         setSaving(false);
         return;
       }
-      await adminApi.updateMerchant({
-        statusConfig: enabled.map((s) => ({ key: s.key, label: s.label.trim(), mandiri: s.mandiri, notify: s.notify, confirm: s.confirm })),
+      const result = await adminApi.updateMerchant({
+        statusConfig: enabled.map((s) => ({ key: s.key, label: s.label.trim(), notify: s.notify, confirm: s.confirm })),
+        paymentConfirm,
       });
+      if (result && result.paymentConfirm !== undefined) {
+        setPaymentConfirm(!!result.paymentConfirm);
+      }
       setSuccess('Mode panggilan berhasil disimpan');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: unknown) {
@@ -162,9 +161,8 @@ export default function CallModePage() {
 
   const sorted = [...statuses];
   const enabledSt = sorted.filter(s => s.enabled);
-  const linearSt = enabledSt.filter(s => !s.mandiri);
-  const mandiriSt = enabledSt.filter(s => s.mandiri);
-  const disabledSt = sorted.filter(s => !s.enabled);
+  const flowSt = enabledSt.filter(s => s.key !== 'skipped');
+  const disabledSt = sorted.filter(s => !s.enabled && s.key !== 'skipped');
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -173,10 +171,10 @@ export default function CallModePage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Mode Panggilan</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Atur status antrian, tandai mandiri/linear, dan notifikasi
+              Atur status antrian, urutan, dan notifikasi
             </p>
           </div>
-        </div>
+          </div>
 
         <Separator />
 
@@ -214,55 +212,47 @@ export default function CallModePage() {
             <div className="bg-muted/50 rounded-2xl p-4 text-xs text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">Alur status saat ini:</p>
               <p>
-                {linearSt.map((s, i) => (
+                {flowSt.map((s, i) => (
                   <span key={s.key}>
                     {i > 0 && <span className="mx-1.5 text-muted-foreground/50">&rarr;</span>}
                     <span className="font-medium text-foreground">{s.label}</span>
                   </span>
                 ))}
-                {mandiriSt.length > 0 && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    · {mandiriSt.map(s => s.label).join(', ')}
-                  </span>
-                )}
               </p>
             </div>
 
             {/* Active Statuses */}
             <div className="space-y-2">
-              {enabledSt.map((s, idx) => {
+              {flowSt.map((s, idx) => {
                 const def = ALL_STATUSES[s.key];
                 const Icon = def?.icon || IconVocabulary;
                 const locked = LOCKED_KEYS.includes(s.key);
 
                 return (
-                  <Card key={s.key} className={`border rounded-2xl overflow-hidden ${
-                    s.mandiri ? 'border-orange-200 dark:border-orange-800 bg-orange-500/[0.02]' : 'border-border'
-                  }`}>
+                  <Card key={s.key} className="border border-border rounded-2xl overflow-hidden">
                     <CardContent className="p-3 sm:p-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          s.mandiri ? 'bg-orange-500/10' : locked ? 'bg-primary/10' : 'bg-muted'
+                          locked ? 'bg-primary/10' : 'bg-muted'
                         }`}>
                           <Icon className={`w-4 h-4 ${
-                            s.mandiri ? 'text-orange-500' : locked ? 'text-primary' : 'text-muted-foreground'
+                            locked ? 'text-primary' : 'text-muted-foreground'
                           }`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-semibold text-foreground">{def.label}</span>
                             {locked && <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">Wajib</span>}
-                            {s.mandiri && <span className="text-[10px] text-orange-600 dark:text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded-full">Mandiri</span>}
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5">{def.desc}</p>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          {!locked && !s.mandiri && (
+                          {!locked && (
                             <>
-                              <button type="button" onClick={() => moveUp(idx)} disabled={idx === 0 || LOCKED_KEYS.includes(enabledSt[idx - 1]?.key)} className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
+                              <button type="button" onClick={() => moveUp(idx)} disabled={idx === 0 || LOCKED_KEYS.includes(flowSt[idx - 1]?.key)} className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
                                 <IconChevronUp className="w-3.5 h-3.5" />
                               </button>
-                              <button type="button" onClick={() => moveDown(idx)} disabled={idx === enabledSt.length - 1 || LOCKED_KEYS.includes(enabledSt[idx + 1]?.key)} className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
+                              <button type="button" onClick={() => moveDown(idx)} disabled={idx === flowSt.length - 1 || LOCKED_KEYS.includes(flowSt[idx + 1]?.key)} className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
                                 <IconChevronDown className="w-3.5 h-3.5" />
                               </button>
                             </>
@@ -278,18 +268,6 @@ export default function CallModePage() {
                             title={s.notify ? 'Notifikasi aktif' : 'Notifikasi mati'}
                           >
                             <IconBell className={`w-4 h-4 ${s.notify ? 'fill-primary/20' : ''}`} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleMandiri(s.key)}
-                            disabled={locked}
-                            className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                              s.mandiri
-                                ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20'
-                                : 'bg-muted text-muted-foreground hover:text-foreground'
-                            } disabled:opacity-50`}
-                          >
-                            Mandiri
                           </button>
                           <button
                             type="button"
@@ -314,7 +292,7 @@ export default function CallModePage() {
                           )}
                         </div>
                       </div>
-                      {!s.mandiri && s.key !== 'waiting' && s.key !== 'done' && (
+                      {s.key !== 'waiting' && s.key !== 'done' && (
                         <div className="mt-2 ml-12">
                           <Input
                             value={s.label}
@@ -354,6 +332,60 @@ export default function CallModePage() {
               </div>
             )}
 
+            {/* Dilewati */}
+            <Card className="border rounded-2xl overflow-hidden border-orange-200 dark:border-orange-800 bg-orange-500/[0.02]">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-orange-500/10">
+                    <IconAlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-semibold text-foreground">Dilewati</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Antrian dilewati (independen, tidak masuk alur)</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleConfirm('skipped')}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      statuses.find(s => s.key === 'skipped')?.confirm
+                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
+                        : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Konfirmasi
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pembayaran */}
+            <Card className="border rounded-2xl overflow-hidden border-emerald-200 dark:border-emerald-800 bg-emerald-500/[0.02]">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-emerald-500/10">
+                    <IconCreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-foreground">Pembayaran</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Tandai pelanggan sudah bayar</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentConfirm(!paymentConfirm)}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      paymentConfirm
+                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
+                        : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Konfirmasi
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Separator />
 
             <div className="flex items-center justify-end gap-3">
@@ -366,13 +398,12 @@ export default function CallModePage() {
                     return {
                       key,
                       label: def.label,
-                      mandiri: def.defaultMandiri,
                       notify: def.defaultNotify,
                       confirm: def.defaultConfirm,
-                      enabled: true,
+                      enabled: ['waiting', 'confirmed', 'serving', 'called', 'done'].includes(key),
                     };
                   });
-                  setStatuses(merged);
+setStatuses(merged);
                 }}
                 className="rounded-xl"
               >

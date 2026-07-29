@@ -65,7 +65,8 @@ export interface Merchant {
     holder: string;
   };
   socialLinks: SocialLink[];
-  statusConfig?: { key: string; label: string; mandiri?: boolean; notify?: boolean; confirm?: boolean }[];
+  statusConfig?: { key: string; label: string; notify?: boolean; confirm?: boolean }[];
+  paymentConfirm?: boolean;
   customFieldsConfig?: { key: string; label: string; placeholder: string; required: boolean }[];
   createdAt: string;
   updatedAt: string;

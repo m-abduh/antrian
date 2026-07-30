@@ -819,14 +819,15 @@ export async function getFinance(req, res, next) {
     const thirtyDaysAgo = new Date(todayStart);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
 
-    const [
-      todayAgg,
-      dailyTrend,
-      topCustomers,
-      peakHoursResult,
-      ratingResult,
-      newCustomerTokens,
-    ] = await Promise.all([
+      const [
+        todayAgg,
+        dailyTrend,
+        topCustomers,
+        peakHoursResult,
+        ratingResult,
+        newCustomerTokens,
+        services30,
+      ] = await Promise.all([
       // Pipeline 1: Ringkasan hari ini + revenue by service
       Queue.aggregate([
         { $match: { merchantId, createdAt: { $gte: todayStart, $lt: todayEnd } } },
@@ -907,29 +908,6 @@ export async function getFinance(req, res, next) {
                   uniqueCustomerCount: { $size: '$uniqueCustomers' },
                 },
               },
-            ],
-            servicesBreakdown: [
-              { $unwind: '$services' },
-              {
-                $group: {
-                  _id: '$services.name',
-                  orders: { $sum: 1 },
-                  quantity: { $sum: '$services.quantity' },
-                  revenue: { $sum: { $multiply: ['$services.price', '$services.quantity'] } },
-                  totalPriceSum: { $sum: '$services.price' },
-                },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  name: '$_id',
-                  orders: 1,
-                  quantity: 1,
-                  revenue: 1,
-                  avgPrice: { $round: [{ $divide: ['$totalPriceSum', '$orders'] }, 0] },
-                },
-              },
-              { $sort: { revenue: -1 } },
             ],
             paidRevenue: [
               { $match: { isPaid: true } },
@@ -1077,6 +1055,30 @@ export async function getFinance(req, res, next) {
           },
         },
       ]),
+
+      // Pipeline 7: Service breakdown 30 hari
+      Queue.aggregate([
+        { $match: { merchantId, createdAt: { $gte: thirtyDaysAgo, $lt: todayEnd } } },
+        { $unwind: '$services' },
+        {
+          $group: {
+            _id: '$services.name',
+            orders: { $sum: 1 },
+            quantity: { $sum: '$services.quantity' },
+            revenue: { $sum: { $multiply: ['$services.price', '$services.quantity'] } },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            name: '$_id',
+            orders: 1,
+            quantity: 1,
+            revenue: 1,
+          },
+        },
+        { $sort: { revenue: -1 } },
+      ]),
     ]);
 
     const summary = todayAgg[0]?.summary?.[0] || {
@@ -1112,7 +1114,7 @@ export async function getFinance(req, res, next) {
         avgRating,
         totalRatings,
       },
-      servicesBreakdown: todayAgg[0]?.servicesBreakdown || [],
+      servicesBreakdown: services30,
       dailyTrend,
       topCustomers,
       peakHours: peakHoursResult[0]?.peakHours || [],

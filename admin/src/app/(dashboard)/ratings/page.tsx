@@ -77,9 +77,9 @@ export default function RatingsPage() {
         <ErrorAlert message={error instanceof Error ? error.message : ''} onClose={() => {}} />
 
         {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-32 w-full rounded-2xl" />
             ))}
           </div>
         ) : !ratings || ratings.length === 0 ? (
@@ -93,7 +93,7 @@ export default function RatingsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {ratings.map((r, i) => (
               <Card key={r._id} className="rounded-2xl border-border">
                 <CardContent className="p-4 sm:p-5">
@@ -102,14 +102,12 @@ export default function RatingsPage() {
                       <IconStarFilled className="w-5 h-5 text-yellow-400" />
                     </div>
                     <div className="flex-1 min-w-0 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <span className="font-semibold text-foreground">{r.customerName}</span>
-                          <span className="text-muted-foreground/50 mx-2">·</span>
-                          <span className="text-xs text-muted-foreground font-mono">{r.queueNumber}</span>
-                        </div>
-                        <StarDisplay value={r.rating} />
+                      <div>
+                        <span className="font-semibold text-foreground">{r.customerName}</span>
+                        <span className="text-muted-foreground/50 mx-2">·</span>
+                        <span className="text-xs text-muted-foreground font-mono">{r.queueNumber}</span>
                       </div>
+                      <StarDisplay value={r.rating} />
                       {r.services?.length > 0 && (
                         <p className="text-xs text-muted-foreground">
                           {r.services.map((s: any) => s.name).join(', ')}

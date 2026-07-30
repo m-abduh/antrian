@@ -5,9 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {
-  IconLoader2, IconUsers, IconCircleCheck, IconClock, IconPlayerSkipForward,
-  IconCoin, IconShoppingCart, IconReceipt, IconTrendingUp, IconStar,
-  IconUserPlus, IconUserCheck, IconHourglass,
+  IconCoin, IconUsers, IconShoppingCart, IconReceipt,
 } from '@tabler/icons-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -39,37 +37,34 @@ export default function FinancePage() {
 
   const t = finance?.today;
 
-  const todayCards = [
-    { label: 'Pemasukan', value: t ? formatRp(t.totalRevenue) : '-', icon: IconCoin, color: 'bg-emerald-500' },
-    { label: 'Antrian', value: t?.totalOrders ?? '-', icon: IconUsers, color: 'bg-blue-500' },
-    { label: 'Rata-rata Belanja', value: t ? formatRp(t.avgOrderValue) : '-', icon: IconShoppingCart, color: 'bg-violet-500' },
-    { label: 'Sudah Bayar', value: t ? `${t.paidCount} (${formatRp(t.paidRevenue)})` : '-', icon: IconReceipt, color: 'bg-green-500' },
-    { label: 'Belum Bayar', value: t ? `${t.unpaidCount} (${formatRp(t.unpaidRevenue)})` : '-', icon: IconCoin, color: 'bg-orange-500' },
-  ];
-
-  const opsCards = [
-    { label: 'Selesai', value: t?.completedCount ?? '-', icon: IconCircleCheck, color: 'bg-green-500' },
-    { label: 'Menunggu', value: t?.waitingNow ?? '-', icon: IconClock, color: 'bg-yellow-500' },
-    { label: 'Dilewati', value: t?.skippedCount ?? '-', icon: IconPlayerSkipForward, color: 'bg-red-500' },
-    { label: 'Pelanggan', value: t ? `${t.uniqueCustomerCount} (${t.newCustomers} baru)` : '-', icon: IconUsers, color: 'bg-cyan-500' },
-    { label: 'Rating', value: t ? `${t.avgRating} ⭐ (${t.totalRatings})` : '-', icon: IconStar, color: 'bg-amber-500' },
-  ];
-
-  const detailCards = [
-    { label: 'Waktu Tunggu', value: t ? `${t.avgWaitTime} mnt` : '-', icon: IconHourglass, color: 'bg-indigo-500' },
-    { label: 'Waktu Layanan', value: t ? `${t.avgServiceTime} mnt` : '-', icon: IconClock, color: 'bg-purple-500' },
-    { label: 'Pelanggan Baru', value: t?.newCustomers ?? '-', icon: IconUserPlus, color: 'bg-teal-500' },
-    { label: 'Pelanggan Kembali', value: t?.returningCustomers ?? '-', icon: IconUserCheck, color: 'bg-sky-500' },
-    { label: 'Total Hari Ini', value: t ? formatRp(t.totalRevenue) : '-', icon: IconTrendingUp, color: 'bg-rose-500' },
-  ];
+  function StatCard({ label, value, icon: Icon, color, sub }: { label: string; value: string; icon: any; color: string; sub?: string }) {
+    return (
+      <Card className="rounded-xl border border-border/60 shadow-sm overflow-hidden">
+        <div className={`h-1 ${color}`} />
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground mb-1">{label}</p>
+              <p className="text-lg md:text-xl font-bold text-foreground truncate">{value}</p>
+              {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+            </div>
+            <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center flex-shrink-0 ml-3`}>
+              <Icon className="w-4 h-4 text-white" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const skeletonCards = (count: number) => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {Array.from({ length: count }).map((_, i) => (
         <Card key={i} className="rounded-xl">
           <CardContent className="p-4">
-            <Skeleton className="h-3 w-16 mb-3" />
-            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-3 w-16 mb-2" />
+            <Skeleton className="h-6 w-24 mb-1" />
+            <Skeleton className="h-3 w-12" />
           </CardContent>
         </Card>
       ))}
@@ -78,16 +73,14 @@ export default function FinancePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-6 space-y-6">
           <div>
             <Skeleton className="h-7 w-48 mb-2" />
-            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-36" />
           </div>
           <Separator />
-          {skeletonCards(5)}
-          {skeletonCards(5)}
-          {skeletonCards(5)}
+          {skeletonCards(4)}
         </div>
       </div>
     );
@@ -101,13 +94,12 @@ export default function FinancePage() {
   }));
 
   const serviceData = finance.servicesBreakdown.slice(0, 8);
-
   const peakData = finance.peakHours;
 
-  const formatTooltip = (value: number) => formatRp(value);
+  const paidRate = t && t.totalOrders > 0 ? Math.round((t.paidCount / t.totalOrders) * 100) : 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Laporan Keuangan</h1>
@@ -117,80 +109,42 @@ export default function FinancePage() {
         <Separator />
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          {/* Row 1: Keuangan */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-              <span className="w-1 h-3 rounded-full bg-emerald-500" />
-              Ringkasan Keuangan
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {todayCards.map((s) => (
-                <Card key={s.label} className="rounded-xl border border-border/60 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
-                      <div className={`w-7 h-7 rounded-lg ${s.color} flex items-center justify-center`}>
-                        <s.icon className="w-3.5 h-3.5 text-white" />
-                      </div>
-                    </div>
-                    <p className="text-sm md:text-base font-bold text-foreground truncate">{s.value}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Row 2: Operasional */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-              <span className="w-1 h-3 rounded-full bg-blue-500" />
-              Ringkasan Operasional
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {opsCards.map((s) => (
-                <Card key={s.label} className="rounded-xl border border-border/60 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
-                      <div className={`w-7 h-7 rounded-lg ${s.color} flex items-center justify-center`}>
-                        <s.icon className="w-3.5 h-3.5 text-white" />
-                      </div>
-                    </div>
-                    <p className="text-sm md:text-base font-bold text-foreground truncate">{s.value}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Row 3: Detail */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-              <span className="w-1 h-3 rounded-full bg-violet-500" />
-              Detail Layanan
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {detailCards.map((s) => (
-                <Card key={s.label} className="rounded-xl border border-border/60 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
-                      <div className={`w-7 h-7 rounded-lg ${s.color} flex items-center justify-center`}>
-                        <s.icon className="w-3.5 h-3.5 text-white" />
-                      </div>
-                    </div>
-                    <p className="text-sm md:text-base font-bold text-foreground truncate">{s.value}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          {/* Row 1: Pemasukan */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard
+              label="Pemasukan"
+              value={t ? formatRp(t.totalRevenue) : '-'}
+              icon={IconCoin}
+              color="bg-emerald-500"
+              sub={t ? `${t.totalOrders} antrian` : undefined}
+            />
+            <StatCard
+              label="Rata-rata Belanja"
+              value={t ? formatRp(t.avgOrderValue) : '-'}
+              icon={IconShoppingCart}
+              color="bg-violet-500"
+            />
+            <StatCard
+              label="Sudah Bayar"
+              value={t ? `${t.paidCount} dari ${t.totalOrders}` : '-'}
+              icon={IconReceipt}
+              color="bg-green-500"
+              sub={t ? `${paidRate}% · ${formatRp(t.paidRevenue)}` : undefined}
+            />
+            <StatCard
+              label="Pelanggan"
+              value={t ? t.uniqueCustomerCount.toString() : '-'}
+              icon={IconUsers}
+              color="bg-blue-500"
+              sub={t ? `${t.newCustomers} baru · ${t.returningCustomers} kembali` : undefined}
+            />
           </div>
 
           <Separator />
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Trend 30 Hari */}
+            {/* Tren 30 Hari */}
             <Card className="rounded-xl border border-border/60 shadow-sm">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-4">
@@ -316,7 +270,7 @@ export default function FinancePage() {
             {/* Detail Per Layanan */}
             <Card className="rounded-xl border border-border/60 shadow-sm">
               <CardContent className="p-5">
-                <h3 className="font-semibold text-foreground text-sm mb-4">Detail Per Layanan</h3>
+                <h3 className="font-semibold text-foreground text-sm mb-4">Detail Per Layanan (30 hari)</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>

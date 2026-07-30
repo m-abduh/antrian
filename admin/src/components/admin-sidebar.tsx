@@ -20,15 +20,15 @@ import type { Merchant } from '@/lib/types';
 import { ThemeToggle } from './ThemeToggle';
 
 const navItems = [
-  { label: 'Dashboard', icon: IconLayoutDashboard, href: '/dashboard' },
-  { label: 'Layanan', icon: IconChartBar, href: '/services' },
-  { label: 'Kategori', icon: IconLayoutKanban, href: '/groups' },
-  { label: 'Laporan', icon: IconReportAnalytics, href: '/finance' },
+  { label: 'Halaman Utama', icon: IconLayoutDashboard, href: '/dashboard' },
+  { label: 'Daftar Layanan', icon: IconChartBar, href: '/services' },
+  { label: 'Grup Layanan', icon: IconLayoutKanban, href: '/groups' },
+  { label: 'Laporan Keuangan', icon: IconReportAnalytics, href: '/finance' },
   { label: 'Mode Panggilan', icon: IconVocabulary, href: '/call-mode' },
-  { label: 'Field Checkout', icon: IconShoppingCart, href: '/checkout-field' },
-  { label: 'Pelanggan', icon: IconUsers, href: '/customers' },
-  { label: 'Rating', icon: IconStar, href: '/ratings' },
-  { label: 'Pengaturan', icon: IconSettings, href: '/settings' },
+  { label: 'Form Checkout', icon: IconShoppingCart, href: '/checkout-field' },
+  { label: 'Data Pelanggan', icon: IconUsers, href: '/customers' },
+  { label: 'Penilaian Pelanggan', icon: IconStar, href: '/ratings' },
+  { label: 'Pengaturan Toko', icon: IconSettings, href: '/settings' },
 ];
 
 export function AdminSidebar() {

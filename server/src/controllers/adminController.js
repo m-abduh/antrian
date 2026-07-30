@@ -949,7 +949,7 @@ export async function getFinance(req, res, next) {
         { $match: { merchantId, createdAt: { $gte: thirtyDaysAgo, $lt: todayEnd } } },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+07:00' } },
             revenue: { $sum: { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } } },
             orders: { $sum: 1 },
             customers: { $addToSet: '$customerToken' },
@@ -1019,7 +1019,7 @@ export async function getFinance(req, res, next) {
               { $match: { createdAt: { $gte: todayStart, $lt: todayEnd } } },
               {
                 $group: {
-                  _id: { $hour: '$createdAt' },
+                  _id: { $hour: { date: '$createdAt', timezone: '+07:00' } },
                   count: { $sum: 1 },
                   revenue: { $sum: { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } } },
                 },

@@ -362,8 +362,8 @@ export default function FinancePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {finance.topCustomers.map((c) => (
-                        <tr key={c.customerName + c.customerPhone} className="border-b border-border/50 last:border-0">
+                      {finance.topCustomers.map((c, i) => (
+                        <tr key={c.customerName + c.customerPhone + i} className="border-b border-border/50 last:border-0">
                           <td className="py-2.5 pr-3 text-foreground font-medium truncate max-w-[140px]">{c.customerName}</td>
                           <td className="text-right py-2.5 px-3 text-foreground">{c.totalOrders}x</td>
                           <td className="text-right py-2.5 px-3 text-foreground font-medium">{formatRp(c.totalSpent)}</td>

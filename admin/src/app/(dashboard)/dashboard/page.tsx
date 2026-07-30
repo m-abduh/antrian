@@ -15,7 +15,7 @@ import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, 
 import { adminApi } from '@/lib/api/admin';
 import type { Queue } from '@/lib/types';
 import { ErrorAlert } from '@/components/ErrorAlert';
-import { getAdminSocket } from '@/lib/socket';
+import { useAdminSocket } from '@/lib/socket-provider';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -224,10 +224,10 @@ export default function DashboardPage() {
       .catch(() => {});
   }, [status]);
 
+  const { socket: adminSocket } = useAdminSocket();
+
   useEffect(() => {
-    if (status !== 'authenticated') return;
-    const socket = getAdminSocket();
-    if (!socket) return;
+    if (!adminSocket) return;
 
     const handleNew = (payload: any) => {
       console.log('[WS Admin] queue:new', payload?.queue?.queueNumber);
@@ -251,14 +251,14 @@ export default function DashboardPage() {
       }
     };
 
-    socket.on('queue:new', handleNew);
-    socket.on('queue:status', handleStatus);
+    adminSocket.on('queue:new', handleNew);
+    adminSocket.on('queue:status', handleStatus);
 
     return () => {
-      socket.off('queue:new', handleNew);
-      socket.off('queue:status', handleStatus);
+      adminSocket.off('queue:new', handleNew);
+      adminSocket.off('queue:status', handleStatus);
     };
-  }, [queryClient, status]);
+  }, [adminSocket, queryClient]);
 
   if (status !== 'authenticated' || !session?.user) return null;
 

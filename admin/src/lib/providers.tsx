@@ -6,6 +6,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAccessToken } from '@/lib/auth-token';
 import { ThemeProvider } from '@/lib/theme';
+import { SocketProvider } from '@/lib/socket-provider';
 
 function TokenSync({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
@@ -52,7 +53,9 @@ export function Providers({ children }: { children: ReactNode }) {
       <SessionProvider>
         <QueryClientProvider client={queryClient}>
           <TokenSync>
-            <AuthListener>{children}</AuthListener>
+            <SocketProvider>
+              <AuthListener>{children}</AuthListener>
+            </SocketProvider>
           </TokenSync>
         </QueryClientProvider>
       </SessionProvider>

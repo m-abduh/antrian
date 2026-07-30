@@ -5,15 +5,13 @@ import { AdminSidebar } from '@/components/admin-sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { IconBell, IconLoader2 } from '@tabler/icons-react';
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
 import { useNotification } from '@/lib/hooks/useNotification';
-import { getAdminSocket } from '@/lib/socket';
+import { useAdminSocket } from '@/lib/socket-provider';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
   const { permission, subscribe } = useNotification();
   const [notifLoading, setNotifLoading] = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
@@ -23,10 +21,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (isDashboard) setNewOrderCount(0);
   }, [isDashboard]);
 
+  const { socket: adminSocket } = useAdminSocket();
+
   useEffect(() => {
-    if (status !== 'authenticated') return;
-    const socket = getAdminSocket();
-    if (!socket) return;
+    if (!adminSocket) return;
 
     const handleNew = (payload: any) => {
       if (payload?.queue?.status === 'waiting') setNewOrderCount((c) => c + 1);
@@ -36,13 +34,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setNewOrderCount((c) => Math.max(0, c - 1));
       }
     };
-    socket.on('queue:new', handleNew);
-    socket.on('queue:status', handleStatus);
+    adminSocket.on('queue:new', handleNew);
+    adminSocket.on('queue:status', handleStatus);
     return () => {
-      socket.off('queue:new', handleNew);
-      socket.off('queue:status', handleStatus);
+      adminSocket.off('queue:new', handleNew);
+      adminSocket.off('queue:status', handleStatus);
     };
-  }, [status]);
+  }, [adminSocket]);
 
   const handleSubscribe = useCallback(async () => {
     setNotifLoading(true);

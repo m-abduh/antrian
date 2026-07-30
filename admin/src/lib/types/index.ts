@@ -85,6 +85,55 @@ export interface LoginResponse {
   token?: string;
 }
 
+export interface FinanceData {
+  today: {
+    totalRevenue: number;
+    totalOrders: number;
+    avgOrderValue: number;
+    paidRevenue: number;
+    unpaidRevenue: number;
+    paidCount: number;
+    unpaidCount: number;
+    completedCount: number;
+    skippedCount: number;
+    waitingNow: number;
+    avgWaitTime: number;
+    avgServiceTime: number;
+    uniqueCustomerCount: number;
+    newCustomers: number;
+    returningCustomers: number;
+    avgRating: number;
+    totalRatings: number;
+  };
+  servicesBreakdown: {
+    name: string;
+    orders: number;
+    quantity: number;
+    revenue: number;
+    avgPrice: number;
+  }[];
+  dailyTrend: {
+    date: string;
+    revenue: number;
+    orders: number;
+    customers: number;
+    paidRevenue: number;
+    paidOrders: number;
+  }[];
+  topCustomers: {
+    customerName: string;
+    customerPhone: string;
+    totalOrders: number;
+    totalSpent: number;
+    lastVisit: string;
+  }[];
+  peakHours: {
+    hour: string;
+    count: number;
+    revenue: number;
+  }[];
+}
+
 export interface Stats {
   total: number;
   done: number;

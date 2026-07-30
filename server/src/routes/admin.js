@@ -18,6 +18,7 @@ import {
   getCustomers,
   getRatings,
   getStats,
+  getFinance,
   getServices,
   createService,
   updateService,
@@ -51,6 +52,7 @@ router.patch('/queues/:id/start', startServing);
 router.patch('/queues/:id/payment', togglePayment);
 
 router.get('/stats', getStats);
+router.get('/finance', getFinance);
 router.get('/customers', getCustomers);
 router.get('/ratings', getRatings);
 

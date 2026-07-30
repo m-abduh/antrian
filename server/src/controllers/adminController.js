@@ -808,3 +808,316 @@ export async function deleteService(req, res, next) {
     next(err);
   }
 }
+
+export async function getFinance(req, res, next) {
+  try {
+    const merchantId = req.admin.merchantId;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+    const thirtyDaysAgo = new Date(todayStart);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+
+    const [
+      todayAgg,
+      dailyTrend,
+      topCustomers,
+      peakHoursResult,
+      ratingResult,
+      newCustomerTokens,
+    ] = await Promise.all([
+      // Pipeline 1: Ringkasan hari ini + revenue by service
+      Queue.aggregate([
+        { $match: { merchantId, createdAt: { $gte: todayStart, $lt: todayEnd } } },
+        {
+          $facet: {
+            summary: [
+              {
+                $group: {
+                  _id: null,
+                  totalRevenue: { $sum: { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } } },
+                  totalOrders: { $sum: 1 },
+                  paidCount: { $sum: { $cond: ['$isPaid', 1, 0] } },
+                  completedCount: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } },
+                  skippedCount: { $sum: { $cond: [{ $eq: ['$status', 'skipped'] }, 1, 0] } },
+                  uniqueCustomers: { $addToSet: '$customerToken' },
+                  totalWaitTime: {
+                    $sum: {
+                      $cond: [
+                        { $and: ['$startedAt', '$createdAt'] },
+                        { $subtract: ['$startedAt', '$createdAt'] },
+                        0,
+                      ],
+                    },
+                  },
+                  waitCount: {
+                    $sum: {
+                      $cond: [
+                        { $and: ['$startedAt', '$createdAt'] },
+                        1,
+                        0,
+                      ],
+                    },
+                  },
+                  totalServiceTime: {
+                    $sum: {
+                      $cond: [
+                        { $and: ['$finishedAt', '$startedAt'] },
+                        { $subtract: ['$finishedAt', '$startedAt'] },
+                        0,
+                      ],
+                    },
+                  },
+                  serviceTimeCount: {
+                    $sum: {
+                      $cond: [
+                        { $and: ['$finishedAt', '$startedAt'] },
+                        1,
+                        0,
+                      ],
+                    },
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  totalRevenue: 1,
+                  totalOrders: 1,
+                  paidCount: 1,
+                  unpaidCount: { $subtract: ['$totalOrders', '$paidCount'] },
+                  paidRevenue: 1,
+                  completedCount: 1,
+                  skippedCount: 1,
+                  avgWaitTime: {
+                    $cond: [
+                      { $gt: ['$waitCount', 0] },
+                      { $round: [{ $divide: [{ $divide: ['$totalWaitTime', '$waitCount'] }, 60000] }, 0] },
+                      0,
+                    ],
+                  },
+                  avgServiceTime: {
+                    $cond: [
+                      { $gt: ['$serviceTimeCount', 0] },
+                      { $round: [{ $divide: [{ $divide: ['$totalServiceTime', '$serviceTimeCount'] }, 60000] }, 0] },
+                      0,
+                    ],
+                  },
+                  uniqueCustomerCount: { $size: '$uniqueCustomers' },
+                },
+              },
+            ],
+            servicesBreakdown: [
+              { $unwind: '$services' },
+              {
+                $group: {
+                  _id: '$services.name',
+                  orders: { $sum: 1 },
+                  quantity: { $sum: '$services.quantity' },
+                  revenue: { $sum: { $multiply: ['$services.price', '$services.quantity'] } },
+                  totalPriceSum: { $sum: '$services.price' },
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  name: '$_id',
+                  orders: 1,
+                  quantity: 1,
+                  revenue: 1,
+                  avgPrice: { $round: [{ $divide: ['$totalPriceSum', '$orders'] }, 0] },
+                },
+              },
+              { $sort: { revenue: -1 } },
+            ],
+            paidRevenue: [
+              { $match: { isPaid: true } },
+              {
+                $group: {
+                  _id: null,
+                  total: { $sum: { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } } },
+                },
+              },
+            ],
+          },
+        },
+      ]),
+
+      // Pipeline 2: Daily trend 30 hari
+      Queue.aggregate([
+        { $match: { merchantId, createdAt: { $gte: thirtyDaysAgo, $lt: todayEnd } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            revenue: { $sum: { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } } },
+            orders: { $sum: 1 },
+            customers: { $addToSet: '$customerToken' },
+            paidRevenue: {
+              $sum: {
+                $cond: [
+                  '$isPaid',
+                  { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } },
+                  0,
+                ],
+              },
+            },
+            paidOrders: { $sum: { $cond: ['$isPaid', 1, 0] } },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            date: '$_id',
+            revenue: 1,
+            orders: 1,
+            customers: { $size: '$customers' },
+            paidRevenue: 1,
+            paidOrders: 1,
+          },
+        },
+        { $sort: { date: 1 } },
+      ]),
+
+      // Pipeline 3: Top customers 30 hari
+      Queue.aggregate([
+        { $match: { merchantId, createdAt: { $gte: thirtyDaysAgo, $lt: todayEnd }, customerName: { $ne: '' } } },
+        {
+          $group: {
+            _id: '$customerToken',
+            customerName: { $first: '$customerName' },
+            customerPhone: { $first: '$customerPhone' },
+            totalOrders: { $sum: 1 },
+            totalSpent: { $sum: { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } } },
+            lastVisit: { $max: '$createdAt' },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            customerName: 1,
+            customerPhone: 1,
+            totalOrders: 1,
+            totalSpent: 1,
+            lastVisit: 1,
+          },
+        },
+        { $sort: { totalSpent: -1 } },
+        { $limit: 10 },
+      ]),
+
+      // Pipeline 4: Peak hours hari ini + waitingNow count
+      Queue.aggregate([
+        { $match: { merchantId } },
+        {
+          $facet: {
+            waitingNow: [
+              { $match: { status: { $in: ['waiting', 'called'] } } },
+              { $count: 'count' },
+            ],
+            peakHours: [
+              { $match: { createdAt: { $gte: todayStart, $lt: todayEnd } } },
+              {
+                $group: {
+                  _id: { $hour: '$createdAt' },
+                  count: { $sum: 1 },
+                  revenue: { $sum: { $sum: { $map: { input: '$services', as: 's', in: { $multiply: ['$$s.price', '$$s.quantity'] } } } } },
+                },
+              },
+              { $match: { count: { $gt: 0 } } },
+              { $sort: { count: -1 } },
+              { $limit: 6 },
+              {
+                $project: {
+                  _id: 0,
+                  hour: { $concat: [{ $toString: '$_id' }, ':00'] },
+                  count: 1,
+                  revenue: 1,
+                },
+              },
+            ],
+          },
+        },
+      ]),
+
+      // Pipeline 5: Rating
+      Rating.aggregate([
+        { $match: { merchantId, createdAt: { $gte: todayStart, $lt: todayEnd } } },
+        {
+          $group: {
+            _id: null,
+            avgRating: { $avg: '$rating' },
+            totalRatings: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, avgRating: { $round: ['$avgRating', 1] }, totalRatings: 1 } },
+      ]),
+
+      // Pipeline 6: New customers today (first time ever)
+      Queue.aggregate([
+        { $match: { merchantId, customerToken: { $ne: '' }, createdAt: { $gte: todayStart, $lt: todayEnd } } },
+        { $group: { _id: '$customerToken', createdAt: { $min: '$createdAt' } } },
+        {
+          $lookup: {
+            from: 'queues',
+            let: { token: '$_id' },
+            pipeline: [
+              { $match: { merchantId, createdAt: { $lt: todayStart } } },
+              { $match: { $expr: { $eq: ['$customerToken', '$$token'] } } },
+              { $limit: 1 },
+            ],
+            as: 'previous',
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            token: '$_id',
+            isNew: { $eq: [{ $size: '$previous' }, 0] },
+          },
+        },
+      ]),
+    ]);
+
+    const summary = todayAgg[0]?.summary?.[0] || {
+      totalRevenue: 0, totalOrders: 0, paidCount: 0, unpaidCount: 0,
+      completedCount: 0, skippedCount: 0, avgWaitTime: 0, avgServiceTime: 0,
+      uniqueCustomerCount: 0,
+    };
+    const paidRev = todayAgg[0]?.paidRevenue?.[0]?.total || 0;
+    const waitingNowArr = peakHoursResult[0]?.waitingNow || [];
+    const waitingNow = waitingNowArr[0]?.count || 0;
+    const avgRating = ratingResult[0]?.avgRating || 0;
+    const totalRatings = ratingResult[0]?.totalRatings || 0;
+    const newCustCount = newCustomerTokens.filter((c) => c.isNew).length;
+    const returningCustCount = newCustomerTokens.length - newCustCount;
+
+    return success(res, {
+      today: {
+        totalRevenue: Math.round(summary.totalRevenue),
+        totalOrders: summary.totalOrders,
+        avgOrderValue: summary.totalOrders > 0 ? Math.round(summary.totalRevenue / summary.totalOrders) : 0,
+        paidRevenue: Math.round(paidRev),
+        unpaidRevenue: Math.round(summary.totalRevenue - paidRev),
+        paidCount: summary.paidCount,
+        unpaidCount: summary.totalOrders - summary.paidCount,
+        completedCount: summary.completedCount,
+        skippedCount: summary.skippedCount,
+        waitingNow,
+        avgWaitTime: summary.avgWaitTime,
+        avgServiceTime: summary.avgServiceTime,
+        uniqueCustomerCount: summary.uniqueCustomerCount,
+        newCustomers: newCustCount,
+        returningCustomers: returningCustCount,
+        avgRating,
+        totalRatings,
+      },
+      servicesBreakdown: todayAgg[0]?.servicesBreakdown || [],
+      dailyTrend,
+      topCustomers,
+      peakHours: peakHoursResult[0]?.peakHours || [],
+    });
+  } catch (err) {
+    next(err);
+  }
+}

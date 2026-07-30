@@ -1,5 +1,5 @@
 import api from '../axios';
-import type { Queue, Service, LoginResponse, Stats, Merchant, Group, SocialLink, Customer, Rating } from '../types';
+import type { Queue, Service, LoginResponse, Stats, FinanceData, Merchant, Group, SocialLink, Customer, Rating } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleResponse = (r: any) => r.data;
@@ -40,6 +40,9 @@ export const adminApi = {
 
   getStats: (date?: string) =>
     api.get('/admin/stats', { params: { date } }).then(handleResponse) as Promise<Stats>,
+
+  getFinance: () =>
+    api.get('/admin/finance').then(handleResponse) as Promise<FinanceData>,
 
   getRatings: () =>
     api.get('/admin/ratings').then(handleResponse) as Promise<Rating[]>,

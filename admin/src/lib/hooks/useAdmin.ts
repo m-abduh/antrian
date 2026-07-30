@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../api/admin';
-import type { Queue, Service, Stats } from '../types';
+import type { Queue, Service, Stats, FinanceData } from '../types';
 
 export const queueKeys = {
   all: ['admin', 'queues'] as const,
@@ -13,6 +13,7 @@ export const serviceKeys = {
 
 export const statsKeys = {
   all: ['admin', 'stats'] as const,
+  finance: ['admin', 'finance'] as const,
 };
 
 export function useQueues(params?: { date?: string; status?: string; excludeStatus?: string }) {
@@ -54,6 +55,14 @@ export function useStats(date?: string) {
     queryKey: [...statsKeys.all, date],
     queryFn: () => adminApi.getStats(date),
     refetchInterval: isToday ? 30_000 : Infinity,
+  });
+}
+
+export function useFinance() {
+  return useQuery<FinanceData>({
+    queryKey: statsKeys.finance,
+    queryFn: () => adminApi.getFinance(),
+    refetchInterval: 30_000,
   });
 }
 

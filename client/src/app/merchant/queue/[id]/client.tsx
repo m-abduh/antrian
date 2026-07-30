@@ -15,7 +15,7 @@ import { updateActiveQueueStatus } from '@/lib/activeQueue';
 import {
   IconClock, IconCircleCheck, IconLoader2, IconUsers, IconArrowLeft,
   IconAlertTriangle, IconChevronRight, IconTrophy, IconStar,
-  IconBell, IconWavesElectricity,
+  IconBell,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,11 +23,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const STATUS_FALLBACK: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  waiting: { label: 'Menunggu', color: 'text-foreground', bg: 'bg-muted border-border', icon: IconClock },
-  called: { label: 'Dipanggil!', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: IconBell },
-  serving: { label: 'Sedang Dilayani', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/50 border-purple-200 dark:border-purple-800', icon: IconUsers },
-  done: { label: 'Selesai', color: 'text-green-700 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800', icon: IconTrophy },
-  skipped: { label: 'Dilewati', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800', icon: IconAlertTriangle },
+  waiting: { label: 'Menunggu', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800', icon: IconClock },
+  called: { label: 'Dipanggil!', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800', icon: IconBell },
+  serving: { label: 'Sedang Dilayani', color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/50 border-violet-200 dark:border-violet-800', icon: IconUsers },
+  done: { label: 'Selesai', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800', icon: IconTrophy },
+  skipped: { label: 'Dilewati', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800', icon: IconAlertTriangle },
 };
 
 export function QueueClient({ slug, queueId }: { slug: string; queueId: string }) {
@@ -179,292 +179,324 @@ export function QueueClient({ slug, queueId }: { slug: string; queueId: string }
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <AnimatePresence>
         {called && (
           <motion.div
             initial={{ y: -80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -80, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-green-500 text-white p-4 md:p-5 text-center shadow-lg"
+            className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-5 md:py-6 text-center shadow-2xl shadow-emerald-500/20"
           >
-            <IconBell className="w-6 h-6 md:w-8 md:h-8 mx-auto mb-1 animate-bounce" />
-            <p className="text-lg md:text-xl font-bold">Anda Dipanggil!</p>
-            <p className="text-xs md:text-sm opacity-90">Silakan menuju ke lokasi</p>
+            <motion.div
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+            >
+              <IconBell className="w-7 h-7 md:w-9 md:h-9 mx-auto mb-1.5" />
+            </motion.div>
+            <p className="text-xl md:text-2xl font-bold tracking-tight">Anda Dipanggil!</p>
+            <p className="text-sm md:text-base text-white/80 mt-0.5">Silakan menuju ke lokasi</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <header className="bg-card border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <IconArrowLeft className="w-5 h-5" />
-            <span className="font-medium text-sm">Kembali</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <IconWavesElectricity className="w-5 h-5 text-primary" />
-            <span className="font-bold text-sm text-foreground">Tunggu.id</span>
-          </div>
-        </div>
-      </header>
+      <main className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+        <div className="md:grid md:grid-cols-2 md:gap-6 lg:gap-8">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Back */}
+            <div>
+              <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+                <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center group-hover:bg-muted-foreground/10 transition-colors">
+                  <IconArrowLeft className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-medium">Kembali</span>
+              </Link>
+            </div>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center mb-6">
-          {/* Status badge */}
-          <motion.div
-            layout
-            className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-5 ${statusInfo.bg} ${statusInfo.color} text-xs md:text-sm font-medium`}
-          >
-            <motion.div
-              animate={queue.status === 'waiting' ? { rotate: 360 } : {}}
-              transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-            >
-              {queue.status === 'waiting' ? (
-                <IconLoader2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              ) : (
-                <StatusIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            {/* Status Header */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+              {/* Status badge */}
+              <motion.div
+                layout
+                className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-5 shadow-sm ${statusInfo.bg} ${statusInfo.color} text-xs md:text-sm font-medium`}
+              >
+                <motion.div
+                  animate={queue.status === 'waiting' ? { rotate: 360 } : queue.status === 'serving' ? { scale: [1, 1.2, 1] } : {}}
+                  transition={queue.status === 'waiting' ? { repeat: Infinity, duration: 2, ease: 'linear' } : { repeat: Infinity, duration: 1.5 }}
+                >
+                  {queue.status === 'waiting' ? (
+                    <IconLoader2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  ) : (
+                    <StatusIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  )}
+                </motion.div>
+                {statusInfo.label}
+              </motion.div>
+
+              {queue.isPaid && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-xs font-medium mb-5">
+                  <IconCircleCheck className="w-3.5 h-3.5" />
+                  Sudah Dibayar
+                </div>
+              )}
+
+              {/* Queue Number */}
+              <motion.div
+                initial={{ scale: 0.5 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 10 }}
+              >
+                <div className="text-6xl md:text-7xl lg:text-8xl font-extrabold text-foreground mb-2 tracking-tight">
+                  {queue.queueNumber}
+                </div>
+                <p className="text-sm md:text-base text-muted-foreground font-medium">{queue.customerName}</p>
+              </motion.div>
+
+              {queue.status === 'waiting' && (
+                <Button
+                  variant={permission === 'granted' ? 'outline' : 'default'}
+                  size="sm"
+                  onClick={async () => {
+                    setNotifLoading(true);
+                    await subscribe(slug);
+                    setNotifLoading(false);
+                  }}
+                  disabled={notifLoading || permission === 'denied'}
+                  className={`mt-5 rounded-full ${
+                    permission === 'denied' ? 'opacity-50 cursor-not-allowed' : ''
+                  } ${permission === 'granted' ? 'border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400' : ''}`}
+                >
+                  {notifLoading ? (
+                    <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                  ) : (
+                    <IconBell className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  {permission === 'granted' ? 'Notifikasi aktif' : permission === 'denied' ? 'Notifikasi diblokir' : 'Aktifkan notifikasi'}
+                </Button>
               )}
             </motion.div>
-            {statusInfo.label}
-          </motion.div>
 
-          {queue.isPaid && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-xs font-medium mb-5">
-              <IconCircleCheck className="w-3.5 h-3.5" />
-              Sudah Dibayar
-            </div>
-          )}
-
-          {/* Queue number */}
-          <motion.div
-            className="text-6xl md:text-7xl lg:text-8xl font-bold text-foreground mb-3 tracking-tight"
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 10 }}
-          >
-            {queue.queueNumber}
-          </motion.div>
-          <p className="text-sm md:text-base text-muted-foreground">{queue.customerName}</p>
-
-          {queue.status === 'waiting' && (
-            <Button
-              variant={permission === 'granted' ? 'outline' : 'default'}
-              size="sm"
-              onClick={async () => {
-                setNotifLoading(true);
-                await subscribe(slug);
-                setNotifLoading(false);
-              }}
-              disabled={notifLoading || permission === 'denied'}
-              className={`mt-4 rounded-full ${
-                permission === 'denied' ? 'opacity-50 cursor-not-allowed' : ''
-              } ${permission === 'granted' ? 'border-green-200 dark:border-green-800 text-green-600 dark:text-green-400' : ''}`}
-            >
-              {notifLoading ? (
-                <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-              ) : (
-                <IconBell className="w-3.5 h-3.5 mr-1.5" />
-              )}
-              {permission === 'granted' ? 'Notifikasi aktif' : permission === 'denied' ? 'Notifikasi diblokir' : 'Aktifkan notifikasi'}
-            </Button>
-          )}
-        </motion.div>
-
-        {/* Position card */}
-        {queue.status === 'waiting' && positionInLine > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-            <Card className="rounded-2xl overflow-hidden">
-              <CardContent className="p-5 md:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-full flex items-center justify-center">
-                      <IconUsers className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+            {/* Position Card (waiting) */}
+            {queue.status === 'waiting' && positionInLine > 0 && (
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-5 md:p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
+                          <IconUsers className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-2xl md:text-3xl font-bold text-foreground">{positionInLine}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">dari {totalInLine} antrian</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl md:text-2xl font-bold text-foreground">~{positionInLine * 10}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">menit estimasi</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">{positionInLine}</p>
-                      <p className="text-xs md:text-sm text-muted-foreground">dari {totalInLine} antrian</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl md:text-2xl font-bold text-foreground">~{positionInLine * 10}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">menit estimasi</p>
-                  </div>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2 md:h-2.5 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progressPercent}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }}
-                    className="bg-primary h-full rounded-full"
-                  />
-                </div>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-2 text-center">
-                  {progressPercent}% antrian telah selesai
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Serving status */}
-        {queue.status === 'serving' && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-            <Card className="border-purple-500/20 rounded-2xl overflow-hidden">
-              <CardContent className="p-5 md:p-6 text-center bg-purple-500/5">
-                <IconUsers className="w-8 h-8 md:w-10 md:h-10 text-purple-500 mx-auto mb-2" />
-                <h3 className="text-base md:text-lg font-bold text-foreground">Sedang Dilayani</h3>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1">Mohon bersiap jika dipanggil</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Queue list */}
-        <div className="space-y-3 mb-6">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Antrian Saat Ini</h3>
-
-          {liveData?.current ? (
-            <Card className={`rounded-2xl overflow-hidden border-l-4 border-l-green-500`}>
-              <CardContent className="p-4 md:p-5 flex items-center gap-3 md:gap-4">
-                <div className="w-9 h-9 md:w-10 md:h-10 bg-green-500/10 rounded-full flex items-center justify-center">
-                  <IconCircleCheck className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm md:text-base text-foreground">{liveData.current.queueNumber}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">{liveData.current.customerName}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="rounded-2xl">
-              <CardContent className="p-5 text-center">
-                <p className="text-xs md:text-sm text-muted-foreground">Belum ada antrian yang dilayani</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {liveData && liveData.waiting.length > 0 && (
-            <>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1 mt-4">
-                Menunggu ({liveData.waiting.length})
-              </h3>
-              <AnimatePresence>
-                {liveData.waiting.slice(0, 5).map((q, i) => {
-                  const isMe = q._id === queueId;
-                  return (
-                    <motion.div
-                      key={q._id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <Card className={`rounded-2xl overflow-hidden ${
-                        isMe ? 'border-primary bg-primary/[0.03]' : ''
-                      }`}>
-                        <CardContent className="p-3 md:p-4 flex items-center gap-3">
-                          <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                          }`}>
-                            <span className="font-semibold text-xs md:text-sm">{q.queueNumber}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm md:text-base truncate">
-                              {q.customerName}
-                              {isMe && <span className="text-[10px] md:text-xs ml-1.5 text-primary">(Kamu)</span>}
-                            </p>
-                              {q.services?.length > 0 && (
-                              <p className="text-xs md:text-sm text-muted-foreground truncate">{q.services.map((s: QueueService) => s.quantity > 1 ? `${s.name} (×${s.quantity})` : s.name).join(', ')}</p>
-                            )}
-                          </div>
-                          <IconChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </>
-          )}
-        </div>
-
-        {/* Rating */}
-        {queue.status === 'done' && !ratingSent && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-            <Card className="rounded-2xl text-center">
-              <CardContent className="p-5 md:p-6">
-                <IconTrophy className="w-8 h-8 md:w-10 md:h-10 text-green-500 mx-auto mb-2" />
-                <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Selesai!</h3>
-                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Bagaimana pelayanan kami?</p>
-                <div className="flex justify-center gap-1.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <motion.button
-                      key={star}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleRating(star)}
-                      disabled={ratingLoading}
-                      className="focus:outline-none"
-                    >
-                      <IconStar
-                        className={`w-7 h-7 md:w-8 md:h-8 ${
-                          star <= rating
-                            ? 'text-yellow-400 fill-yellow-400 drop-shadow-sm'
-                            : 'text-muted-foreground/30'
-                        }`}
+                    <div className="relative w-full bg-muted rounded-full h-2.5 md:h-3 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progressPercent}%` }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                        className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary"
                       />
-                    </motion.button>
-                  ))}
-                </div>
-                {rating > 0 && (
-                  <>
-                    <textarea
-                      value={ratingComment}
-                      onChange={(e) => setRatingComment(e.target.value)}
-                      placeholder="Tulis komentar (opsional)..."
-                      rows={2}
-                      className="mt-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <button
-                      onClick={submitRating}
-                      disabled={ratingLoading}
-                      className="mt-2 w-full h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                    </div>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-2 text-center">
+                      {progressPercent}% antrian telah selesai
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Serving Card */}
+            {queue.status === 'serving' && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden rounded-2xl"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent" />
+                <motion.div
+                  className="absolute -top-10 -right-10 w-40 h-40 bg-violet-500/10 rounded-full blur-3xl"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ repeat: Infinity, duration: 3 }}
+                />
+                <Card className="relative rounded-2xl border-violet-200/50 dark:border-violet-800/50 shadow-sm">
+                  <CardContent className="p-6 md:p-7 text-center">
+                    <motion.div
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                      className="w-14 h-14 md:w-16 md:h-16 bg-violet-100 dark:bg-violet-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3"
                     >
-                      {ratingLoading ? (
-                        <><IconLoader2 className="w-4 h-4 animate-spin" /> Mengirim...</>
-                      ) : (
-                        'Kirim Penilaian'
-                      )}
-                    </button>
-                  </>
-                )}
-                {ratingLoading && <IconLoader2 className="w-5 h-5 animate-spin text-primary mx-auto mt-2" />}
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+                      <IconUsers className="w-7 h-7 md:w-8 md:h-8 text-violet-600 dark:text-violet-400" />
+                    </motion.div>
+                    <h3 className="text-lg md:text-xl font-bold text-foreground">Sedang Dilayani</h3>
+                    <p className="text-sm md:text-base text-muted-foreground mt-1">Mohon bersiap jika dipanggil</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
 
-        {ratingSent && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-            <Card className="border-green-500/20 rounded-2xl">
-              <CardContent className="p-4 md:p-5 text-center bg-green-500/5">
-                <IconCircleCheck className="w-6 h-6 md:w-8 md:h-8 text-green-500 mx-auto mb-1" />
-                <p className="text-sm md:text-base text-green-600 dark:text-green-400 font-medium">Terima kasih atas penilaiannya!</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Queue List */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1 h-4 rounded-full bg-green-500" />
+                Antrian Saat Ini
+              </h3>
 
-        {/* Done today */}
-        {liveData && (
-          <Card className="bg-primary/[0.03] border-primary/[0.1] rounded-2xl">
-            <CardContent className="p-4 md:p-5">
-              <div className="flex items-center justify-between text-xs md:text-sm">
-                <span className="text-foreground font-medium">Selesai hari ini</span>
-                <span className="text-primary font-bold text-base md:text-lg">{liveData.doneToday}</span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              {liveData?.current ? (
+                <Card className="rounded-2xl border-l-[3px] border-l-green-500 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 md:p-5 flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                      <IconCircleCheck className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm md:text-base text-foreground">{liveData.current.queueNumber}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">{liveData.current.customerName}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="rounded-2xl bg-muted/30">
+                  <CardContent className="p-5 text-center">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mx-auto mb-2">
+                      <IconUsers className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Belum ada antrian yang dilayani</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {liveData && liveData.waiting.length > 0 && (
+                <>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2 pt-2">
+                    <span className="w-1 h-4 rounded-full bg-primary" />
+                    Menunggu ({liveData.waiting.length})
+                  </h3>
+                  <AnimatePresence>
+                    {liveData.waiting.slice(0, 5).map((q, i) => {
+                      const isMe = q._id === queueId;
+                      return (
+                        <motion.div
+                          key={q._id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                        >
+                          <Card className={`rounded-2xl overflow-hidden transition-all hover:shadow-sm ${
+                            isMe ? 'border-primary/50 bg-gradient-to-r from-primary/[0.03] to-transparent shadow-sm' : ''
+                          }`}>
+                            <CardContent className="p-3.5 md:p-4 flex items-center gap-3">
+                              <div className={`w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm ${
+                                isMe
+                                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                                  : 'bg-muted text-muted-foreground'
+                              }`}>
+                                {q.queueNumber}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm md:text-base truncate">
+                                  {q.customerName}
+                                  {isMe && <span className="text-[10px] md:text-xs ml-1.5 text-primary font-medium">(Kamu)</span>}
+                                </p>
+                                {q.services?.length > 0 && (
+                                  <p className="text-xs md:text-sm text-muted-foreground truncate mt-0.5">{q.services.map((s: QueueService) => s.quantity > 1 ? `${s.name} (×${s.quantity})` : s.name).join(', ')}</p>
+                                )}
+                              </div>
+                              <IconChevronRight className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </>
+              )}
+            </div>
+
+            {/* Rating */}
+            {queue.status === 'done' && !ratingSent && (
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="rounded-2xl border-amber-200/50 dark:border-amber-800/50 shadow-sm">
+                  <CardContent className="p-5 md:p-6 text-center">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <IconTrophy className="w-7 h-7 md:w-8 md:h-8 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <h3 className="text-lg md:text-xl font-bold text-foreground mb-1">Selesai!</h3>
+                    <p className="text-sm md:text-base text-muted-foreground mb-4">Bagaimana pelayanan kami?</p>
+                    <div className="flex justify-center gap-2 mb-4">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <motion.button
+                          key={star}
+                          whileHover={{ scale: 1.15 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleRating(star)}
+                          disabled={ratingLoading}
+                          className="focus:outline-none transition-transform"
+                        >
+                          <IconStar
+                            className={`w-8 h-8 md:w-9 md:h-9 transition-all ${
+                              star <= rating
+                                ? 'text-amber-400 fill-amber-400 drop-shadow-sm'
+                                : 'text-muted-foreground/25'
+                            }`}
+                          />
+                        </motion.button>
+                      ))}
+                    </div>
+                    {rating > 0 && (
+                      <div className="space-y-3">
+                        <textarea
+                          value={ratingComment}
+                          onChange={(e) => setRatingComment(e.target.value)}
+                          placeholder="Tulis komentar (opsional)..."
+                          rows={2}
+                          className="w-full rounded-xl border border-border bg-background/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow"
+                        />
+                        <button
+                          onClick={submitRating}
+                          disabled={ratingLoading}
+                          className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-amber-500/20"
+                        >
+                          {ratingLoading ? (
+                            <><IconLoader2 className="w-4 h-4 animate-spin" /> Mengirim...</>
+                          ) : (
+                            'Kirim Penilaian'
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {ratingSent && (
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="rounded-2xl border-emerald-200/50 dark:border-emerald-800/50 shadow-sm">
+                  <CardContent className="p-5 md:p-6 text-center bg-gradient-to-br from-emerald-50/50 to-transparent dark:from-emerald-950/20 dark:to-transparent">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+                    >
+                      <IconCircleCheck className="w-10 h-10 md:w-12 md:h-12 text-emerald-500 mx-auto mb-2" />
+                    </motion.div>
+                    <p className="text-base md:text-lg text-emerald-600 dark:text-emerald-400 font-semibold">Terima kasih atas penilaiannya!</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );

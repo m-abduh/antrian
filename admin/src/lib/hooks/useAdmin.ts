@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../api/admin';
+import { useAdminSocket } from '@/lib/socket-provider';
 import type { Queue, Service, Stats, FinanceData } from '../types';
 
 export const queueKeys = {
@@ -17,11 +18,12 @@ export const statsKeys = {
 };
 
 export function useQueues(params?: { date?: string; status?: string; excludeStatus?: string }) {
+  const { isConnected } = useAdminSocket();
   return useQuery<Queue[]>({
     queryKey: queueKeys.list(params),
     queryFn: () => adminApi.getQueues(params),
     staleTime: 5000,
-    refetchInterval: 15_000,
+    refetchInterval: isConnected ? false : 15_000,
   });
 }
 
@@ -49,12 +51,13 @@ export function useStartServing() {
 }
 
 export function useStats(date?: string) {
+  const { isConnected } = useAdminSocket();
   const today = new Date().toISOString().split('T')[0];
   const isToday = !date || date === today;
   return useQuery<Stats>({
     queryKey: [...statsKeys.all, date],
     queryFn: () => adminApi.getStats(date),
-    refetchInterval: isToday ? 30_000 : Infinity,
+    refetchInterval: isToday ? (isConnected ? false : 30_000) : Infinity,
   });
 }
 

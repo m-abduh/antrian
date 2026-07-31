@@ -17,6 +17,8 @@ import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notification.js';
 import uploadRoutes from './routes/upload.js';
 import { initSocket } from './socket.js';
+import cron from 'node-cron';
+import { cleanupExpiredQueues } from './cron/cleanupQueue.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -125,6 +127,10 @@ async function start() {
 
   const server = http.createServer(app);
   initSocket(server, app);
+
+  cron.schedule('0 */6 * * *', () => {
+    cleanupExpiredQueues();
+  });
 
   server.timeout = 30000;
 

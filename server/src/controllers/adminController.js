@@ -14,15 +14,21 @@ if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
 }
 
-async function notifyCustomer(queue) {
+async function notifyCustomer(queue, merchantSlug) {
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return;
   const subs = await PushSubscription.find({ merchantId: queue.merchantId, subscriptionType: 'customer' });
   if (subs.length === 0) return;
-  const merchant = await Merchant.findById(queue.merchantId).select('slug');
-const payload = JSON.stringify({
+  if (!merchantSlug) {
+    try {
+      const m = await Merchant.findById(queue.merchantId).select('slug');
+      merchantSlug = m?.slug;
+    } catch {}
+  }
+  if (!merchantSlug) return;
+  const payload = JSON.stringify({
       title: 'Antrian Anda Dipanggil!',
       body: `Nomor antrian ${queue.queueNumber} — ${queue.customerName}, silakan menuju lokasi.`,
-      url: `/${queue.merchantSlug}/queue/${queue._id}`,
+      url: `/${merchantSlug}/queue/${queue._id}`,
     });
   for (const sub of subs) {
     try {
@@ -35,6 +41,21 @@ const payload = JSON.stringify({
       }
     }
   }
+}
+
+async function adminToken(admin) {
+  let slug = null;
+  if (admin.merchantId) {
+    try {
+      const m = await Merchant.findById(admin.merchantId).select('slug');
+      slug = m?.slug || null;
+    } catch {}
+  }
+  return jwt.sign(
+    { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email, slug },
+    env.JWT_SECRET,
+    { expiresIn: env.JWT_EXPIRES_IN }
+  );
 }
 
 export async function login(req, res, next) {
@@ -55,11 +76,7 @@ export async function login(req, res, next) {
       return error(res, 'Email atau password salah', 401);
     }
 
-    const token = jwt.sign(
-      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
-    );
+    const token = await adminToken(admin);
 
     const cookieOptions = {
       httpOnly: true,
@@ -104,11 +121,7 @@ export async function register(req, res, next) {
   role: 'admin',
     });
 
-    const token = jwt.sign(
-      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
-    );
+    const token = await adminToken(admin);
 
     const cookieOptions = {
       httpOnly: true,
@@ -151,11 +164,7 @@ export async function googleAuth(req, res, next) {
     if (!admin) return error(res, 'Email Google belum terdaftar. Silakan daftar di halaman register.', 401);
     if (admin.role !== 'admin') return error(res, 'Akun ini bukan admin', 403);
 
-    const token = jwt.sign(
-      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
-    );
+    const token = await adminToken(admin);
 
     const cookieOptions = {
       httpOnly: true,
@@ -191,11 +200,7 @@ export async function googleTokenLogin(req, res, next) {
     if (!admin) return error(res, 'Email Google belum terdaftar. Silakan daftar di halaman register.', 401);
     if (admin.role !== 'admin') return error(res, 'Akun ini bukan admin', 403);
 
-    const token = jwt.sign(
-      { id: admin._id, merchantId: admin.merchantId, role: admin.role, name: admin.name, email: admin.email },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
-    );
+    const token = await adminToken(admin);
 
     const cookieOptions = {
       httpOnly: true,
@@ -356,11 +361,8 @@ export async function setupMerchant(req, res, next) {
 
     await Admin.findByIdAndUpdate(req.admin.id, { merchantId: merchant._id });
 
-    const token = jwt.sign(
-      { id: req.admin.id, merchantId: merchant._id, role: req.admin.role, name: req.admin.name, email: req.admin.email },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN }
-    );
+    const admin = await Admin.findById(req.admin.id);
+    const token = await adminToken(admin);
 
     return success(res, { merchant, token });
   } catch (err) {
@@ -460,7 +462,7 @@ export async function updateQueueStatus(req, res, next) {
     if (merchant) {
       const statusCfg = merchant.statusConfig?.find(s => s.key === queue.status);
       if (statusCfg?.notify) {
-        notifyCustomer(queue).catch(() => {});
+        notifyCustomer(queue, merchant.slug).catch(() => {});
       }
     }
 
@@ -509,23 +511,20 @@ export async function startServing(req, res, next) {
     await queue.save();
 
     const io = req.app.get('io');
-    if (io) {
-      const merchant = await Merchant.findById(queue.merchantId).select('slug');
-      if (merchant) {
-        const publicQueue = {
-          _id: queue._id,
-          id: queue._id,
-          queueNumber: queue.queueNumber,
-          customerName: queue.customerName,
-          services: queue.services,
-          status: queue.status,
-          estimatedStartTime: queue.estimatedStartTime,
-          startedAt: queue.startedAt,
-          finishedAt: queue.finishedAt,
-          createdAt: queue.createdAt,
-        };
-        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: publicQueue, action: 'serve' });
-      }
+    if (io && req.admin.slug) {
+      const publicQueue = {
+        _id: queue._id,
+        id: queue._id,
+        queueNumber: queue.queueNumber,
+        customerName: queue.customerName,
+        services: queue.services,
+        status: queue.status,
+        estimatedStartTime: queue.estimatedStartTime,
+        startedAt: queue.startedAt,
+        finishedAt: queue.finishedAt,
+        createdAt: queue.createdAt,
+      };
+      io.to(`merchant:${req.admin.slug}`).emit('queue:status', { queue: publicQueue, action: 'serve' });
     }
 
     return success(res, queue);
@@ -545,23 +544,20 @@ export async function togglePayment(req, res, next) {
     await queue.save();
 
     const io = req.app.get('io');
-    if (io) {
-      const merchant = await Merchant.findById(queue.merchantId).select('slug');
-      if (merchant) {
-        const publicQueue = {
-          _id: queue._id,
-          id: queue._id,
-          queueNumber: queue.queueNumber,
-          services: queue.services,
-          status: queue.status,
-          isPaid: queue.isPaid,
-          estimatedStartTime: queue.estimatedStartTime,
-          startedAt: queue.startedAt,
-          finishedAt: queue.finishedAt,
-          createdAt: queue.createdAt,
-        };
-        io.to(`merchant:${merchant.slug}`).emit('queue:status', { queue: publicQueue, action: 'payment' });
-      }
+    if (io && req.admin.slug) {
+      const publicQueue = {
+        _id: queue._id,
+        id: queue._id,
+        queueNumber: queue.queueNumber,
+        services: queue.services,
+        status: queue.status,
+        isPaid: queue.isPaid,
+        estimatedStartTime: queue.estimatedStartTime,
+        startedAt: queue.startedAt,
+        finishedAt: queue.finishedAt,
+        createdAt: queue.createdAt,
+      };
+      io.to(`merchant:${req.admin.slug}`).emit('queue:status', { queue: publicQueue, action: 'payment' });
     }
 
     return success(res, queue);

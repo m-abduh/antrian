@@ -11,11 +11,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
-import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
+import { useQueues, useUpdateQueueStatus, useStartServing, useStats, queueKeys } from '@/lib/hooks/useAdmin';
 import { adminApi } from '@/lib/api/admin';
 import type { Queue } from '@/lib/types';
 import { ErrorAlert } from '@/components/ErrorAlert';
-import { useAdminSocket } from '@/lib/socket-provider';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -224,41 +223,6 @@ export default function DashboardPage() {
       .catch(() => {});
   }, [status]);
 
-  const { socket: adminSocket } = useAdminSocket();
-
-  useEffect(() => {
-    if (!adminSocket) return;
-
-    const handleNew = (payload: any) => {
-      console.log('[WS Admin] queue:new', payload?.queue?.queueNumber);
-      if (payload?.queue) {
-        queryClient.setQueriesData<Queue[]>({ queryKey: queueKeys.all }, (old) => {
-          if (!old) return old;
-          if (old.some(q => q._id === payload.queue._id)) return old;
-          return [payload.queue, ...old];
-        });
-      }
-      queryClient.invalidateQueries({ queryKey: statsKeys.all });
-    };
-
-    const handleStatus = (payload: any) => {
-      console.log('[WS Admin] queue:status', payload?.queue?.queueNumber, payload?.action);
-      if (payload?.queue) {
-        queryClient.setQueriesData<Queue[]>({ queryKey: queueKeys.all }, (old) => {
-          if (!old) return old;
-          return old.map(q => q._id === payload.queue._id ? { ...q, ...payload.queue } : q);
-        });
-      }
-    };
-
-    adminSocket.on('queue:new', handleNew);
-    adminSocket.on('queue:status', handleStatus);
-
-    return () => {
-      adminSocket.off('queue:new', handleNew);
-      adminSocket.off('queue:status', handleStatus);
-    };
-  }, [adminSocket, queryClient]);
 
   if (status !== 'authenticated' || !session?.user) return null;
 

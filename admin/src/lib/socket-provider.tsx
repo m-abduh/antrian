@@ -1,15 +1,16 @@
 'use client';
 
-import { createContext, useContext, useEffect, useRef, useReducer, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useReducer, useState, type ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
 
 interface SocketContextValue {
   socket: Socket | null;
   isConnected: boolean;
+  kicked: boolean;
 }
 
-const SocketContext = createContext<SocketContextValue>({ socket: null, isConnected: false });
+const SocketContext = createContext<SocketContextValue>({ socket: null, isConnected: false, kicked: false });
 
 export function useAdminSocket() {
   return useContext(SocketContext);
@@ -21,6 +22,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const tokenRef = useRef<string | null>(null);
   const [isConnected, setIsConnected] = useReducer((_: boolean, next: boolean) => next, false);
+  const [kicked, setKicked] = useState(false);
   const [, forceRender] = useReducer(x => x + 1, 0);
 
   useEffect(() => {
@@ -31,6 +33,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         socketRef.current = null;
         tokenRef.current = null;
         setIsConnected(false);
+        setKicked(false);
         forceRender();
       }
       return;
@@ -54,6 +57,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socket.on('connect', () => setIsConnected(true));
     socket.on('disconnect', () => setIsConnected(false));
     socket.on('connect_error', () => setIsConnected(false));
+    socket.on('kicked', (msg: string) => {
+      console.log('[WS] kicked:', msg);
+      socket.disconnect();
+      socket.removeAllListeners();
+      socketRef.current = null;
+      tokenRef.current = null;
+      setIsConnected(false);
+      setKicked(true);
+      forceRender();
+    });
 
     socketRef.current = socket;
     tokenRef.current = token;
@@ -70,7 +83,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, [session, sessionStatus, token]);
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, isConnected }}>
+    <SocketContext.Provider value={{ socket: socketRef.current, isConnected, kicked }}>
       {children}
     </SocketContext.Provider>
   );

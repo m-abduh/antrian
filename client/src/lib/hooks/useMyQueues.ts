@@ -7,6 +7,6 @@ export function useMyQueues(slug: string, token: string | null) {
     queryKey: ['myQueues', slug, token],
     queryFn: () => merchantApi.getMyQueues(slug, token!) as Promise<Queue[]>,
     enabled: !!slug && !!token,
-    refetchInterval: 10_000,
+    refetchInterval: 20_000,
   });
 }

@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const downloadQr = () => {
     if (!qrDataUrl) return;
     const link = document.createElement('a');
-    link.download = `antriin-${merchant?.slug || 'merchant'}.png`;
+    link.download = `tunggu-${merchant?.slug || 'merchant'}.png`;
     link.href = qrDataUrl;
     link.click();
   };
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                 <div>
                   <Label>Link Merchant</Label>
                   <div className="flex items-center border border-border rounded-xl bg-muted px-4 py-2.5 mt-1.5">
-                    <span className="text-sm text-muted-foreground">/antriin/</span>
+                    <span className="text-sm text-muted-foreground">/tunggu/</span>
                     <span className="text-sm text-foreground font-medium ml-1">{merchant.slug}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Slug tidak dapat diubah</p>

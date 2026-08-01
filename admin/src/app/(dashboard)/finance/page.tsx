@@ -172,8 +172,8 @@ export default function FinancePage() {
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
                       <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
                       <Tooltip
-                        formatter={(value: number) =>
-                          chartMode === 'revenue' ? formatRp(value) : value
+                        formatter={(value) =>
+                          chartMode === 'revenue' ? formatRp(Number(value)) : value
                         }
                         contentStyle={{ borderRadius: 8, border: '1px solid var(--border)' }}
                       />
@@ -202,7 +202,7 @@ export default function FinancePage() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis type="number" tick={{ fontSize: 11 }} className="text-muted-foreground" tickFormatter={(v) => formatRp(v)} />
                       <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} className="text-muted-foreground" width={75} />
-                      <Tooltip formatter={(value: number) => formatRp(value)} contentStyle={{ borderRadius: 8, border: '1px solid var(--border)' }} />
+                      <Tooltip formatter={(value) => formatRp(Number(value))} contentStyle={{ borderRadius: 8, border: '1px solid var(--border)' }} />
                       <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
                         {serviceData.map((_, i) => (
                           <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />

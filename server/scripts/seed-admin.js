@@ -7,7 +7,7 @@ const rl = readline.createInterface({ input: process.stdin, output: process.stdo
 const ask = (q) => new Promise((r) => rl.question(q, r));
 
 async function seed() {
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/antriin';
+  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/tunggu';
   await mongoose.connect(uri);
   console.log(`Connected to ${uri}\n`);
 

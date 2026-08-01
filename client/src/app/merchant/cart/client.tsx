@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
-const CUSTOMER_STORAGE_KEY = 'antriin-customer';
+const CUSTOMER_STORAGE_KEY = 'tunggu-customer';
 
 function loadCustomerData(): { customerName: string; customerPhone: string } {
   if (typeof window === 'undefined') return { customerName: '', customerPhone: '' };

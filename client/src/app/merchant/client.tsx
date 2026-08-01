@@ -45,7 +45,7 @@ export function MerchantClient({ slug }: { slug: string }) {
   const token = getCustomerToken();
   const { data: myQueues } = useMyQueues(slug, token);
 
-  const DISMISSED_KEY = `antriin-dismissed-${slug}`;
+  const DISMISSED_KEY = `tunggu-dismissed-${slug}`;
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set();
     try {

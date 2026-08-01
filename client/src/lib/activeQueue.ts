@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'antriin-active-queues';
+const STORAGE_KEY = 'tunggu-active-queues';
 
 interface ActiveQueue {
   queueId: string;

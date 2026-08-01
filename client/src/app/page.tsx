@@ -630,8 +630,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm text-foreground mb-3">Kontak</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><span className="hover:text-foreground transition-colors">hello@antriin.id</span></li>
-                <li><span className="hover:text-foreground transition-colors">@antriin_id</span></li>
+                <li><span className="hover:text-foreground transition-colors">hello@tunggu.id</span></li>
+                <li><span className="hover:text-foreground transition-colors">@tunggu_id</span></li>
               </ul>
             </div>
           </div>

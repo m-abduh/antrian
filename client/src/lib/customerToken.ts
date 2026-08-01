@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'antriin-customer-token';
+const TOKEN_KEY = 'tunggu-customer-token';
 const TOKEN_MAX_AGE = 365 * 24 * 60 * 60;
 
 function getCookie(name: string): string | null {

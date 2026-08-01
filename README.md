@@ -1,4 +1,4 @@
-# Antriin — Queue Management System
+# Tunggu — Queue Management System
 
 Sistem antrian online untuk UMKM. Pelanggan ambil nomor via web dan pantau antrian real-time. Admin dashboard untuk call/skip/done queue, kelola layanan, dan lihat statistik.
 
@@ -64,7 +64,7 @@ db.admins.insertOne({ name: "...", email: "...", password: "<bcrypt hash>", merc
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `MONGODB_URI` | Yes | MongoDB connection string (Docker: `mongodb://mongo:27017/antriin`) |
+| `MONGODB_URI` | Yes | MongoDB connection string (Docker: `mongodb://mongo:27017/tunggu`) |
 | `JWT_SECRET` | Yes | Min 16 chars |
 | `CORS_ORIGIN` | No | Default `*`, set eksplisit di production |
 | `API_URL` | Yes | Base URL API publik, dipakai CSP + URL upload |
@@ -102,7 +102,7 @@ Var penting di `.env` root (dibaca otomatis oleh `docker compose`):
 
 | Variable | Contoh | Keterangan |
 |----------|--------|-----------|
-| `MONGODB_URI` | `mongodb://mongo:27017/antriin` | Pakai hostname `mongo` (network compose) |
+| `MONGODB_URI` | `mongodb://mongo:27017/tunggu` | Pakai hostname `mongo` (network compose) |
 | `API_URL` | `https://api.tunggu.id` | URL API publik, dipakai CSP server |
 | `CORS_ORIGIN` | `https://tunggu.id,https://dash.tunggu.id` | Origin yang diizinkan |
 | `CLIENT_API_URL` | `https://api.tunggu.id/api` | Base URL browser → API (di-bake di build client) |

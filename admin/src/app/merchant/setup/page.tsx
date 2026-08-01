@@ -93,7 +93,7 @@ export default function MerchantSetupPage() {
                   <Label htmlFor="slug">Link Merchant</Label>
                   <div className="flex items-center border border-border rounded-xl focus-within:ring-2 focus-within:ring-ring overflow-hidden">
                     <span className="px-3 py-3 bg-muted text-sm text-muted-foreground border-r border-border whitespace-nowrap">
-                      /antriin/
+                      /tunggu/
                     </span>
                     <Input
                       id="slug"

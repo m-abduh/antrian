@@ -65,6 +65,6 @@ export const useCartStore = create<CartState>()(
       totalPrice: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
     }),
-    { name: 'antriin-cart' },
+    { name: 'tunggu-cart' },
   ),
 );

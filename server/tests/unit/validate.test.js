@@ -116,14 +116,14 @@ describe('Validation Rules', () => {
 
 describe('calculateEstimatedTime', () => {
   it('should return 0 for no queues ahead', () => {
-    expect(calculateEstimatedTime(0, 30)).toBe(0);
+    expect(calculateEstimatedTime(0)).toBe(0);
   });
 
   it('should calculate correctly', () => {
-    expect(calculateEstimatedTime(3, 30)).toBe(90);
+    expect(calculateEstimatedTime(3)).toBe(30);
   });
 
   it('should handle large numbers', () => {
-    expect(calculateEstimatedTime(10, 45)).toBe(450);
+    expect(calculateEstimatedTime(10)).toBe(100);
   });
 });

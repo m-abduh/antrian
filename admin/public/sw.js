@@ -1,4 +1,4 @@
-const CACHE = 'antriin-admin-v1';
+const CACHE = 'tunggu-admin-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

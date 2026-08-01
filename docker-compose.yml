@@ -25,7 +25,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/antriin}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/tunggu}
       API_URL: ${API_URL:-https://api.tunggu.id}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://tunggu.id,https://dash.tunggu.id}
     ports:

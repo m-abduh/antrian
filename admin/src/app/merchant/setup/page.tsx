@@ -93,7 +93,7 @@ export default function MerchantSetupPage() {
                   <Label htmlFor="slug">Link Merchant</Label>
                   <div className="flex items-center border border-border rounded-xl focus-within:ring-2 focus-within:ring-ring overflow-hidden">
                     <span className="px-3 py-3 bg-muted text-sm text-muted-foreground border-r border-border whitespace-nowrap">
-                      /tunggu/
+                      https://
                     </span>
                     <Input
                       id="slug"
@@ -105,6 +105,9 @@ export default function MerchantSetupPage() {
                       className="border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                       placeholder="namamerchant"
                     />
+                    <span className="px-3 py-3 bg-muted text-sm text-muted-foreground border-l border-border whitespace-nowrap">
+                      .tunggu.id
+                    </span>
                   </div>
                   {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
                 </div>

@@ -246,7 +246,7 @@ export async function getMerchant(req, res, next) {
 
 export async function updateMerchant(req, res, next) {
   try {
-    const { name, address, phone, image, banner, description, bank, socialLinks, statusConfig, customFieldsConfig, paymentConfirm } = req.body;
+    const { name, slug, address, phone, image, banner, description, bank, socialLinks, statusConfig, customFieldsConfig, paymentConfirm } = req.body;
 
     const merchant = await Merchant.findById(req.admin.merchantId);
     if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
@@ -255,6 +255,16 @@ export async function updateMerchant(req, res, next) {
       if (!name.trim()) return error(res, 'Nama merchant wajib diisi');
       if (name.trim().length > 100) return error(res, 'Nama maksimal 100 karakter');
       merchant.name = name.trim();
+    }
+    if (slug !== undefined) {
+      const cleanSlug = slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+      if (!cleanSlug) return error(res, 'Slug tidak valid');
+      if (cleanSlug.length > 50) return error(res, 'Slug maksimal 50 karakter');
+      if (cleanSlug !== merchant.slug) {
+        const existing = await Merchant.findOne({ slug: cleanSlug, _id: { $ne: merchant._id } });
+        if (existing) return error(res, 'Slug sudah digunakan merchant lain');
+      }
+      merchant.slug = cleanSlug;
     }
     if (address !== undefined) {
       if (address.length > 500) return error(res, 'Alamat maksimal 500 karakter');

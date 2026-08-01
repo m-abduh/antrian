@@ -51,6 +51,7 @@ export default function SettingsPage() {
 
   const [form, setForm] = useState({
     name: '',
+    slug: '',
     address: '',
     phone: '',
     description: '',
@@ -70,6 +71,7 @@ export default function SettingsPage() {
         setMerchant(m);
         setForm({
           name: m.name,
+          slug: m.slug,
           address: m.address || '',
           phone: m.phone || '',
           description: m.description || '',
@@ -90,6 +92,7 @@ export default function SettingsPage() {
     try {
       const updated = await adminApi.updateMerchant({
         name: form.name,
+        slug: form.slug,
         address: form.address,
         phone: form.phone,
         description: form.description,
@@ -98,6 +101,7 @@ export default function SettingsPage() {
         socialLinks: form.socialLinks,
       });
       setMerchant(updated);
+      setForm({ ...form, slug: updated.slug });
       setSuccess('Pengaturan berhasil disimpan');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: unknown) {
@@ -184,10 +188,22 @@ export default function SettingsPage() {
                 <div>
                   <Label>Link Merchant</Label>
                   <div className="flex items-center border border-border rounded-xl bg-muted px-4 py-2.5 mt-1.5">
-                    <span className="text-sm text-muted-foreground">/tunggu/</span>
-                    <span className="text-sm text-foreground font-medium ml-1">{merchant.slug}</span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">https://</span>
+                    <input
+                      value={form.slug}
+                      onChange={(e) =>
+                        setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })
+                      }
+                      className="flex-1 bg-transparent text-sm text-foreground font-medium focus:outline-none min-w-0"
+                      placeholder="namamerchant"
+                      pattern="[a-z0-9-]+"
+                      maxLength={50}
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">.tunggu.id</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Slug tidak dapat diubah</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Hanya huruf kecil, angka, dan strip. QR code & link lama akan ikut berubah.
+                  </p>
                 </div>
 
                 <div>

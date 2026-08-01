@@ -9,7 +9,7 @@ const ipConnections = new Map();
 const customerPerSlug = new Map();
 
 const LIMITS = {
-  perIP: 20,
+  perIP: 100,
   adminPerMerchant: 5,
   customerPerSlug: 200,
 };
@@ -89,21 +89,16 @@ export function initSocket(httpServer, app) {
       }
       adminSockets.set(adminId, socket);
 
-      if (socket.admin.slug) {
-        socket.join(`merchant:${socket.admin.slug}`);
-        logger.info(`[Socket] Admin connected: ${socket.admin.name} id=${socket.id.slice(0, 6)} joined=merchant:${socket.admin.slug}`);
-      } else {
-        try {
-          const merchant = await Merchant.findById(socket.admin.merchantId).select('slug');
-          if (merchant) {
-            socket.join(`merchant:${merchant.slug}`);
-            logger.info(`[Socket] Admin connected (legacy): ${socket.admin.name} id=${socket.id.slice(0, 6)} joined=merchant:${merchant.slug}`);
-          } else {
-            logger.warn(`[Socket] Admin merchant not found: ${socket.admin.merchantId}`);
-          }
-        } catch (err) {
-          logger.error(`[Socket] Admin merchant lookup failed: ${err.message}`);
+      try {
+        const merchant = await Merchant.findById(socket.admin.merchantId).select('slug');
+        if (merchant) {
+          socket.join(`merchant:${merchant.slug}`);
+          logger.info(`[Socket] Admin connected: ${socket.admin.name} id=${socket.id.slice(0, 6)} joined=merchant:${merchant.slug}`);
+        } else {
+          logger.warn(`[Socket] Admin merchant not found: ${socket.admin.merchantId}`);
         }
+      } catch (err) {
+        logger.error(`[Socket] Admin merchant lookup failed: ${err.message}`);
       }
     }
 

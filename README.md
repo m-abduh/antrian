@@ -103,13 +103,20 @@ Var penting di `.env` root (dibaca otomatis oleh `docker compose`):
 | Variable | Contoh | Keterangan |
 |----------|--------|-----------|
 | `MONGODB_URI` | `mongodb://mongo:27017/tunggu` | Pakai hostname `mongo` (network compose) |
+| `JWT_SECRET` | random ≥32 char | Wajib, dipakai server (JWT) |
+| `JWT_EXPIRES_IN` | `8h` | Masa berlaku token JWT |
 | `API_URL` | `https://api.tunggu.id` | URL API publik, dipakai CSP server |
 | `CORS_ORIGIN` | `https://tunggu.id,https://dash.tunggu.id` | Origin yang diizinkan |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | dari `npx web-push generate-vapid-keys` | Push notification |
+| `VAPID_SUBJECT` | `mailto:admin@tunggu.id` | Subject push notification |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | Opsional, login Google admin |
 | `CLIENT_API_URL` | `https://api.tunggu.id/api` | Base URL browser → API (di-bake di build client) |
 | `ADMIN_API_URL` | `https://api.tunggu.id` | Base URL browser → API (di-bake di build admin) |
 | `NEXTAUTH_SECRET` | random ≥32 char | Wajib, dipakai NextAuth admin |
 | `NEXTAUTH_URL` | `https://dash.tunggu.id` | URL publik admin |
 | `ROOT_DOMAIN` | `tunggu.id` | Subdomain routing client |
+
+> **Satu file `.env` di root sudah cukup untuk docker compose** — semua service (server/client/admin) membaca variabelnya dari sini. `server/.env` hanya dipakai saat dev lokal (`npm run dev`).
 
 > `NEXT_PUBLIC_*` values are baked at build time — they must point to your **public domain**, not internal Docker hostnames. Setiap ganti value-nya, jalankan ulang `docker compose build`.
 

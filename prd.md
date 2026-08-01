@@ -2,7 +2,7 @@
 
 ## 1. Ringkasan
 
-Aplikasi antrean berbasis web dengan alur **Scan QR → Pilih Layanan → Bayar (QRIS) → Dapat Nomor Antrean**. Target: restoran, barbershop, salon, klinik, laundry UMKM di Indonesia. Tidak perlu install aplikasi, cukup scan QR atau buka link.
+Aplikasi antrean berbasis web dengan alur **Scan QR → Pilih Layanan → Dapat Nomor Antrean**. Target: restoran, barbershop, salon, klinik, laundry UMKM di Indonesia. Tidak perlu install aplikasi, cukup scan QR atau buka link.
 
 ---
 
@@ -12,7 +12,7 @@ Aplikasi antrean berbasis web dengan alur **Scan QR → Pilih Layanan → Bayar 
 
 | Proyek | Stack | Fungsi |
 |--------|-------|--------|
-| `server/` | Express.js + Mongoose + Midtrans | Backend API |
+| `server/` | Express.js + Mongoose | Backend API |
 | `client/` | Next.js + Tailwind + PWA | Customer web app (scan, order, queue) |
 | `admin/` | Next.js + Tailwind | Admin dashboard (login, manage queue) |
 
@@ -23,7 +23,6 @@ Aplikasi antrean berbasis web dengan alur **Scan QR → Pilih Layanan → Bayar 
 | Frontend | Next.js (App Router) + Tailwind CSS |
 | Backend | Express.js (Node.js) |
 | Database | MongoDB (Mongoose) |
-| Payment | Midtrans Snap (QRIS) |
 | Notifikasi | PWA Push Notification (Web Push API) |
 | Auth | JWT (admin) |
 
@@ -39,10 +38,6 @@ Lihat daftar layanan + harga
 Pilih 1 layanan
     ↓
 Input nama + no WA (opsional)
-    ↓
-Checkout → Midtrans Snap (QRIS / Virtual Account)
-    ↓
-Pembayaran sukses
     ↓
 Dapat nomor antrean + estimasi waktu
     ↓
@@ -65,8 +60,7 @@ Selesai → Rating
 | Daftar Layanan | Nama layanan + durasi + harga |
 | Pilih Layanan | Single select (1x antrean = 1 layanan) |
 | Input Data | Nama (wajib), No WA (opsional) |
-| Pembayaran QRIS | Midtrans Snap popup |
-| Nomor Antrean | Tampil setelah bayar, format: `A001` |
+| Nomor Antrean | Tampil setelah buat antrean, format: `A001` |
 | Estimasi Waktu | Berdasarkan rata-rata durasi layanan x antrean di depan |
 | Live Status | Posisi antrean real-time (auto-refresh tiap 10s) |
 | Push Notification | Kirim notifikasi ke browser saat tinggal 3 antrean lagi |
@@ -93,7 +87,6 @@ Selesai → Rating
 {
   _id, name, slug, address, phone,
   waGateway: { provider, apiKey, phoneNumber },
-  midtrans: { serverKey, clientKey },
   isActive, createdAt, updatedAt
 }
 ```
@@ -113,8 +106,6 @@ Selesai → Rating
   queueNumber: "A001",
   customerName, customerPhone,
   status: "waiting" | "called" | "serving" | "done" | "skipped",
-  paymentStatus: "pending" | "paid" | "expired",
-  midtransOrderId, midtransTransactionId,
   rating: Number (1-5),
   estimatedStartTime, startedAt, finishedAt,
   createdAt
@@ -137,8 +128,7 @@ Selesai → Rating
 |--------|----------|--------|
 | GET | `/api/merchant/:slug` | Ambil data merchant |
 | GET | `/api/merchant/:slug/services` | Daftar layanan |
-| POST | `/api/merchant/:slug/queue` | Buat antrean + Midtrans transaction |
-| POST | `/api/midtrans/notification` | Webhook Midtrans (update payment status) |
+| POST | `/api/merchant/:slug/queue` | Buat antrean |
 | GET | `/api/merchant/:slug/queue/live` | Live antrean (pending + current) |
 
 ### Admin (auth required)
@@ -154,37 +144,12 @@ Selesai → Rating
 
 ---
 
-## 7. Alur Midtrans
-
-```
-Customer checkout
-    ↓
-Backend create Midtrans Snap transaction (gross_amount = service.price)
-    ↓
-Return snap_token ke frontend
-    ↓
-Frontend open Midtrans Snap popup (QRIS)
-    ↓
-Customer scan & bayar
-    ↓
-Midtrans kirim webhook ke /api/midtrans/notification
-    ↓
-Backend update paymentStatus → "paid"
-    ↓
-Queue status → "waiting"
-```
-
-- **Handle expired**: cron tiap 5 menit cek queue dengan status `pending` > 30 menit → hapus.
-- **Security**: verifikasi webhook signature Midtrans (`transaction_status`, `order_id`, `status_code`, `gross_amount`).
-
----
-
-## 8. Notifikasi (PWA Push)
+## 7. Notifikasi (PWA Push)
 
 - **Web Push API**: gratis, unlimited, tanpa provider pihak ketiga.
 - Customer cukup tap "Allow" sekali saat pertama buka halaman.
 - Kirim notifikasi via `service worker` + `push event` dari backend.
-- Trigger: `paid` → "Antrean A001, estimasi 20 menit"
+- Trigger: saat buat antrean → "Antrean A001, estimasi 20 menit"
 - Trigger: saat dipanggil → "Antrean A001, silakan ke lokasi"
 - Fallback: halaman web tetap bisa di-refresh customer untuk lihat status.
 
@@ -195,7 +160,7 @@ Queue status → "waiting"
 - **PWA**: Bisa di-save ke home screen, push notification (fallback).
 - **Responsive**: Mobile-first (95% traffic dari HP).
 - **Loading**: Skeleton screen, form submit button disabled + spinner.
-- **Error**: Midtrans gagal → tampilkan pesan jelas, data tetap tersimpan.
+- **Error**: tampilkan pesan jelas, data tetap tersimpan.
 - **Rate limit**: 1 nomor WA per 5 menit untuk cegah spam antrean.
 
 ---
@@ -204,7 +169,7 @@ Queue status → "waiting"
 
 | Fase | Fitur |
 |------|-------|
-| **MVP** | Core flow: scan → pilih → bayar → antre. Admin dashboard dasar. |
+| **MVP** | Core flow: scan → pilih → antre. Admin dashboard dasar. |
 | **Fase 2** | Notifikasi WA, rating, multi-layanan per antrean, multi-barber |
 | **Fase 3** | Multi-cabang, laporan omzet, loyalty program |
 | **Fase 4** | Mode offline (service worker), custom branding, white-label |
@@ -220,7 +185,7 @@ antrian/
 │   ├── routes/      — Express routers
 │   ├── controllers/ — Business logic
 │   ├── middleware/   — Auth, error handler
-│   ├── utils/       — Midtrans helper, queue helper
+│   ├── utils/       — queue helper
 │   └── config/      — DB connection, env
 │
 ├── client/          — Next.js (customer)
@@ -252,5 +217,5 @@ antrian/
 | Paket | Harga/bulan | Fitur |
 |-------|-------------|-------|
 | Gratis | Rp0 | 1 cabang, max 50 antrean/hari, 1 admin |
-| Starter | Rp49.000 | 1 cabang, unlimited, push notif, QRIS |
+| Starter | Rp49.000 | 1 cabang, unlimited, push notif |
 | Pro | Rp149.000 | 3 cabang, laporan, loyalty, prioritas support |

@@ -1,11 +1,11 @@
 # Antriin — Queue Management System
 
-Sistem antrian online untuk UMKM. Pelanggan ambil nomor via web, bayar QRIS (Midtrans), dan pantau antrian real-time. Admin dashboard untuk call/skip/done queue, kelola layanan, dan lihat statistik.
+Sistem antrian online untuk UMKM. Pelanggan ambil nomor via web dan pantau antrian real-time. Admin dashboard untuk call/skip/done queue, kelola layanan, dan lihat statistik.
 
 ## Architecture
 
 ```
-├── server/      Express + MongoDB + Midtrans (:4000)
+├── server/      Express + MongoDB (:4000)
 ├── client/      Next.js — Customer facing (:3000)
 ├── admin/       Next.js — Admin dashboard (:3001)
 └── docker-compose.yml  — All services + MongoDB
@@ -31,25 +31,26 @@ npm run dev
 ## Quick Start (Docker)
 
 ```bash
+cp .env.example .env        # edit isinya (semua var deploy + secret)
 cp server/.env.example server/.env   # edit isinya
-export MIDTRANS_CLIENT_KEY=your_key
-export VAPID_PUBLIC_KEY=your_vapid_public
-docker compose up -d
+docker compose up -d --build
 ```
+
+> `docker compose` otomatis membaca `.env` di root repo untuk var-var produksi.
 
 ### First-time setup
 
 After services are running, create the first merchant + admin:
 
 ```bash
-cd server && node scripts/seed-admin.js
+docker compose exec server node scripts/seed-admin.js
 ```
 
 Or insert manually into MongoDB:
 
 ```javascript
 // merchant
-db.merchants.insertOne({ name: "...", slug: "...", isActive: true, midtrans: { serverKey: "...", clientKey: "..." } })
+db.merchants.insertOne({ name: "...", slug: "...", isActive: true })
 
 // admin (password hashed with bcrypt)
 db.admins.insertOne({ name: "...", email: "...", password: "<bcrypt hash>", merchantId: "<merchant._id>", role: "admin" })
@@ -57,15 +58,16 @@ db.admins.insertOne({ name: "...", email: "...", password: "<bcrypt hash>", merc
 
 ## Environment Variables
 
+> Untuk **deployment Docker**, var-var produksi ditaruh di `.env` root (lihat `.env.example`), bukan di `server/.env`. Var di bawah hanya untuk development lokal.
+
 ### Server (`server/.env`)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `MONGODB_URI` | Yes | MongoDB connection string |
+| `MONGODB_URI` | Yes | MongoDB connection string (Docker: `mongodb://mongo:27017/antriin`) |
 | `JWT_SECRET` | Yes | Min 16 chars |
-| `MIDTRANS_SERVER_KEY` | Yes | Midtrans server key (rahasia) |
-| `MIDTRANS_CLIENT_KEY` | Yes | Midtrans client key (publik) |
 | `CORS_ORIGIN` | No | Default `*`, set eksplisit di production |
+| `API_URL` | Yes | Base URL API publik, dipakai CSP + URL upload |
 | `VAPID_PUBLIC_KEY` | No | Untuk push notification |
 | `VAPID_PRIVATE_KEY` | No | Untuk push notification |
 
@@ -76,7 +78,6 @@ Generate VAPID keys: `node server/scripts/generate-vapid.js`
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_API_URL` | Yes | `http://localhost:4000/api` (dev) |
-| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Yes | Midtrans client key |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | No | VAPID public key |
 
 ### Admin (`admin/.env`)
@@ -85,27 +86,32 @@ Generate VAPID keys: `node server/scripts/generate-vapid.js`
 |----------|----------|-------------|
 | `NEXT_PUBLIC_API_URL` | Yes | `http://localhost:4000` (dev) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | No | VAPID public key |
+| `NEXTAUTH_SECRET` | Yes | Min 32 chars |
+| `NEXTAUTH_URL` | Yes | `http://localhost:3001` (dev) |
 
 ## Deployment
 
-Build production images:
+Build & start production images:
 
 ```bash
-docker compose -f docker-compose.yml build
-docker compose up -d
+cp .env.example .env        # isi semua value
+docker compose up -d --build
 ```
 
-For production, set `COMPOSE_FILE` vars or pass via `.env`:
+Var penting di `.env` root (dibaca otomatis oleh `docker compose`):
 
-```bash
-CLIENT_API_URL=https://api.antriin.com \
-ADMIN_API_URL=https://api.antriin.com \
-MIDTRANS_CLIENT_KEY=... \
-VAPID_PUBLIC_KEY=... \
-docker compose up -d
-```
+| Variable | Contoh | Keterangan |
+|----------|--------|-----------|
+| `MONGODB_URI` | `mongodb://mongo:27017/antriin` | Pakai hostname `mongo` (network compose) |
+| `API_URL` | `https://api.tunggu.id` | URL API publik, dipakai CSP server |
+| `CORS_ORIGIN` | `https://tunggu.id,https://dash.tunggu.id` | Origin yang diizinkan |
+| `CLIENT_API_URL` | `https://api.tunggu.id/api` | Base URL browser → API (di-bake di build client) |
+| `ADMIN_API_URL` | `https://api.tunggu.id` | Base URL browser → API (di-bake di build admin) |
+| `NEXTAUTH_SECRET` | random ≥32 char | Wajib, dipakai NextAuth admin |
+| `NEXTAUTH_URL` | `https://dash.tunggu.id` | URL publik admin |
+| `ROOT_DOMAIN` | `tunggu.id` | Subdomain routing client |
 
-> `NEXT_PUBLIC_*` values are baked at build time — they must point to your **public domain**, not internal Docker hostnames.
+> `NEXT_PUBLIC_*` values are baked at build time — they must point to your **public domain**, not internal Docker hostnames. Setiap ganti value-nya, jalankan ulang `docker compose build`.
 
 ## CI/CD
 
@@ -116,6 +122,6 @@ GitHub Actions on push/PR to master:
 
 ## Tech Stack
 
-- **Backend**: Express.js, Mongoose, JWT, Midtrans client, web-push
+- **Backend**: Express.js, Mongoose, JWT, web-push
 - **Frontend**: Next.js 16, TanStack Query, Zustand, Framer Motion, Tailwind v4, react-hook-form
 - **Infra**: Docker, Compose, GitHub Actions, MongoDB 7

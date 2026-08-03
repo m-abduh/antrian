@@ -7,6 +7,7 @@ import {
   IconBuildingStore, IconChartBar, IconBell, IconUsers,
   IconCheck, IconChevronDown, IconStar, IconStarFilled, IconWavesElectricity,
   IconLayoutDashboard, IconReportAnalytics, IconCircleCheck, IconPlayerSkipForward,
+  IconHelp,
 } from '@tabler/icons-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import Hero from '@/components/Hero';
@@ -50,6 +51,39 @@ const faqs = [
   { q: 'Bagaimana cara pelanggan dapat notifikasi?', a: 'Pelanggan bisa pantau antrian langsung di halaman merchant. Status antrian berubah real-time tanpa perlu reload.' },
 ];
 
+const sectionBadge =
+  'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-500 text-sm font-medium mb-4';
+
+const blobTeal =
+  'absolute top-10 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-teal-500/[0.05] rounded-full pointer-events-none';
+const blobOrange =
+  'absolute bottom-0 right-0 translate-x-1/3 w-[400px] h-[400px] bg-orange-500/[0.05] rounded-full pointer-events-none';
+
+function SectionHeading({ badge, icon: Icon, title, subtitle }: {
+  badge: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: React.ReactNode;
+  subtitle: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      className="text-center mb-8 md:mb-12"
+    >
+      <span className={sectionBadge}>
+        <Icon className="w-4 h-4" />
+        {badge}
+      </span>
+      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-[1.1]">
+        {title}
+      </h2>
+      <p className="mt-3 text-muted-foreground max-w-md mx-auto">{subtitle}</p>
+    </motion.div>
+  );
+}
+
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -60,7 +94,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/[0.04] via-background to-background dark:from-primary/[0.06] dark:via-background dark:to-background">
+    <div className="min-h-screen bg-gradient-to-b from-teal-500/[0.05] via-background to-background dark:from-teal-500/[0.08] dark:via-background dark:to-background">
       {/* ─── NAVBAR ─── */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -79,7 +113,7 @@ export default function LandingPage() {
             <ThemeToggle />
             <a
               href={`${adminUrl}/register`}
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm"
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-teal-500 text-white text-sm font-semibold rounded-xl hover:bg-teal-600 transition-all shadow-sm shadow-teal-500/20"
             >
               Daftar Merchant
             </a>
@@ -92,7 +126,8 @@ export default function LandingPage() {
         <Hero />
 
         {/* ─── STATS ─── */}
-        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+          <div className={blobTeal} aria-hidden="true" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[
               { value: '500+', label: 'Merchant Aktif', icon: IconBuildingStore },
@@ -105,12 +140,12 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-card border border-border rounded-2xl p-5 md:p-7 text-center"
+                className="bg-card border border-border rounded-2xl p-5 md:p-7 text-center hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-0.5 transition-all"
               >
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <s.icon className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <s.icon className="w-5 h-5 text-teal-500" />
                 </div>
-                <p className="text-2xl md:text-3xl font-bold text-foreground">{s.value}</p>
+                <p className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{s.value}</p>
                 <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
               </motion.div>
             ))}
@@ -118,21 +153,14 @@ export default function LandingPage() {
         </section>
 
         {/* ─── CARA KERJA (CUSTOMER) ─── */}
-        <section id="how-customer" className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Cara Kerja —{' '}
-              <span className="text-primary">Pelanggan</span>
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Gampang, tinggal 3 langkah aja
-            </p>
-          </motion.div>
+        <section id="how-customer" className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+          <div className={blobOrange} aria-hidden="true" />
+          <SectionHeading
+            badge="Cara Kerja"
+            icon={IconUsers}
+            title={<>Untuk <span className="text-teal-500">Pelanggan</span></>}
+            subtitle="Gampang, tinggal 3 langkah aja"
+          />
 
           <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
             {stepsCustomer.map((s, i) => (
@@ -142,14 +170,14 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="relative bg-card border border-border rounded-2xl p-5 md:p-7"
+                className="relative bg-card border border-border rounded-2xl p-5 md:p-7 hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-0.5 transition-all"
               >
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center flex-shrink-0">
+                  <span className="w-8 h-8 rounded-full bg-teal-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 shadow-sm shadow-teal-500/30">
                     {i + 1}
                   </span>
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <s.icon className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center">
+                    <s.icon className="w-5 h-5 text-teal-500" />
                   </div>
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">{s.step}</h3>
@@ -160,21 +188,14 @@ export default function LandingPage() {
         </section>
 
         {/* ─── CARA KERJA (MERCHANT) ─── */}
-        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Cara Kerja —{' '}
-              <span className="text-primary">Merchant</span>
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Setup dalam hitungan menit
-            </p>
-          </motion.div>
+        <section className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+          <div className={blobTeal} aria-hidden="true" />
+          <SectionHeading
+            badge="Cara Kerja"
+            icon={IconLayoutDashboard}
+            title={<>Untuk <span className="text-teal-500">Merchant</span></>}
+            subtitle="Setup dalam hitungan menit"
+          />
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {stepsMerchant.map((s, i) => (
@@ -184,14 +205,14 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-card border border-border rounded-2xl p-5 md:p-6"
+                className="bg-card border border-border rounded-2xl p-5 md:p-6 hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-0.5 transition-all"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  <span className="w-7 h-7 rounded-full bg-teal-500/10 text-teal-500 text-xs font-bold flex items-center justify-center flex-shrink-0">
                     {i + 1}
                   </span>
-                  <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <s.icon className="w-4 h-4 text-primary" />
+                  <div className="w-9 h-9 bg-teal-500/10 rounded-xl flex items-center justify-center">
+                    <s.icon className="w-4 h-4 text-teal-500" />
                   </div>
                 </div>
                 <h3 className="font-semibold text-sm text-foreground mb-1">{s.step}</h3>
@@ -202,21 +223,14 @@ export default function LandingPage() {
         </section>
 
         {/* ─── FITUR ─── */}
-        <section id="features" className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Fitur Lengkap{' '}
-              <span className="text-primary">Tunggu.id</span>
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Semua yang kamu butuh buat kelola antrian
-            </p>
-          </motion.div>
+        <section id="features" className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+          <div className={blobOrange} aria-hidden="true" />
+          <SectionHeading
+            badge="Fitur"
+            icon={IconLayoutDashboard}
+            title={<>Fitur Lengkap <span className="text-teal-500">Tunggu.id</span></>}
+            subtitle="Semua yang kamu butuh buat kelola antrian"
+          />
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {features.map((f, i) => (
@@ -226,10 +240,10 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-card border border-border rounded-2xl p-4 md:p-5 hover:shadow-md hover:shadow-primary/5 transition-all"
+                className="bg-card border border-border rounded-2xl p-4 md:p-5 hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-0.5 transition-all"
               >
-                <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center mb-3">
-                  <f.icon className="w-4 h-4 text-primary" />
+                <div className="w-9 h-9 bg-teal-500/10 rounded-xl flex items-center justify-center mb-3">
+                  <f.icon className="w-4 h-4 text-teal-500" />
                 </div>
                 <h3 className="font-semibold text-sm text-foreground mb-1">{f.title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
@@ -239,28 +253,21 @@ export default function LandingPage() {
         </section>
 
         {/* ─── DASHBOARD PREVIEW ─── */}
-        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Dashboard{' '}
-              <span className="text-primary">Real-time</span>
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Pantau dan kelola antrian dari mana saja
-            </p>
-          </motion.div>
+        <section className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+          <div className={blobTeal} aria-hidden="true" />
+          <SectionHeading
+            badge="Dashboard"
+            icon={IconChartBar}
+            title={<>Kelola Antrian <span className="text-teal-500">Real-time</span></>}
+            subtitle="Pantau dan kelola antrian dari mana saja"
+          />
 
           <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-card border border-border rounded-2xl p-5 md:p-7 space-y-4"
+              className="bg-card border border-border rounded-2xl p-5 md:p-7 space-y-4 hover:shadow-lg hover:shadow-teal-500/5 transition-all"
             >
               {[
                 { icon: IconUsers, label: 'Total Antrian', color: 'bg-primary' },
@@ -324,21 +331,14 @@ export default function LandingPage() {
         </section>
 
         {/* ─── TESTIMONI ─── */}
-        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Apa Kata{' '}
-              <span className="text-primary">Pengguna</span>
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Mereka sudah merasakan manfaat Tunggu.id
-            </p>
-          </motion.div>
+        <section className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+          <div className={blobOrange} aria-hidden="true" />
+          <SectionHeading
+            badge="Testimoni"
+            icon={IconStarFilled}
+            title={<>Apa Kata <span className="text-teal-500">Pengguna</span></>}
+            subtitle="Mereka sudah merasakan manfaat Tunggu.id"
+          />
 
           <div className="grid md:grid-cols-3 gap-4 md:gap-6">
             {testimonials.map((t, i) => (
@@ -348,7 +348,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-card border border-border rounded-2xl p-5 md:p-6"
+                className="bg-card border border-border rounded-2xl p-5 md:p-6 hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-0.5 transition-all"
               >
                 <div className="flex items-center gap-1 mb-3">
                   {Array.from({ length: t.rating }).map((_, ri) => (
@@ -360,7 +360,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-sm text-foreground mb-4 leading-relaxed italic">&ldquo;{t.text}&rdquo;</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-500 font-bold text-sm">
                     {t.name.charAt(0)}
                   </div>
                   <div>
@@ -374,21 +374,14 @@ export default function LandingPage() {
         </section>
 
         {/* ─── FAQ ─── */}
-        <section id="faq" className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Pertanyaan{' '}
-              <span className="text-primary">Umum</span>
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Yang sering ditanyakan
-            </p>
-          </motion.div>
+        <section id="faq" className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+          <div className={blobTeal} aria-hidden="true" />
+          <SectionHeading
+            badge="FAQ"
+            icon={IconHelp}
+            title={<>Pertanyaan <span className="text-teal-500">Umum</span></>}
+            subtitle="Yang sering ditanyakan"
+          />
 
           <div className="space-y-3">
             {faqs.map((faq, i) => (
@@ -398,7 +391,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-card border border-border rounded-2xl overflow-hidden"
+                className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-teal-500/5 transition-all"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -428,33 +421,38 @@ export default function LandingPage() {
         </section>
 
         {/* ─── CTA ─── */}
-        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
+        <section className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl md:rounded-3xl p-8 md:p-14 text-center text-primary-foreground"
+            className="relative overflow-hidden bg-gradient-to-br from-teal-500 via-teal-600 to-teal-600 rounded-2xl md:rounded-3xl p-8 md:p-14 text-center text-white shadow-xl shadow-teal-500/20"
           >
-            <IconWavesElectricity className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-4 opacity-80" />
-            <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-              Siap Kelola Antrian?
-            </h2>
-            <p className="mt-2 md:mt-3 text-primary-foreground/80 max-w-md mx-auto text-sm md:text-base">
-              Daftar gratis jadi merchant, kelola antrian dengan mudah.
-            </p>
-            <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a
-                href={`${adminUrl}/register`}
-                className="px-6 md:px-8 py-3 bg-white text-primary font-semibold rounded-xl hover:bg-white/90 transition-all shadow-lg"
-              >
-                Daftar Merchant Gratis
-              </a>
-              <a
-                href={`${adminUrl}/login`}
-                className="px-6 md:px-8 py-3 bg-primary-foreground/10 text-primary-foreground font-semibold rounded-xl hover:bg-primary-foreground/20 transition-all border border-primary-foreground/20"
-              >
-                Masuk
-              </a>
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-2xl" aria-hidden="true" />
+            <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-orange-400/20 rounded-full blur-2xl" aria-hidden="true" />
+
+            <div className="relative z-10">
+              <IconWavesElectricity className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-4 opacity-80" />
+              <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
+                Siap Kelola Antrian?
+              </h2>
+              <p className="mt-2 md:mt-3 text-white/80 max-w-md mx-auto text-sm md:text-base">
+                Daftar gratis jadi merchant, kelola antrian dengan mudah.
+              </p>
+              <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a
+                  href={`${adminUrl}/register`}
+                  className="px-6 md:px-8 py-3 bg-white text-teal-600 font-semibold rounded-xl hover:bg-white/90 transition-all shadow-lg"
+                >
+                  Daftar Merchant Gratis
+                </a>
+                <a
+                  href={`${adminUrl}/login`}
+                  className="px-6 md:px-8 py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all border border-white/20"
+                >
+                  Masuk
+                </a>
+              </div>
             </div>
           </motion.div>
         </section>

@@ -83,12 +83,9 @@ export default function LandingPage() {
       {/* ─── NAVBAR ─── */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
-              <IconClock className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-xl text-foreground">Tunggu.id</span>
-          </div>
+          <a href="/" className="flex items-center">
+            <img src="/logo/Tunggu.id.png" alt="Tunggu.id" className="h-5 md:h-6 w-auto" />
+          </a>
 
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <button onClick={() => scrollTo('how-customer')} className="hover:text-foreground transition-colors">Cara Kerja</button>
@@ -600,12 +597,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div className="sm:col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
-                  <IconClock className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-bold text-lg text-foreground">Tunggu.id</span>
-              </div>
+              <a href="/" className="flex items-center mb-3">
+                <img src="/logo/Tunggu.id.png" alt="Tunggu.id" className="h-6 w-auto" />
+              </a>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Sistem antrian online untuk bisnis kecil. Bikin antrian lebih teratur, pelanggan lebih puas.
               </p>

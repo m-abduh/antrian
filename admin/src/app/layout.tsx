@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   title: 'Tunggu.id - Admin Dashboard',
   description: 'Dashboard manajemen antrian',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icons/icon-192.png',
+    apple: '/icons/apple-touch-icon.png',
+  },
   other: {
     'theme-color': '#3b82f6',
   },

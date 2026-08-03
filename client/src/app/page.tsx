@@ -1,18 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  IconSearch, IconArrowRight, IconQrcode, IconClock, IconDeviceMobile, IconShield,
-  IconLoader2, IconBuildingStore, IconChartBar, IconBell, IconMessage, IconUsers,
+  IconSearch, IconQrcode, IconClock, IconDeviceMobile, IconShield,
+  IconBuildingStore, IconChartBar, IconBell, IconUsers,
   IconCheck, IconChevronDown, IconStar, IconStarFilled, IconWavesElectricity,
   IconLayoutDashboard, IconReportAnalytics, IconCircleCheck, IconPlayerSkipForward,
-  IconBrandGooglePlay, IconBrandApple,
 } from '@tabler/icons-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import Hero from '@/components/Hero';
 
 const features = [
   { icon: IconQrcode, title: 'Scan QR / Link', desc: 'Pelanggan bisa masuk lewat QR code atau link merchant, tanpa install apps' },
@@ -45,7 +42,7 @@ const testimonials = [
 ];
 
 const faqs = [
-  { q: 'Apakah Tunggu.id gratis?', a: 'Ya, Tunggu.id gratis untuk merchant. Akses awal tanpa biaya berlangganan. Fitur premium akan kami informasikan lebih lanjut.' },
+  { q: 'Apakah Tunggu.id gratis?', a: 'Ya, Tunggu.id gratis untuk merchant. Kami menyediakan fitur dasar tanpa biaya berlangganan. Untuk fitur premium akan kami informasikan lebih lanjut.' },
   { q: 'Bagaimana cara daftar jadi merchant?', a: 'Klik tombol "Daftar Merchant", isi data diri, buat merchant dengan nama dan slug, lalu siap digunakan. Total proses kurang dari 5 menit.' },
   { q: 'Apakah pelanggan perlu install apps?', a: 'Tidak perlu. Pelanggan cukup buka link merchant atau scan QR code lewat browser HP. Semua berjalan di web.' },
   { q: 'Bisa dipake untuk banyak layanan?', a: 'Bisa. Satu merchant bisa punya banyak layanan, dikelompokkan dalam grup. Contoh: potong rambut, creambath, coloring — dalam grup "Hair Treatment".' },
@@ -54,25 +51,9 @@ const faqs = [
 ];
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [slug, setSlug] = useState('');
-  const [loading, setLoading] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001';
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (slug.trim()) {
-      setLoading(true);
-      const s = slug.trim().toLowerCase();
-      if (window.location.hostname === 'localhost') {
-        window.location.href = `http://${s}.localhost:3000`;
-      } else {
-        window.location.href = `https://${s}.tunggu.id`;
-      }
-    }
-  };
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -83,12 +64,9 @@ export default function LandingPage() {
       {/* ─── NAVBAR ─── */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
-              <IconClock className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-xl text-foreground">Tunggu.id</span>
-          </div>
+          <a href="/" className="flex items-center">
+            <img src="/logo/Tunggu.id.png" alt="Tunggu.id" className="h-5 md:h-6 w-auto" />
+          </a>
 
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <button onClick={() => scrollTo('how-customer')} className="hover:text-foreground transition-colors">Cara Kerja</button>
@@ -103,7 +81,7 @@ export default function LandingPage() {
               href={`${adminUrl}/register`}
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
-              Daftar — Akses Awal
+              Daftar Merchant
             </a>
           </div>
         </div>
@@ -111,120 +89,7 @@ export default function LandingPage() {
 
       <main>
         {/* ─── HERO ─── */}
-        <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 min-h-[calc(100vh-73px)] flex flex-col items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <IconWavesElectricity className="w-4 h-4" />
-              Antre Online Tanpa Ribet
-            </span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] tracking-tight text-center"
-          >
-            Antre Online{' '}
-            <span className="text-primary">Tanpa Ribet</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-4 md:mt-5 text-base md:text-lg lg:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed text-center px-2"
-          >
-            Antre dari mana aja, pantau langsung dari HP.
-            Nggak perlu nunggu lama-lama di tempat.
-          </motion.p>
-
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
-            className="mt-3 flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium"
-          >
-            <IconCheck className="w-4 h-4" />
-            100% Gratis — Akses Awal, Tanpa Dipungut Biaya
-          </motion.p>
-
-          <motion.form
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            onSubmit={handleSubmit}
-            className="mt-8 md:mt-10 max-w-md md:max-w-lg mx-auto"
-          >
-            <label htmlFor="merchant-search" className="block text-sm font-medium text-foreground mb-2 text-left">
-              Cari Merchant
-            </label>
-            <div className="flex gap-2 md:gap-3">
-              <div className="relative flex-1">
-                <IconSearch className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                <input
-                  id="merchant-search"
-                  type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="contoh: mabduh"
-                  className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-3.5 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm placeholder:text-muted-foreground/60"
-                  disabled={loading}
-                />
-              </div>
-              <motion.button
-                type="submit"
-                disabled={!slug.trim() || loading}
-                whileTap={{ scale: 0.97 }}
-                className="px-5 md:px-6 py-3 md:py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-all shadow-sm"
-              >
-                {loading ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <IconArrowRight className="w-4 h-4" />}
-              </motion.button>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground text-left">
-              Masukkan nama merchant untuk langsung ambil antrian
-            </p>
-          </motion.form>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-6 md:mt-8 text-xs md:text-sm text-muted-foreground text-center"
-          >
-            Atau scan QR code dari merchant untuk masuk langsung
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="flex flex-wrap items-center justify-center gap-3 mt-6"
-          >
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-card border border-border">
-              <IconBrandGooglePlay className="w-5 h-5 text-muted-foreground" />
-              <div className="text-left">
-                <p className="text-[10px] text-muted-foreground leading-tight">Get it on</p>
-                <p className="text-xs font-semibold text-foreground leading-tight">Google Play</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-card border border-border">
-              <IconBrandApple className="w-5 h-5 text-muted-foreground" />
-              <div className="text-left">
-                <p className="text-[10px] text-muted-foreground leading-tight">Download on</p>
-                <p className="text-xs font-semibold text-foreground leading-tight">App Store</p>
-              </div>
-            </div>
-            <span className="text-[10px] px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 font-medium">
-              Tahap Pengembangan
-            </span>
-          </motion.div>
-        </section>
+        <Hero />
 
         {/* ─── STATS ─── */}
         <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pb-16 md:pb-24">
@@ -575,14 +440,14 @@ export default function LandingPage() {
               Siap Kelola Antrian?
             </h2>
             <p className="mt-2 md:mt-3 text-primary-foreground/80 max-w-md mx-auto text-sm md:text-base">
-              Daftar gratis jadi merchant, kelola antrian dengan mudah. Akses awal, tanpa biaya.
+              Daftar gratis jadi merchant, kelola antrian dengan mudah.
             </p>
             <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
                 href={`${adminUrl}/register`}
                 className="px-6 md:px-8 py-3 bg-white text-primary font-semibold rounded-xl hover:bg-white/90 transition-all shadow-lg"
               >
-                Daftar Merchant — Akses Awal Gratis
+                Daftar Merchant Gratis
               </a>
               <a
                 href={`${adminUrl}/login`}
@@ -600,12 +465,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div className="sm:col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
-                  <IconClock className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-bold text-lg text-foreground">Tunggu.id</span>
-              </div>
+              <a href="/" className="flex items-center mb-3">
+                <img src="/logo/Tunggu.id.png" alt="Tunggu.id" className="h-6 w-auto" />
+              </a>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Sistem antrian online untuk bisnis kecil. Bikin antrian lebih teratur, pelanggan lebih puas.
               </p>
@@ -623,7 +485,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm text-foreground mb-3">Merchant</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href={`${adminUrl}/register`} className="hover:text-foreground transition-colors">Daftar — Akses Awal</a></li>
+                <li><a href={`${adminUrl}/register`} className="hover:text-foreground transition-colors">Daftar</a></li>
                 <li><a href={`${adminUrl}/login`} className="hover:text-foreground transition-colors">Masuk</a></li>
                 <li><a href={`${adminUrl}/dashboard`} className="hover:text-foreground transition-colors">Dashboard</a></li>
               </ul>

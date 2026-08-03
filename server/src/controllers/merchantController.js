@@ -271,14 +271,14 @@ export async function subscribePush(req, res, next) {
     const merchant = await Merchant.findOne({ slug: req.params.slug, isActive: true });
     if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
 
-    const { endpoint, keys } = req.body;
+    const { endpoint, keys, customerToken } = req.body;
     if (!endpoint || !keys?.p256dh || !keys?.auth) {
       return error(res, 'Invalid subscription data');
     }
 
     await PushSubscription.findOneAndUpdate(
       { merchantId: merchant._id, endpoint },
-      { merchantId: merchant._id, subscriptionType: 'customer', endpoint, keys, userAgent: req.headers['user-agent'] || '' },
+      { merchantId: merchant._id, subscriptionType: 'customer', customerToken: customerToken || '', endpoint, keys, userAgent: req.headers['user-agent'] || '' },
       { upsert: true, returnDocument: 'after' },
     );
 

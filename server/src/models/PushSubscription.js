@@ -12,6 +12,10 @@ const pushSubscriptionSchema = new mongoose.Schema({
     enum: ['admin', 'customer'],
     default: 'customer',
   },
+  customerToken: {
+    type: String,
+    default: '',
+  },
   endpoint: {
     type: String,
     required: true,

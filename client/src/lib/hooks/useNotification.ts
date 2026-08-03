@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '../axios';
+import { getCustomerToken } from '../customerToken';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
 
@@ -44,7 +45,10 @@ export function useNotification() {
     if (!sub || !slug) return sub;
 
     try {
-      await api.post(`/merchant/${slug}/subscribe`, sub.toJSON());
+      await api.post(`/merchant/${slug}/subscribe`, {
+        ...sub.toJSON(),
+        customerToken: getCustomerToken() || '',
+      });
     } catch {
       // silently fail
     }

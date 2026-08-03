@@ -16,7 +16,8 @@ if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
 
 async function notifyCustomer(queue, merchantSlug) {
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return;
-  const subs = await PushSubscription.find({ merchantId: queue.merchantId, subscriptionType: 'customer' });
+  if (!queue.customerToken) return;
+  const subs = await PushSubscription.find({ merchantId: queue.merchantId, subscriptionType: 'customer', customerToken: queue.customerToken });
   if (subs.length === 0) return;
   if (!merchantSlug) {
     try {

@@ -1,23 +1,79 @@
-const CACHE = 'tunggu-admin-v1';
+const CACHE = 'tunggu-admin-v2';
+const STATIC_CACHE = 'tunggu-admin-static-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(['/'])),
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
-    ),
+      Promise.all(keys.filter((k) => k !== CACHE && k !== STATIC_CACHE).map((k) => caches.delete(k))),
+    ).then(() => self.clients.claim()),
   );
 });
 
+function isNavigationalRequest(request) {
+  return request.mode === 'navigate' || (request.destination === 'document');
+}
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function isStaticAsset(url) {
+  return url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/');
+}
+
+function isOkResponse(response) {
+  return response && response.ok;
+}
+
+function isRedirectResponse(response) {
+  return response && response.type === 'opaqueredirect' || (response && response.status >= 300 && response.status < 400);
+}
+
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request)),
-  );
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (!isSameOrigin(url)) return;
+  if (request.method !== 'GET') return;
+
+  // Static assets: cache-first with network fallback
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (!isOkResponse(response) || isRedirectResponse(response)) return response;
+          const clone = response.clone();
+          caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          return response;
+        });
+      }),
+    );
+    return;
+  }
+
+  // Navigations (HTML): network-first, fall back to cache only when offline
+  if (isNavigationalRequest(request)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (isOkResponse(response) && !isRedirectResponse(response)) {
+            const clone = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || Response.error())),
+    );
+    return;
+  }
+
+  // Everything else (API, auth endpoints): never cache, always network
+  return;
 });
 
 self.addEventListener('push', (event) => {

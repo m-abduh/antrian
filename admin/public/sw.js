@@ -29,8 +29,8 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
       self.registration.showNotification(title || 'Tunggu.id Admin', {
         body: body || '',
-        icon: '/icons/icon-192.svg',
-        badge: '/icons/icon-192.svg',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200],
         data: { url: url || '/' },
       }),
@@ -39,7 +39,7 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
       self.registration.showNotification('Tunggu.id Admin', {
         body: event.data.text(),
-        icon: '/icons/icon-192.svg',
+        icon: '/icons/icon-192.png',
       }),
     );
   }

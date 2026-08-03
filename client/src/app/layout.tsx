@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: 'Tunggu.id - Antrian Mudah',
   description: 'Sistem antrian online untuk bisnis kecil',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/logo/favicon.png',
+    apple: '/logo/apple-touch-icon.png',
+  },
   other: {
     'theme-color': '#0f0f0f',
   },

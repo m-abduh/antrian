@@ -26,10 +26,11 @@ async function notifyCustomer(queue, merchantSlug) {
     } catch {}
   }
   if (!merchantSlug) return;
+  const base = env.ROOT_DOMAIN ? `https://${merchantSlug}.${env.ROOT_DOMAIN}` : `/${merchantSlug}`;
   const payload = JSON.stringify({
       title: 'Antrian Anda Dipanggil!',
       body: `Nomor antrian ${queue.queueNumber} — ${queue.customerName}, silakan menuju lokasi.`,
-      url: `/${merchantSlug}/queue/${queue._id}`,
+      url: `${base}`,
     });
   for (const sub of subs) {
     try {

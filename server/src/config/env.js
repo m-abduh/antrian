@@ -37,6 +37,7 @@ const env = {
   VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',
   VAPID_SUBJECT: process.env.VAPID_SUBJECT || 'mailto:admin@tunggu.id',
   API_URL: process.env.API_URL,
+  ROOT_DOMAIN: process.env.ROOT_DOMAIN || '',
 };
 
 export default env;

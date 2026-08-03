@@ -33,6 +33,7 @@ services:
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@tunggu.id}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      ROOT_DOMAIN: ${ROOT_DOMAIN:-tunggu.id}
     ports:
       - "0.0.0.0:4000:4000"
     volumes:

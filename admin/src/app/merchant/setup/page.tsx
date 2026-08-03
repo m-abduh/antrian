@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { IconLoader2, IconBuildingStore, IconArrowRight, IconWavesElectricity } from '@tabler/icons-react';
@@ -42,7 +43,14 @@ export default function MerchantSetupPage() {
     setError('');
     try {
       const result = await adminApi.setupMerchant(data);
-      if (result.token) setAccessToken(result.token);
+      if (result.token) {
+        setAccessToken(result.token);
+        const si = await signIn('credentials', { token: result.token, redirect: false });
+        if (si?.error) {
+          setError('Merchant berhasil dibuat, tapi gagal sync session. Silakan login ulang.');
+          return;
+        }
+      }
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Gagal membuat merchant');

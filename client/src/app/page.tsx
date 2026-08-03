@@ -45,7 +45,7 @@ const testimonials = [
 ];
 
 const faqs = [
-  { q: 'Apakah Tunggu.id gratis?', a: 'Ya, Tunggu.id gratis untuk merchant. Kami menyediakan fitur dasar tanpa biaya berlangganan. Untuk fitur premium akan kami informasikan lebih lanjut.' },
+  { q: 'Apakah Tunggu.id gratis?', a: 'Ya, Tunggu.id gratis untuk merchant. Akses awal tanpa biaya berlangganan. Fitur premium akan kami informasikan lebih lanjut.' },
   { q: 'Bagaimana cara daftar jadi merchant?', a: 'Klik tombol "Daftar Merchant", isi data diri, buat merchant dengan nama dan slug, lalu siap digunakan. Total proses kurang dari 5 menit.' },
   { q: 'Apakah pelanggan perlu install apps?', a: 'Tidak perlu. Pelanggan cukup buka link merchant atau scan QR code lewat browser HP. Semua berjalan di web.' },
   { q: 'Bisa dipake untuk banyak layanan?', a: 'Bisa. Satu merchant bisa punya banyak layanan, dikelompokkan dalam grup. Contoh: potong rambut, creambath, coloring — dalam grup "Hair Treatment".' },
@@ -103,7 +103,7 @@ export default function LandingPage() {
               href={`${adminUrl}/register`}
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
-              Daftar Merchant
+              Daftar — Akses Awal
             </a>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function LandingPage() {
             className="mt-3 flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium"
           >
             <IconCheck className="w-4 h-4" />
-            100% Gratis — Tanpa Dipungut Biaya
+            100% Gratis — Akses Awal, Tanpa Dipungut Biaya
           </motion.p>
 
           <motion.form
@@ -575,14 +575,14 @@ export default function LandingPage() {
               Siap Kelola Antrian?
             </h2>
             <p className="mt-2 md:mt-3 text-primary-foreground/80 max-w-md mx-auto text-sm md:text-base">
-              Daftar gratis jadi merchant, kelola antrian dengan mudah.
+              Daftar gratis jadi merchant, kelola antrian dengan mudah. Akses awal, tanpa biaya.
             </p>
             <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
                 href={`${adminUrl}/register`}
                 className="px-6 md:px-8 py-3 bg-white text-primary font-semibold rounded-xl hover:bg-white/90 transition-all shadow-lg"
               >
-                Daftar Merchant Gratis
+                Daftar Merchant — Akses Awal Gratis
               </a>
               <a
                 href={`${adminUrl}/login`}
@@ -623,7 +623,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm text-foreground mb-3">Merchant</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href={`${adminUrl}/register`} className="hover:text-foreground transition-colors">Daftar</a></li>
+                <li><a href={`${adminUrl}/register`} className="hover:text-foreground transition-colors">Daftar — Akses Awal</a></li>
                 <li><a href={`${adminUrl}/login`} className="hover:text-foreground transition-colors">Masuk</a></li>
                 <li><a href={`${adminUrl}/dashboard`} className="hover:text-foreground transition-colors">Dashboard</a></li>
               </ul>

@@ -59,6 +59,8 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (slug.trim()) {
@@ -92,13 +94,13 @@ export default function LandingPage() {
             <button onClick={() => scrollTo('how-customer')} className="hover:text-foreground transition-colors">Cara Kerja</button>
             <button onClick={() => scrollTo('features')} className="hover:text-foreground transition-colors">Fitur</button>
             <button onClick={() => scrollTo('faq')} className="hover:text-foreground transition-colors">FAQ</button>
-            <a href="http://localhost:3001/login" className="hover:text-foreground transition-colors">Masuk</a>
+            <a href={`${adminUrl}/login`} className="hover:text-foreground transition-colors">Masuk</a>
           </nav>
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <a
-              href="http://localhost:3001/register"
+              href={`${adminUrl}/register`}
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
               Daftar Merchant
@@ -577,13 +579,13 @@ export default function LandingPage() {
             </p>
             <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
-                href="http://localhost:3001/register"
+                href={`${adminUrl}/register`}
                 className="px-6 md:px-8 py-3 bg-white text-primary font-semibold rounded-xl hover:bg-white/90 transition-all shadow-lg"
               >
                 Daftar Merchant Gratis
               </a>
               <a
-                href="http://localhost:3001/login"
+                href={`${adminUrl}/login`}
                 className="px-6 md:px-8 py-3 bg-primary-foreground/10 text-primary-foreground font-semibold rounded-xl hover:bg-primary-foreground/20 transition-all border border-primary-foreground/20"
               >
                 Masuk
@@ -621,9 +623,9 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm text-foreground mb-3">Merchant</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="http://localhost:3001/register" className="hover:text-foreground transition-colors">Daftar</a></li>
-                <li><a href="http://localhost:3001/login" className="hover:text-foreground transition-colors">Masuk</a></li>
-                <li><a href="http://localhost:3001/dashboard" className="hover:text-foreground transition-colors">Dashboard</a></li>
+                <li><a href={`${adminUrl}/register`} className="hover:text-foreground transition-colors">Daftar</a></li>
+                <li><a href={`${adminUrl}/login`} className="hover:text-foreground transition-colors">Masuk</a></li>
+                <li><a href={`${adminUrl}/dashboard`} className="hover:text-foreground transition-colors">Dashboard</a></li>
               </ul>
             </div>
 

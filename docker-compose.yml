@@ -53,6 +53,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${CLIENT_API_URL:-https://api.tunggu.id/api}
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+        NEXT_PUBLIC_ADMIN_URL: ${ADMIN_PUBLIC_URL:-https://dash.tunggu.id}
     restart: unless-stopped
     depends_on:
       server:

@@ -9,6 +9,7 @@ import webpush from 'web-push';
 import { OAuth2Client } from 'google-auth-library';
 import env from '../config/env.js';
 import { success, error } from '../utils/response.js';
+import { deleteObjectFromUrl } from '../services/s3.js';
 
 if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
@@ -253,6 +254,9 @@ export async function updateMerchant(req, res, next) {
     const merchant = await Merchant.findById(req.admin.merchantId);
     if (!merchant) return error(res, 'Merchant tidak ditemukan', 404);
 
+    const oldImage = merchant.image;
+    const oldBanner = merchant.banner;
+
     if (name !== undefined) {
       if (!name.trim()) return error(res, 'Nama merchant wajib diisi');
       if (name.trim().length > 100) return error(res, 'Nama maksimal 100 karakter');
@@ -346,6 +350,13 @@ export async function updateMerchant(req, res, next) {
     }
 
     await merchant.save();
+
+    if (image !== undefined && image !== oldImage && oldImage) {
+      deleteObjectFromUrl(oldImage).catch(() => {});
+    }
+    if (banner !== undefined && banner !== oldBanner && oldBanner) {
+      deleteObjectFromUrl(oldBanner).catch(() => {});
+    }
 
     return success(res, merchant);
   } catch (err) {
@@ -795,6 +806,11 @@ export async function updateService(req, res, next) {
     if (isActive !== undefined) update.isActive = isActive;
 
     const updated = await Service.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true });
+
+    if (image !== undefined && image !== service.image && service.image) {
+      deleteObjectFromUrl(service.image).catch(() => {});
+    }
+
     return success(res, updated);
   } catch (err) {
     next(err);
@@ -811,6 +827,11 @@ export async function deleteService(req, res, next) {
     }
 
     await Service.findByIdAndDelete(id);
+
+    if (service.image) {
+      deleteObjectFromUrl(service.image).catch(() => {});
+    }
+
     return success(res, { message: 'Layanan berhasil dihapus' });
   } catch (err) {
     next(err);

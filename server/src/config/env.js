@@ -38,6 +38,13 @@ const env = {
   VAPID_SUBJECT: process.env.VAPID_SUBJECT || 'mailto:admin@tunggu.id',
   API_URL: process.env.API_URL,
   ROOT_DOMAIN: process.env.ROOT_DOMAIN || '',
+  MINIO_ENDPOINT: process.env.MINIO_ENDPOINT || '',
+  MINIO_PORT: parseInt(process.env.MINIO_PORT || '9000', 10),
+  MINIO_USE_SSL: process.env.MINIO_USE_SSL === 'true',
+  MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY || '',
+  MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY || '',
+  MINIO_BUCKET: process.env.MINIO_BUCKET || 'tunggu',
+  MINIO_PUBLIC_URL: process.env.MINIO_PUBLIC_URL || '',
 };
 
 export default env;

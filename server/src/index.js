@@ -9,18 +9,15 @@ import { connectDB, isDBConnected } from './config/db.js';
 import logger from './config/logger.js';
 import env from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { authenticate } from './middleware/auth.js';
 import merchantRoutes from './routes/merchant.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notification.js';
 import uploadRoutes from './routes/upload.js';
+import { getObject } from './services/s3.js';
 import { initSocket } from './socket.js';
 import cron from 'node-cron';
 import { cleanupExpiredQueues } from './cron/cleanupQueue.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
@@ -109,10 +106,19 @@ app.get('/api/health', (_req, res) => {
   res.json({ status, db: dbOk ? 'connected' : 'disconnected', timestamp: new Date().toISOString() });
 });
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads'), {
-  maxAge: '30d',
-  immutable: true,
-}));
+app.use('/uploads/:file', async (req, res, next) => {
+  const key = req.params.file;
+  if (!key) return next();
+  try {
+    const obj = await getObject(key);
+    if (!obj) return res.status(404).json({ error: 'File tidak ditemukan' });
+    res.setHeader('Content-Type', obj.contentType);
+    res.setHeader('Cache-Control', obj.cacheControl);
+    obj.body.pipe(res);
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.use('/api/upload', authenticate, uploadRoutes);
 app.use('/api/merchant', merchantRoutes);

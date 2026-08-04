@@ -12,13 +12,35 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in root .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD (min 8 chars) in root .env}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   server:
     build:
       context: .
       dockerfile: Dockerfile.server
+      network: host
     restart: unless-stopped
     depends_on:
       mongo:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     environment:
       NODE_ENV: production
@@ -34,11 +56,17 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       ROOT_DOMAIN: ${ROOT_DOMAIN:-tunggu.id}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tunggu}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-}
     ports:
       - "0.0.0.0:4000:4000"
     volumes:
       - server_logs:/app/logs
-      - server_uploads:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health"]
       interval: 30s
@@ -50,6 +78,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.client
+      network: host
       args:
         NEXT_PUBLIC_API_URL: ${CLIENT_API_URL:-https://api.tunggu.id/api}
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
@@ -74,6 +103,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.admin
+      network: host
       args:
         NEXT_PUBLIC_API_URL: ${ADMIN_API_URL:-https://api.tunggu.id}
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
@@ -103,4 +133,4 @@ services:
 volumes:
   mongo_data:
   server_logs:
-  server_uploads:
+  minio_data:

@@ -689,7 +689,7 @@ export function MerchantClient({ slug }: { slug: string }) {
                exit={{ y: 60, opacity: 0 }}
                transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
                style={{ willChange: 'transform, opacity' }}
-               className="bg-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-border shadow-xl overflow-hidden"
+               className="bg-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-border shadow-xl overflow-hidden flex flex-col max-h-[92dvh]"
                onClick={(e) => e.stopPropagation()}
              >
                <div className="relative">
@@ -700,7 +700,7 @@ export function MerchantClient({ slug }: { slug: string }) {
                    <IconX className="w-4 h-4" />
                  </button>
                  {modalService.image ? (
-                   <div className="w-full aspect-square sm:aspect-video bg-muted">
+                   <div className="w-full aspect-video max-h-[45vh] sm:max-h-[40vh] bg-muted flex-shrink-0">
                      <img src={imageUrl(modalService.image)} alt={modalService.name} className="w-full h-full object-cover" />
                    </div>
                  ) : (
@@ -709,7 +709,7 @@ export function MerchantClient({ slug }: { slug: string }) {
                    </div>
                  )}
                </div>
-               <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+               <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto overscroll-behavior:contain flex-1 min-h-0">
                  <div>
                    <h3 className="font-bold text-lg text-foreground">{modalService.name}</h3>
                    {modalService.description && (

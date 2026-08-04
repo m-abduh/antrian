@@ -20,7 +20,7 @@ import { getCustomerSocket } from '@/lib/socket';
 import { SocialIcon } from '@/components/SocialIcon';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { Service, Queue, QueueService } from '@/lib/types';
+import type { Service, Queue, QueueService, ServiceVariant } from '@/lib/types';
 
 function Skeleton({ className }: { className: string }) {
   return <div className={`bg-muted rounded-2xl animate-pulse ${className}`} />;
@@ -37,8 +37,11 @@ export function MerchantClient({ slug }: { slug: string }) {
   const { data: merchant, isLoading: merchantLoading } = useMerchant(slug);
   const { data: services, isLoading: servicesLoading } = useServices(slug);
   const { data: groups } = useGroups(slug);
-  const { items, addItem, updateQuantity, totalPrice, itemCount } = useCartStore();
+  const { items, addItem, totalPrice, itemCount } = useCartStore();
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [modalService, setModalService] = useState<Service | null>(null);
+  const [modalVariant, setModalVariant] = useState<ServiceVariant | null>(null);
+  const [modalQty, setModalQty] = useState(1);
   const queryClient = useQueryClient();
   const { data: liveData } = useLiveQueue(slug);
 
@@ -100,6 +103,18 @@ export function MerchantClient({ slug }: { slug: string }) {
   }, [slug, queryClient]);
 
   const getQty = (id: string) => items.find((i) => i._id === id)?.quantity || 0;
+
+  const getServiceCount = (serviceId: string) =>
+    items.filter((i) => (i.serviceId || i._id) === serviceId).reduce((s, i) => s + i.quantity, 0);
+
+  const openModal = (service: Service) => {
+    setModalVariant(null);
+    setModalQty(1);
+    setModalService(service);
+  };
+
+  const hasVariantsOf = (service: Service) =>
+    Array.isArray(service.variants) && service.variants.length > 0;
 
   const grouplessServices = useMemo(() => {
     if (!services || !groups) return services || [];
@@ -168,7 +183,8 @@ export function MerchantClient({ slug }: { slug: string }) {
   }
 
   const renderService = (service: Service) => {
-    const qty = getQty(service._id);
+    const hasVariants = Array.isArray(service.variants) && service.variants.length > 0;
+    const count = hasVariants ? getServiceCount(service._id) : getQty(service._id);
     return (
       <motion.div
         key={service._id}
@@ -176,12 +192,12 @@ export function MerchantClient({ slug }: { slug: string }) {
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         className={`relative bg-card border rounded-2xl overflow-hidden transition-all duration-200 ${
-          qty > 0
+          count > 0
             ? 'border-primary/40 ring-2 ring-primary/15 shadow-sm shadow-primary/5'
             : 'border-border hover:border-primary/20 hover:shadow-md hover:-translate-y-0.5'
         }`}
       >
-        {qty > 0 && (
+        {count > 0 && (
           <div className="absolute top-2 left-2 z-10 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
             <IconCheck className="w-3 h-3" strokeWidth={3} />
           </div>
@@ -208,36 +224,31 @@ export function MerchantClient({ slug }: { slug: string }) {
                 <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{service.description}</p>
               )}
               <p className="font-semibold text-foreground text-xs mt-1.5 font-mono tabular-nums">
-                {service.price > 0 ? `Rp${service.price.toLocaleString('id-ID')}` : 'Gratis'}
+                {hasVariants
+                  ? (() => {
+                      const prices = service.variants!.map(v => v.price);
+                      const min = Math.min(...prices);
+                      const max = Math.max(...prices);
+                      return min === max
+                        ? min > 0 ? `Rp${min.toLocaleString('id-ID')}` : 'Gratis'
+                        : `Rp${min.toLocaleString('id-ID')} – Rp${max.toLocaleString('id-ID')}`;
+                    })()
+                  : service.price > 0 ? `Rp${service.price.toLocaleString('id-ID')}` : 'Gratis'}
               </p>
             </div>
           </div>
           <div className="mt-2.5">
-            {qty > 0 ? (
-              <div className="flex items-center justify-between bg-muted/50 rounded-xl p-0.5">
-                <button
-                  onClick={() => updateQuantity(service._id, qty - 1)}
-                  className="w-7 h-7 rounded-lg bg-card text-foreground hover:text-primary transition-colors flex items-center justify-center shadow-xs"
-                >
-                  <IconMinus className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-6 text-center text-sm font-bold text-foreground font-mono tabular-nums">{qty}</span>
-                <button
-                  onClick={() => addItem(service)}
-                  className="w-7 h-7 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center shadow-xs"
-                >
-                  <IconPlus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => addItem(service)}
-                className="w-full py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all text-xs font-semibold flex items-center justify-center gap-1"
-              >
-                <IconPlus className="w-3.5 h-3.5" />
-                Tambah
-              </button>
-            )}
+            <button
+              onClick={() => openModal(service)}
+              className={`w-full py-1.5 rounded-xl transition-all text-xs font-semibold flex items-center justify-center gap-1 ${
+                count > 0
+                  ? 'bg-primary text-primary-foreground hover:opacity-90'
+                  : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'
+              }`}
+            >
+              <IconPlus className="w-3.5 h-3.5" />
+              {hasVariants ? 'Pilih Varian' : 'Tambah'}
+            </button>
           </div>
         </div>
       </motion.div>
@@ -653,9 +664,122 @@ export function MerchantClient({ slug }: { slug: string }) {
           </motion.div>
         )}
        </AnimatePresence>
+
+       {/* Product modal */}
+       <AnimatePresence>
+         {modalService && (
+           <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+             onClick={() => setModalService(null)}
+           >
+             <motion.div
+               initial={{ y: 60, opacity: 0 }}
+               animate={{ y: 0, opacity: 1 }}
+               exit={{ y: 60, opacity: 0 }}
+               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+               className="bg-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-border shadow-xl overflow-hidden"
+               onClick={(e) => e.stopPropagation()}
+             >
+               <div className="relative">
+                 <button
+                   onClick={() => setModalService(null)}
+                   className="absolute top-3 right-3 z-10 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 transition-colors"
+                 >
+                   <IconX className="w-4 h-4" />
+                 </button>
+                 {modalService.image ? (
+                   <div className="w-full aspect-square sm:aspect-video bg-muted">
+                     <img src={imageUrl(modalService.image)} alt={modalService.name} className="w-full h-full object-cover" />
+                   </div>
+                 ) : (
+                   <div className="w-full aspect-video bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
+                     <IconCreditCard className="w-10 h-10 text-primary/40" />
+                   </div>
+                 )}
+               </div>
+               <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+                 <div>
+                   <h3 className="font-bold text-lg text-foreground">{modalService.name}</h3>
+                   {modalService.description && (
+                     <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{modalService.description}</p>
+                   )}
+                 </div>
+
+                 {hasVariantsOf(modalService) ? (
+                   <div>
+                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Pilih Varian</p>
+                     <div className="space-y-2">
+                       {modalService.variants!.map((variant) => {
+                         const selected = modalVariant?.name === variant.name;
+                         return (
+                           <button
+                             key={variant.name}
+                             onClick={() => setModalVariant(variant)}
+                             className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border transition-all text-left ${
+                               selected
+                                 ? 'border-primary bg-primary/[0.06] ring-1 ring-primary/30'
+                                 : 'border-border bg-background hover:border-primary/40 hover:bg-primary/[0.03]'
+                             }`}
+                           >
+                             <span className="font-medium text-sm text-foreground">{variant.name}</span>
+                             <span className="font-semibold text-sm text-foreground font-mono tabular-nums">
+                               {variant.price > 0 ? `Rp${variant.price.toLocaleString('id-ID')}` : 'Gratis'}
+                             </span>
+                           </button>
+                         );
+                       })}
+                     </div>
+                   </div>
+                 ) : (
+                   <div className="flex items-center justify-between">
+                     <span className="text-sm text-muted-foreground">Harga</span>
+                     <span className="font-bold text-foreground tabular-nums">
+                       {modalService.price > 0 ? `Rp${modalService.price.toLocaleString('id-ID')}` : 'Gratis'}
+                     </span>
+                   </div>
+                 )}
+
+                 <div className="flex items-center justify-between">
+                   <span className="text-sm text-muted-foreground">Jumlah</span>
+                   <div className="flex items-center gap-1 bg-muted/60 rounded-xl p-1">
+                     <button
+                       onClick={() => setModalQty((q) => Math.max(1, q - 1))}
+                       className="w-8 h-8 rounded-lg bg-card text-foreground hover:text-primary transition-colors flex items-center justify-center"
+                     >
+                       <IconMinus className="w-4 h-4" />
+                     </button>
+                     <span className="w-8 text-center text-base font-bold text-foreground font-mono tabular-nums">{modalQty}</span>
+                     <button
+                       onClick={() => setModalQty((q) => Math.min(99, q + 1))}
+                       className="w-8 h-8 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center"
+                     >
+                       <IconPlus className="w-4 h-4" />
+                     </button>
+                   </div>
+                 </div>
+
+                 <button
+                   onClick={() => {
+                     addItem(modalService, modalVariant || undefined, modalQty);
+                     setModalService(null);
+                   }}
+                   disabled={hasVariantsOf(modalService) && !modalVariant}
+                   className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none"
+                 >
+                   <IconShoppingCart className="w-4 h-4" />
+                   Tambah ke Keranjang
+                 </button>
+               </div>
+             </motion.div>
+           </motion.div>
+         )}
+       </AnimatePresence>
      </div>
    );
-}
+ }
 
 const statusColors: Record<string, { dot: string; bg: string; text: string; label: string }> = {
   waiting: { dot: 'bg-primary', bg: 'bg-primary/[0.04] border-primary/15', text: 'text-foreground', label: 'Menunggu' },

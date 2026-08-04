@@ -757,12 +757,31 @@ export async function getServices(req, res, next) {
   }
 }
 
+function sanitizeVariants(variants) {
+  if (variants === undefined) return undefined;
+  if (!Array.isArray(variants)) return null;
+  if (variants.length > 30) return null;
+  const cleaned = [];
+  for (const v of variants) {
+    const name = typeof v?.name === 'string' ? v.name.trim() : '';
+    const price = Number(v?.price);
+    if (!name || !Number.isFinite(price) || price < 0 || name.length > 100) return null;
+    cleaned.push({ name, price });
+  }
+  return cleaned;
+}
+
 export async function createService(req, res, next) {
   try {
-    const { name, description, price, image } = req.body;
+    const { name, description, price, image, variants } = req.body;
 
     if (!name || !name.trim()) return error(res, 'Nama layanan wajib diisi');
     if (price === undefined || price < 0) return error(res, 'Harga tidak valid');
+
+    const cleanedVariants = sanitizeVariants(variants);
+    if (cleanedVariants === null) {
+      return error(res, 'Format varian tidak valid. Setiap varian butuh nama dan harga.');
+    }
 
     const service = await Service.create({
       merchantId: req.admin.merchantId,
@@ -770,6 +789,7 @@ export async function createService(req, res, next) {
       description: description || '',
       image: image || '',
       price,
+      variants: cleanedVariants || [],
     });
 
     return success(res, service, 201);
@@ -781,7 +801,7 @@ export async function createService(req, res, next) {
 export async function updateService(req, res, next) {
   try {
     const { id } = req.params;
-    const { name, description, price, isActive, image } = req.body;
+    const { name, description, price, isActive, image, variants } = req.body;
 
     const service = await Service.findOne({ _id: id, merchantId: req.admin.merchantId });
     if (!service) {
@@ -802,6 +822,13 @@ export async function updateService(req, res, next) {
     if (price !== undefined) {
       if (price < 0) return error(res, 'Harga tidak boleh negatif');
       update.price = price;
+    }
+    if (variants !== undefined) {
+      const cleanedVariants = sanitizeVariants(variants);
+      if (cleanedVariants === null) {
+        return error(res, 'Format varian tidak valid. Setiap varian butuh nama dan harga.');
+      }
+      update.variants = cleanedVariants || [];
     }
     if (isActive !== undefined) update.isActive = isActive;
 

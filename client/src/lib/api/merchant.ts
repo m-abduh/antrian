@@ -15,7 +15,8 @@ export const merchantApi = {
     api.get(`/merchant/${slug}/groups`).then(handleResponse) as Promise<Group[]>,
 
   createQueue: (slug: string, data: {
-    serviceIds: string[];
+    serviceIds?: string[];
+    items?: { serviceId: string; variant?: string; quantity?: number }[];
     customerName: string;
     customerPhone: string;
     note?: string;

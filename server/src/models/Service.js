@@ -28,6 +28,19 @@ const serviceSchema = new mongoose.Schema({
     required: [true, 'Harga wajib diisi'],
     min: [0, 'Harga minimal 0'],
   },
+  variants: [{
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [100, 'Nama varian maksimal 100 karakter'],
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: [0, 'Harga varian minimal 0'],
+    },
+  }],
   isActive: {
     type: Boolean,
     default: true,

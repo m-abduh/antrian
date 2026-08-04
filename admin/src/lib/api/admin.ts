@@ -59,7 +59,7 @@ export const adminApi = {
   getServices: () =>
     api.get('/admin/services').then(handleResponse) as Promise<Service[]>,
 
-  createService: (data: { name: string; description?: string; image?: string; price: number }) =>
+  createService: (data: { name: string; description?: string; image?: string; price: number; variants?: { name: string; price: number }[] }) =>
     api.post('/admin/services', data).then(handleResponse) as Promise<Service>,
 
   updateService: (id: string, data: Partial<Service>) =>

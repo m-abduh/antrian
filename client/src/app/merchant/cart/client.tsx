@@ -42,7 +42,7 @@ function saveCustomerData(customerName: string, customerPhone: string) {
 export function CartClient({ slug }: { slug: string }) {
   const router = useRouter();
   const { data: merchant } = useMerchant(slug);
-  const { items, note, addItem, updateQuantity, removeItem, clearCart, setNote, totalPrice } = useCartStore();
+  const { items, note, updateQuantity, removeItem, clearCart, setNote, totalPrice } = useCartStore();
   const createQueue = useCreateQueue(slug);
   const [error, setError] = useState('');
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
@@ -68,10 +68,14 @@ export function CartClient({ slug }: { slug: string }) {
     if (items.length === 0) return;
     setError('');
     try {
-      const serviceIds = items.flatMap((i) => Array(i.quantity).fill(i._id));
+      const itemsPayload = items.map((i) => ({
+        serviceId: i.serviceId || i._id,
+        variant: i.variant?.name || undefined,
+        quantity: i.quantity,
+      }));
       const existingToken = getCustomerToken();
       const result = await createQueue.mutateAsync({
-        serviceIds,
+        items: itemsPayload,
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         note: note || undefined,
@@ -186,7 +190,7 @@ export function CartClient({ slug }: { slug: string }) {
                           </button>
                           <span className="w-7 text-center text-sm font-semibold text-foreground tabular-nums">{item.quantity}</span>
                           <button
-                            onClick={() => addItem({ _id: item._id, name: item.name, price: item.price, image: item.image || '', merchantId: '', description: '', isActive: true, createdAt: '', updatedAt: '' })}
+                            onClick={() => updateQuantity(item._id, item.quantity + 1)}
                             className="w-7 h-7 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center"
                           >
                             <IconPlus className="w-3 h-3" />

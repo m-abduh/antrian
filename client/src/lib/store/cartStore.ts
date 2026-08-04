@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Service } from '@/lib/types';
+import type { Service, ServiceVariant } from '@/lib/types';
 
 export interface CartItem {
   _id: string;
+  serviceId?: string;
+  variant?: { name: string; price: number } | null;
   name: string;
   price: number;
   quantity: number;
@@ -13,7 +15,7 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   note: string;
-  addItem: (service: Service) => void;
+  addItem: (service: Service, variant?: ServiceVariant, quantity?: number) => void;
   updateQuantity: (id: string, qty: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
@@ -22,28 +24,36 @@ interface CartState {
   itemCount: () => number;
 }
 
+function lineKey(serviceId: string, variant?: ServiceVariant): string {
+  return variant ? `${serviceId}::${variant.name}` : serviceId;
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
       note: '',
-      addItem: (service) =>
+      addItem: (service, variant, quantity) =>
         set((state) => {
-          const existing = state.items.find((i) => i._id === service._id);
+          const qty = quantity && quantity > 0 ? Math.floor(quantity) : 1;
+          const key = lineKey(service._id, variant);
+          const existing = state.items.find((i) => i._id === key);
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i._id === service._id ? { ...i, quantity: i.quantity + 1 } : i,
+                i._id === key ? { ...i, quantity: i.quantity + qty } : i,
               ),
             };
           }
           return {
             items: [...state.items, {
-              _id: service._id,
-              name: service.name,
-              price: service.price,
+              _id: key,
+              serviceId: service._id,
+              variant: variant ? { name: variant.name, price: variant.price } : null,
+              name: variant ? `${service.name} (${variant.name})` : service.name,
+              price: variant ? variant.price : service.price,
               image: service.image || '',
-              quantity: 1,
+              quantity: qty,
             }],
           };
         }),

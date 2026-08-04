@@ -22,6 +22,11 @@ export interface Queue {
   createdAt: string;
 }
 
+export interface ServiceVariant {
+  name: string;
+  price: number;
+}
+
 export interface Service {
   _id: string;
   merchantId: string;
@@ -29,6 +34,7 @@ export interface Service {
   description: string;
   image: string;
   price: number;
+  variants?: ServiceVariant[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

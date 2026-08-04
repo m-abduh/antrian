@@ -27,7 +27,7 @@ export async function getServices(req, res, next) {
     }
 
     const services = await Service.find({ merchantId: merchant._id, isActive: true })
-      .select('name description price image')
+      .select('name description price image variants')
       .sort({ name: 1 });
 
     return success(res, services);
@@ -43,10 +43,19 @@ export async function createQueue(req, res, next) {
       return error(res, 'Merchant tidak ditemukan', 404);
     }
 
-    const { serviceIds, customerName, customerPhone, note, customerToken, customFieldValues } = req.body;
+    const { serviceIds, items, customerName, customerPhone, note, customerToken, customFieldValues } = req.body;
 
-    if (!serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+    let lineItems;
+    if (Array.isArray(items) && items.length > 0) {
+      lineItems = items;
+    } else if (Array.isArray(serviceIds) && serviceIds.length > 0) {
+      lineItems = serviceIds.map(id => ({ serviceId: String(id) }));
+    }
+    if (!lineItems || lineItems.length === 0) {
       return error(res, 'Pilih minimal 1 layanan');
+    }
+    if (lineItems.length > 100) {
+      return error(res, 'Terlalu banyak item dalam satu pesanan');
     }
 
     const nameCfg = merchant.customFieldsConfig?.find(f => f.key === 'customerName');
@@ -75,21 +84,52 @@ export async function createQueue(req, res, next) {
 
     const token = customerToken || crypto.randomUUID();
 
-    const counts = serviceIds.reduce((acc, id) => {
-      const k = id.toString();
-      acc[k] = (acc[k] || 0) + 1;
-      return acc;
-    }, {});
-    const uniqueIds = Object.keys(counts);
+    const normalized = [];
+    for (const it of lineItems) {
+      const serviceId = typeof it?.serviceId === 'string' ? it.serviceId.trim() : '';
+      if (!serviceId) return error(res, 'Layanan tidak valid');
+      const variant = typeof it.variant === 'string' ? it.variant.trim() : '';
+      const qty = Number(it.quantity);
+      const quantity = Number.isFinite(qty) && qty > 0 ? Math.floor(qty) : 1;
+      normalized.push({ serviceId, variant, quantity });
+    }
+
+    const uniqueIds = [...new Set(normalized.map(i => i.serviceId))];
 
     const services = await Service.find({
       _id: { $in: uniqueIds },
       merchantId: merchant._id,
       isActive: true,
-    }).select('name price');
+    }).select('name price variants');
 
     if (services.length !== uniqueIds.length) {
       return error(res, 'Beberapa layanan tidak ditemukan atau tidak aktif', 404);
+    }
+    const serviceMap = new Map(services.map(s => [s._id.toString(), s]));
+
+    for (const it of normalized) {
+      const svc = serviceMap.get(it.serviceId);
+      if (!svc) return error(res, 'Layanan tidak ditemukan', 404);
+      const hasVariants = Array.isArray(svc.variants) && svc.variants.length > 0;
+      if (it.variant) {
+        const match = svc.variants?.find(v => v.name === it.variant);
+        if (!match) return error(res, `Varian "${it.variant}" pada ${svc.name} tidak ditemukan`, 404);
+      } else if (hasVariants) {
+        return error(res, `Pilih varian untuk ${svc.name}`, 400);
+      }
+    }
+
+    const aggregate = [];
+    const indexMap = new Map();
+    for (const it of normalized) {
+      const key = `${it.serviceId}::${it.variant}`;
+      const existing = indexMap.get(key);
+      if (existing !== undefined) {
+        aggregate[existing].quantity += it.quantity;
+      } else {
+        indexMap.set(key, aggregate.length);
+        aggregate.push({ serviceId: it.serviceId, variant: it.variant, quantity: it.quantity });
+      }
     }
 
     const queueNumber = await generateQueueNumber(merchant._id);
@@ -102,16 +142,25 @@ export async function createQueue(req, res, next) {
     const estimatedMinutes = calculateEstimatedTime(queuesAhead);
     const estimatedStartTime = queuesAhead > 0 ? new Date(Date.now() + estimatedMinutes * 60000) : null;
 
-    const totalPrice = services.reduce((sum, s) => sum + s.price * (counts[s._id.toString()] || 1), 0);
+    const queueServices = [];
+    let totalPrice = 0;
+    for (const line of aggregate) {
+      const svc = serviceMap.get(line.serviceId);
+      const v = line.variant ? svc.variants.find(x => x.name === line.variant) : null;
+      const queueService = {
+        serviceId: svc._id,
+        name: v ? `${svc.name} (${v.name})` : svc.name,
+        price: v ? v.price : svc.price,
+        quantity: line.quantity,
+      };
+      if (v) queueService.variant = v.name;
+      queueServices.push(queueService);
+      totalPrice += queueService.price * queueService.quantity;
+    }
 
     const queue = await Queue.create({
       merchantId: merchant._id,
-      services: services.map(s => ({
-        serviceId: s._id,
-        name: s.name,
-        price: s.price,
-        quantity: counts[s._id.toString()] || 1,
-      })),
+      services: queueServices,
       note: note || '',
       queueNumber,
       customerName: sanitizedName,

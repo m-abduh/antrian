@@ -4,7 +4,8 @@ import type { CreateQueueResponse } from '../types';
 
 export function useCreateQueue(slug: string) {
   return useMutation<CreateQueueResponse, Error, {
-    serviceIds: string[];
+    serviceIds?: string[];
+    items?: { serviceId: string; variant?: string; quantity?: number }[];
     customerName: string;
     customerPhone: string;
     note?: string;

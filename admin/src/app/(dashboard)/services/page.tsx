@@ -40,6 +40,7 @@ export default function ServicesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [serviceError, setServiceError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [variants, setVariants] = useState<{ name: string; price: number }[]>([]);
 
   const {
     register, handleSubmit, reset, setValue, watch, formState: { errors },
@@ -54,22 +55,33 @@ export default function ServicesPage() {
   const openCreate = () => {
     setEditId(null);
     reset({ name: '', description: '', image: '', price: 0 });
+    setVariants([]);
     setModalOpen(true);
   };
 
-  const openEdit = (s: { _id: string; name: string; description?: string; image?: string; price: number }) => {
+  const openEdit = (s: { _id: string; name: string; description?: string; image?: string; price: number; variants?: { name: string; price: number }[] }) => {
     setEditId(s._id);
     setValue('name', s.name);
     setValue('description', s.description || '');
     setValue('image', s.image || '');
     setValue('price', s.price);
+    setVariants(s.variants ? s.variants.map(v => ({ ...v })) : []);
     setModalOpen(true);
+  };
+
+  const setVariant = (index: number, patch: Partial<{ name: string; price: number }>) => {
+    setVariants(prev => prev.map((v, i) => (i === index ? { ...v, ...patch } : v)));
   };
 
   const handleCreate = async (form: ServiceForm) => {
     setServiceError('');
     try {
-      await createService.mutateAsync({ ...form, description: form.description || '', image: form.image || '' });
+      await createService.mutateAsync({
+        ...form,
+        description: form.description || '',
+        image: form.image || '',
+        variants: variants.filter(v => v.name.trim()),
+      });
       setModalOpen(false);
       reset();
     } catch (err: any) {
@@ -81,7 +93,10 @@ export default function ServicesPage() {
     if (!editId) return;
     setServiceError('');
     try {
-      await updateService.mutateAsync({ id: editId, data: form });
+      await updateService.mutateAsync({
+        id: editId,
+        data: { ...form, variants: variants.filter(v => v.name.trim()) },
+      });
       setModalOpen(false);
       reset();
     } catch (err: any) {
@@ -187,8 +202,24 @@ export default function ServicesPage() {
                       )}
                       <div className="flex items-center gap-3 text-sm mt-auto">
                         <span className="font-medium text-foreground">
-                          {s.price > 0 ? `Rp${s.price.toLocaleString('id-ID')}` : 'Gratis'}
+                          {s.variants && s.variants.length > 0
+                            ? (() => {
+                                const prices = s.variants!.map(v => v.price);
+                                const min = Math.min(...prices);
+                                const max = Math.max(...prices);
+                                return min === max
+                                  ? `Rp${min.toLocaleString('id-ID')}`
+                                  : `Rp${min.toLocaleString('id-ID')} – Rp${max.toLocaleString('id-ID')}`;
+                              })()
+                            : s.price > 0
+                              ? `Rp${s.price.toLocaleString('id-ID')}`
+                              : 'Gratis'}
                         </span>
+                        {s.variants && s.variants.length > 0 && (
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {s.variants.length} varian
+                          </span>
+                        )}
                         {!s.isActive && (
                           <span className="text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">Nonaktif</span>
                         )}
@@ -232,7 +263,7 @@ export default function ServicesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md p-6"
+            className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg p-6"
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-foreground">
@@ -311,6 +342,57 @@ export default function ServicesPage() {
                   className="mt-1.5"
                 />
                 {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price.message}</p>}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label>Varian (opsional)</Label>
+                  <button
+                    type="button"
+                    onClick={() => setVariants(prev => [...prev, { name: '', price: 0 }])}
+                    className="text-xs font-medium text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
+                  >
+                    <IconPlus className="w-3.5 h-3.5" />
+                    Tambah Varian
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 mb-2">
+                  Contoh: "Es" & "Anget" untuk jus jeruk. Harga pakai harga tiap varian.
+                </p>
+                {variants.length === 0 ? (
+                  <p className="text-xs text-muted-foreground bg-muted/50 rounded-xl px-3 py-2">
+                    Tanpa varian — produk pakai harga di atas.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {variants.map((v, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          value={v.name}
+                          onChange={(e) => setVariant(idx, { name: e.target.value })}
+                          placeholder="Nama varian (mis. Es)"
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          min={0}
+                          value={v.price || ''}
+                          onChange={(e) => setVariant(idx, { price: Number(e.target.value) || 0 })}
+                          placeholder="Harga"
+                          className="w-28"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setVariants(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-2 text-muted-foreground hover:text-red-500 rounded-lg transition-colors"
+                          aria-label="Hapus varian"
+                        >
+                          <IconTrash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">

@@ -25,6 +25,11 @@ export interface Merchant {
   updatedAt: string;
 }
 
+export interface ServiceVariant {
+  name: string;
+  price: number;
+}
+
 export interface Service {
   _id: string;
   merchantId: string;
@@ -32,6 +37,7 @@ export interface Service {
   description: string;
   image: string;
   price: number;
+  variants?: ServiceVariant[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -41,6 +47,7 @@ export interface QueueService {
   serviceId: string;
   name: string;
   price: number;
+  variant?: string;
   quantity: number;
 }
 
@@ -82,7 +89,7 @@ export interface CreateQueueResponse {
     estimatedMinutes: number;
     queuesAhead: number;
     totalPrice: number;
-    services: { serviceId: string; name: string; price: number; quantity: number }[];
+    services: { serviceId: string; name: string; price: number; variant?: string; quantity: number }[];
   };
   customerToken: string;
 }

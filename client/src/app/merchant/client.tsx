@@ -328,6 +328,30 @@ export function MerchantClient({ slug }: { slug: string }) {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Stats + social row */}
+              <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-primary/[0.06]">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground font-mono tabular-nums">{services?.length || 0}</span>
+                    Layanan
+                  </div>
+                  {groups && groups.length > 0 && (
+                    <>
+                      <span className="text-muted-foreground/30">·</span>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground font-mono tabular-nums">{groups.length}</span>
+                        Kategori
+                      </div>
+                    </>
+                  )}
+                  <span className="text-muted-foreground/30">·</span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Buka
+                  </div>
+                </div>
                 {merchant.socialLinks?.length > 0 && (
                   <div className="flex-shrink-0 flex flex-row gap-2">
                     {merchant.socialLinks.map(link => (
@@ -343,28 +367,6 @@ export function MerchantClient({ slug }: { slug: string }) {
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Stats row */}
-              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-primary/[0.06]">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="font-semibold text-foreground font-mono tabular-nums">{services?.length || 0}</span>
-                  Layanan
-                </div>
-                {groups && groups.length > 0 && (
-                  <>
-                    <span className="text-muted-foreground/30">·</span>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span className="font-semibold text-foreground font-mono tabular-nums">{groups.length}</span>
-                      Kategori
-                    </div>
-                  </>
-                )}
-                <span className="text-muted-foreground/30">·</span>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Buka
-                </div>
               </div>
             </div>
           </div>
@@ -699,8 +701,8 @@ export function MerchantClient({ slug }: { slug: string }) {
                  >
                    <IconX className="w-4 h-4" />
                  </button>
-                 {modalService.image ? (
-                   <div className="w-full aspect-video max-h-[45vh] sm:max-h-[40vh] bg-muted flex-shrink-0">
+                  {modalService.image ? (
+                   <div className="w-full aspect-square max-h-[45vh] sm:max-h-[40vh] bg-muted flex-shrink-0 flex justify-center mx-auto">
                      <img src={imageUrl(modalService.image)} alt={modalService.name} className="w-full h-full object-cover" />
                    </div>
                  ) : (

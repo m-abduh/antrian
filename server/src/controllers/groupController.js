@@ -31,6 +31,37 @@ export async function createGroup(req, res, next) {
   }
 }
 
+export async function reorderGroups(req, res, next) {
+  try {
+    const { groupIds } = req.body;
+
+    if (!Array.isArray(groupIds) || groupIds.length === 0) {
+      return error(res, 'groupIds wajib berupa array', 400);
+    }
+
+    const groups = await Group.find({
+      _id: { $in: groupIds },
+      merchantId: req.admin.merchantId,
+    });
+
+    if (groups.length !== new Set(groupIds).size) {
+      return error(res, 'Salah satu grup tidak ditemukan', 404);
+    }
+
+    const bulkOps = groupIds.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id, merchantId: req.admin.merchantId },
+        update: { $set: { order: index + 1, updatedAt: new Date() } },
+      },
+    }));
+
+    await Group.bulkWrite(bulkOps);
+    return success(res, { message: 'Urutan grup diperbarui' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function updateGroup(req, res, next) {
   try {
     const { id } = req.params;

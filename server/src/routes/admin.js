@@ -29,6 +29,7 @@ import {
   createGroup,
   updateGroup,
   deleteGroup,
+  reorderGroups,
 } from '../controllers/groupController.js';
 
 const router = Router();
@@ -63,6 +64,7 @@ router.delete('/services/:id', deleteService);
 
 router.get('/groups', getGroups);
 router.post('/groups', createGroup);
+router.put('/groups/reorder', reorderGroups);
 router.put('/groups/:id', updateGroup);
 router.delete('/groups/:id', deleteGroup);
 

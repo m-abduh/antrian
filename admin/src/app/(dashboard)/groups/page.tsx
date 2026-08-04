@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import {
   IconPlus, IconPencil, IconTrash, IconX, IconLoader2, IconLayoutKanban,
   IconGripVertical,
@@ -97,6 +97,16 @@ export default function GroupsPage() {
     }
   };
 
+  const persistOrder = async (next: Group[]) => {
+    setGroups(next);
+    try {
+      await adminApi.reorderGroups(next.map(g => g._id));
+    } catch (err: any) {
+      setError(err.message || 'Gagal menyimpan urutan grup');
+      await fetchGroups();
+    }
+  };
+
   const toggleService = (id: string) => {
     setFormServiceIds(prev =>
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id],
@@ -150,80 +160,25 @@ export default function GroupsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <Reorder.Group
+            axis="y"
+            values={groups}
+            onReorder={persistOrder}
+            className="space-y-3"
+          >
             <AnimatePresence mode="popLayout">
               {groups.map((g) => (
-                <motion.div
+                <GroupRow
                   key={g._id}
-                  layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                >
-                  <Card className="rounded-2xl">
-                    <CardContent className="p-4 sm:p-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <IconGripVertical className="w-4 h-4 text-muted-foreground/40" />
-                          <h3 className="font-semibold text-foreground">{g.name}</h3>
-                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                            {g.serviceIds.length} layanan
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => openEdit(g)}
-                            className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                          >
-                            <IconPencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteId(g._id)}
-                            className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                          >
-                            <IconTrash className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      {g.serviceIds.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {g.serviceIds.map((s) => (
-                            <span key={s._id} className="text-xs bg-muted text-foreground px-2.5 py-1 rounded-full">
-                              {s.name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Belum ada layanan di grup ini</p>
-                      )}
-
-                      {deleteId === g._id && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="mt-3 pt-3 border-t border-border flex items-center gap-3"
-                        >
-                          <p className="text-sm text-muted-foreground">Hapus grup ini?</p>
-                          <button
-                            onClick={() => handleDelete(g._id)}
-                            className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:opacity-90 transition-all"
-                          >
-                            Hapus
-                          </button>
-                          <button
-                            onClick={() => setDeleteId(null)}
-                            className="px-3 py-1.5 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
-                          >
-                            Batal
-                          </button>
-                        </motion.div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                  group={g}
+                  openEdit={openEdit}
+                  deleteId={deleteId}
+                  setDeleteId={setDeleteId}
+                  handleDelete={handleDelete}
+                />
               ))}
             </AnimatePresence>
-          </div>
+          </Reorder.Group>
         )}
       </div>
 
@@ -307,5 +262,102 @@ export default function GroupsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function GroupRow({
+  group,
+  openEdit,
+  deleteId,
+  setDeleteId,
+  handleDelete,
+}: {
+  group: Group;
+  openEdit: (g: Group) => void;
+  deleteId: string | null;
+  setDeleteId: (id: string | null) => void;
+  handleDelete: (id: string) => void;
+}) {
+  const controls = useDragControls();
+  const g = group;
+
+  return (
+    <Reorder.Item
+      value={g}
+      dragListener={false}
+      dragControls={controls}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="cursor-default"
+    >
+      <Card className="rounded-2xl">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onPointerDown={(e) => controls.start(e)}
+                className="p-1 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors touch-none"
+                aria-label={`Pindahkan ${g.name}`}
+              >
+                <IconGripVertical className="w-4 h-4" />
+              </button>
+              <h3 className="font-semibold text-foreground">{g.name}</h3>
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {g.serviceIds.length} layanan
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => openEdit(g)}
+                className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+              >
+                <IconPencil className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setDeleteId(g._id)}
+                className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+              >
+                <IconTrash className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          {g.serviceIds.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {g.serviceIds.map((s) => (
+                <span key={s._id} className="text-xs bg-muted text-foreground px-2.5 py-1 rounded-full">
+                  {s.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Belum ada layanan di grup ini</p>
+          )}
+
+          {deleteId === g._id && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-3 pt-3 border-t border-border flex items-center gap-3"
+            >
+              <p className="text-sm text-muted-foreground">Hapus grup ini?</p>
+              <button
+                onClick={() => handleDelete(g._id)}
+                className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:opacity-90 transition-all"
+              >
+                Hapus
+              </button>
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-3 py-1.5 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
+              >
+                Batal
+              </button>
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
+    </Reorder.Item>
   );
 }

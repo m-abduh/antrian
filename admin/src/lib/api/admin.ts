@@ -80,6 +80,9 @@ export const adminApi = {
   deleteGroup: (id: string) =>
     api.delete(`/admin/groups/${id}`).then(handleResponse) as Promise<{ message: string }>,
 
+  reorderGroups: (groupIds: string[]) =>
+    api.put('/admin/groups/reorder', { groupIds }).then(handleResponse) as Promise<{ message: string }>,
+
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append('image', file);

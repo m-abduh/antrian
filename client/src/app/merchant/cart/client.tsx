@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useEffect } from 'react';
 import {
   IconUser, IconPhone, IconLoader2, IconArrowLeft, IconAlertCircle,
-  IconX, IconTrash, IconWavesElectricity, IconShoppingCart, IconPlus, IconMinus,
+  IconX, IconTrash, IconWavesElectricity, IconShoppingCart, IconPlus, IconMinus, IconNote, IconPencil,
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useMerchant } from '@/lib/hooks/useMerchant';
@@ -46,6 +46,8 @@ export function CartClient({ slug }: { slug: string }) {
   const createQueue = useCreateQueue(slug);
   const [error, setError] = useState('');
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
 
   const {
     register,
@@ -210,14 +212,24 @@ export function CartClient({ slug }: { slug: string }) {
 
               {/* Catatan */}
               <Card className="rounded-2xl">
-                <CardContent className="p-4">
-                  <label className="block text-sm font-medium text-foreground mb-2">Catatan (opsional)</label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Tulis catatan untuk merchant..."
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-20 resize-none text-sm placeholder:text-muted-foreground/60"
-                  />
+                <CardContent className="p-2">
+                  <button
+                    onClick={() => { setNoteDraft(note); setNoteModalOpen(true); }}
+                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <IconNote className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {note ? 'Catatan Anda' : 'Tambahan Catatan'}
+                      </p>
+                      <p className={`text-xs truncate ${note ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>
+                        {note || 'Tulis catatan untuk merchant (opsional)'}
+                      </p>
+                    </div>
+                    <IconPencil className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />
+                  </button>
                 </CardContent>
               </Card>
             </div>
@@ -354,6 +366,80 @@ export function CartClient({ slug }: { slug: string }) {
           </div>
         </motion.div>
       </main>
+
+      {/* Modal catatan */}
+      <AnimatePresence>
+        {noteModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            onClick={() => setNoteModalOpen(false)}
+          >
+            <motion.div
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
+              style={{ willChange: 'transform, opacity' }}
+              className="bg-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-border shadow-xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <IconNote className="w-5 h-5 text-primary" />
+                  <h3 className="font-bold text-foreground text-sm">Tambahan Catatan</h3>
+                </div>
+                <button
+                  onClick={() => setNoteModalOpen(false)}
+                  className="p-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+                >
+                  <IconX className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <textarea
+                  value={noteDraft}
+                  onChange={(e) => setNoteDraft(e.target.value)}
+                  placeholder="Contoh: tanpa cabai, gula dikit..."
+                  rows={4}
+                  autoFocus
+                  maxLength={500}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent h-24 resize-none text-sm placeholder:text-muted-foreground/60"
+                />
+                <div className="flex gap-3">
+                  {note && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setNote('');
+                        setNoteDraft('');
+                        setNoteModalOpen(false);
+                      }}
+                      className="rounded-xl text-red-500 hover:text-red-500 border-red-500/20 hover:bg-red-500/10"
+                    >
+                      <IconTrash className="w-4 h-4 mr-1" />
+                      Hapus
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setNote(noteDraft.trim());
+                      setNoteModalOpen(false);
+                    }}
+                    className="flex-1 rounded-xl"
+                  >
+                    Simpan Catatan
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -116,6 +116,14 @@ export function MerchantClient({ slug }: { slug: string }) {
   const hasVariantsOf = (service: Service) =>
     Array.isArray(service.variants) && service.variants.length > 0;
 
+  useEffect(() => {
+    if (modalService) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [modalService]);
+
   const grouplessServices = useMemo(() => {
     if (!services || !groups) return services || [];
     const groupedIds = new Set(groups.flatMap(g => g.serviceIds.map(s => s._id)));

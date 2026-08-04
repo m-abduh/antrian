@@ -679,7 +679,8 @@ export function MerchantClient({ slug }: { slug: string }) {
                initial={{ y: 60, opacity: 0 }}
                animate={{ y: 0, opacity: 1 }}
                exit={{ y: 60, opacity: 0 }}
-               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+               transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
+               style={{ willChange: 'transform, opacity' }}
                className="bg-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-border shadow-xl overflow-hidden"
                onClick={(e) => e.stopPropagation()}
              >

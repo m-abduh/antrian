@@ -78,7 +78,7 @@ function QueueActions({
   const nextLabel = nextStatus ? (statusLabels[nextStatus] || nextStatus) : '';
   const isPending = updateStatus.isPending || startServing.isPending;
   const showPayment = queue.status !== 'waiting' && queue.status !== 'skipped';
-  const canSkip = queue.status === 'waiting' || queue.status === 'called';
+  const isTerminal = queue.status === 'done' || queue.status === 'skipped';
 
   const advance = () => {
     if (nextStatus) {
@@ -89,17 +89,6 @@ function QueueActions({
       }
     }
   };
-
-  const doSkip = () => {
-    const skipLabel = specialStatuses.find(s => s.key === 'skipped')?.label || 'Lewati';
-    if (confirmStatuses.has('skipped')) {
-      onConfirmAction(queue, 'skipped', skipLabel);
-    } else {
-      handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'skip' }));
-    }
-  };
-
-  const isTerminal = queue.status === 'done' || queue.status === 'skipped';
 
   return (
     <>
@@ -117,19 +106,7 @@ function QueueActions({
           {nextLabel}
         </Button>
       )}
-      {canSkip && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={doSkip}
-          disabled={isPending}
-          className="rounded-xl text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-500/10 flex-1 md:flex-none"
-        >
-          <IconPlayerSkipForward className="w-3.5 h-3.5 mr-1.5" />
-          Lewati
-        </Button>
-      )}
-      {!isTerminal && showPayment && (
+      {showPayment && (
         <button
           onClick={() => paymentConfirm ? onConfirmPayment(queue, !queue.isPaid) : togglePayment.mutate(queue._id)}
           disabled={togglePayment.isPending}
@@ -339,7 +316,7 @@ export default function DashboardPage() {
                     exit={{ opacity: 0, x: -16 }}
                     transition={{ delay: i * 0.02 }}
                   >
-                    <Card className="rounded-2xl border border-border hover:shadow-md transition-shadow">
+                    <Card className="rounded-2xl border border-border hover:shadow-md transition-shadow relative">
                       <CardContent className="p-4 sm:p-5">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -407,7 +384,7 @@ export default function DashboardPage() {
                               )}
                             </div>
                           </div>
-                          {q.status !== 'done' && q.status !== 'skipped' && (
+                          {q.status !== 'skipped' && (
                             <div className="flex items-center gap-2 shrink-0 sm:flex-col md:flex-row">
                               <QueueActions
                                 queue={q}
@@ -424,6 +401,16 @@ export default function DashboardPage() {
                                 onConfirmPayment={(q, isPay) => setConfirmPayment({ queue: q, isPay })}
                               />
                             </div>
+                          )}
+                          {q.status !== 'done' && q.status !== 'skipped' && (
+                            <button
+                              onClick={() => setConfirmAction({ queue: q, status: 'skipped', label: 'Lewati' })}
+                              disabled={updateStatus.isPending || startServing.isPending}
+                              title="Lewati"
+                              className="absolute top-2 right-2 w-7 h-7 rounded-full border border-red-200 dark:border-red-800 text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors z-10"
+                            >
+                              <IconX className="w-3.5 h-3.5" />
+                            </button>
                           )}
                         </div>
                       </CardContent>
@@ -450,9 +437,13 @@ export default function DashboardPage() {
       <Dialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Konfirmasi</DialogTitle>
+            <DialogTitle>{confirmAction?.status === 'skipped' ? 'Lewati Antrian' : 'Konfirmasi'}</DialogTitle>
             <DialogDescription>
-              Yakin ingin mengubah status antrian <strong>{confirmAction?.queue.queueNumber} ({confirmAction?.queue.customerName})</strong> menjadi <strong>{confirmAction?.label}</strong>?
+              {confirmAction?.status === 'skipped' ? (
+                <>Yakin ingin melewati antrian <strong>{confirmAction.queue.queueNumber} ({confirmAction.queue.customerName})</strong>? Antrian ini akan ditandai <strong>Dilewati</strong>.</>
+              ) : (
+                <>Yakin ingin mengubah status antrian <strong>{confirmAction?.queue.queueNumber} ({confirmAction?.queue.customerName})</strong> menjadi <strong>{confirmAction?.label}</strong>?</>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -460,7 +451,7 @@ export default function DashboardPage() {
               <Button variant="outline" size="sm" className="rounded-xl">Batal</Button>
             </DialogClose>
             <Button
-              variant="default"
+              variant={confirmAction?.status === 'skipped' ? 'destructive' : 'default'}
               size="sm"
               onClick={() => {
                 if (confirmAction) {
@@ -471,7 +462,7 @@ export default function DashboardPage() {
               className="rounded-xl"
             >
               {updateStatus.isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-              Ya
+              {confirmAction?.status === 'skipped' ? 'Ya, Lewati' : 'Ya'}
             </Button>
           </DialogFooter>
         </DialogContent>

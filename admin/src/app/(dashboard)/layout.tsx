@@ -8,16 +8,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNotification } from '@/lib/hooks/useNotification';
 import { useAdminSocket } from '@/lib/socket-provider';
 import { Button } from '@/components/ui/button';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { queueKeys, statsKeys } from '@/lib/hooks/useAdmin';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import type { Queue } from '@/lib/types';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { permission, subscribe } = useNotification();
   const [notifLoading, setNotifLoading] = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
+  const [popupOrder, setPopupOrder] = useState<Queue | null>(null);
 
   const { socket: adminSocket, kicked } = useAdminSocket();
   const queryClient = useQueryClient();
@@ -57,6 +60,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           if (old.some(q => q._id === payload.queue._id)) return old;
           return [payload.queue, ...old];
         });
+        if (payload.queue.status === 'waiting') {
+          setPopupOrder(payload.queue);
+        }
       }
       queryClient.invalidateQueries({ queryKey: statsKeys.all });
     };
@@ -132,6 +138,46 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </main>
         </SidebarInset>
       </SidebarProvider>
+
+      <Dialog open={!!popupOrder} onOpenChange={(open) => !open && setPopupOrder(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pesanan Baru Masuk</DialogTitle>
+            <DialogDescription>
+              {popupOrder ? (
+                <>
+                  Antrian baru <strong>{popupOrder.queueNumber}</strong> atas nama{' '}
+                  <strong>{popupOrder.customerName}</strong>
+                  {popupOrder.services?.length > 0 && (
+                    <>
+                      <span className="block mt-2 text-xs text-muted-foreground">
+                        {popupOrder.services.map((s: any) => s.quantity > 1 ? `${s.name} (×${s.quantity})` : s.name).join(', ')}
+                      </span>
+                    </>
+                  )}
+                </>
+              ) : (
+                'Antrian baru masuk'
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" size="sm" className="rounded-xl">Batal</Button>
+            </DialogClose>
+            <Button
+              size="sm"
+              className="rounded-xl"
+              onClick={() => {
+                setPopupOrder(null);
+                if (pathname !== '/dashboard') router.push('/dashboard');
+              }}
+            >
+              Ke Dashboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }

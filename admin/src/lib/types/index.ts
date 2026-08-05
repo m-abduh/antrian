@@ -2,6 +2,8 @@ export interface QueueService {
   serviceId: string;
   name: string;
   price: number;
+  quantity?: number;
+  variant?: string;
 }
 
 export interface Queue {

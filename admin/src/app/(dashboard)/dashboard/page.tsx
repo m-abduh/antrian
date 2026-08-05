@@ -78,6 +78,7 @@ function QueueActions({
   const nextLabel = nextStatus ? (statusLabels[nextStatus] || nextStatus) : '';
   const isPending = updateStatus.isPending || startServing.isPending;
   const showPayment = queue.status !== 'waiting' && queue.status !== 'skipped';
+  const canSkip = queue.status === 'waiting' || queue.status === 'called';
 
   const advance = () => {
     if (nextStatus) {
@@ -86,6 +87,15 @@ function QueueActions({
       } else {
         handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'set', status: nextStatus }));
       }
+    }
+  };
+
+  const doSkip = () => {
+    const skipLabel = specialStatuses.find(s => s.key === 'skipped')?.label || 'Lewati';
+    if (confirmStatuses.has('skipped')) {
+      onConfirmAction(queue, 'skipped', skipLabel);
+    } else {
+      handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'skip' }));
     }
   };
 
@@ -99,7 +109,7 @@ function QueueActions({
           size="sm"
           onClick={advance}
           disabled={isPending}
-          className={`rounded-xl shadow-sm ${
+          className={`rounded-xl shadow-sm flex-1 md:flex-none ${
             isLastBeforeDone ? 'bg-green-500 hover:bg-green-600 text-white' : ''
           }`}
         >
@@ -107,35 +117,19 @@ function QueueActions({
           {nextLabel}
         </Button>
       )}
-      {specialStatuses.map((s) => {
-        if (queue.status === s.key) return null;
-        if (queue.status === 'done' || queue.status === 'skipped') return null;
-        if (s.key === 'skipped' && queue.status !== 'waiting') return null;
-        return (
-          <Button
-            key={s.key}
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (confirmStatuses.has(s.key)) {
-                onConfirmAction(queue, s.key, s.label);
-              } else {
-                handleMutation(() => updateStatus.mutateAsync({ id: queue._id, action: 'set', status: s.key }));
-              }
-            }}
-            disabled={isPending}
-            className={`rounded-xl ${
-              s.key === 'skipped' || s.key === 'cancelled'
-                ? 'text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-500/10'
-                : 'text-muted-foreground'
-            }`}
-          >
-            {isPending && <IconLoader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-            {s.label}
-          </Button>
-        );
-      })}
-      {showPayment && (
+      {canSkip && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={doSkip}
+          disabled={isPending}
+          className="rounded-xl text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-500/10 flex-1 md:flex-none"
+        >
+          <IconPlayerSkipForward className="w-3.5 h-3.5 mr-1.5" />
+          Lewati
+        </Button>
+      )}
+      {!isTerminal && showPayment && (
         <button
           onClick={() => paymentConfirm ? onConfirmPayment(queue, !queue.isPaid) : togglePayment.mutate(queue._id)}
           disabled={togglePayment.isPending}
@@ -168,6 +162,7 @@ export default function DashboardPage() {
   const [confirmAction, setConfirmAction] = useState<{ queue: Queue; status: string; label: string } | null>(null);
   const [confirmPayment, setConfirmPayment] = useState<{ queue: Queue; isPay: boolean } | null>(null);
   const [paymentConfirm, setPaymentConfirm] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
   const [statusConfig, setStatusConfig] = useState<{ key: string; label: string; notify?: boolean; confirm?: boolean }[]>([]);
   const [customFieldsConfig, setCustomFieldsConfig] = useState<{ key: string; label: string }[]>([]);
   const updateStatus = useUpdateQueueStatus();
@@ -227,10 +222,16 @@ export default function DashboardPage() {
   if (status !== 'authenticated' || !session?.user) return null;
 
   const filtered = queues?.filter((q) => {
+    if (showHistory) {
+      return q.status === 'done' || q.status === 'skipped';
+    }
     if (!statusFilter && q.status === 'skipped') return false;
     if (!statusFilter && q.status === 'done' && q.isPaid) return false;
     return q.customerName.toLowerCase().includes(search.toLowerCase());
   }) ?? [];
+
+  const activeOnly = queues?.filter((q) => q.status !== 'done' && q.status !== 'skipped') ?? [];
+  const historyCount = queues?.filter((q) => q.status === 'done' || q.status === 'skipped').length ?? 0;
 
   const statCards = [
     { label: 'Total Hari Ini', value: stats?.total ?? 0, icon: IconUsers, color: 'bg-blue-500' },
@@ -318,8 +319,12 @@ export default function DashboardPage() {
                 <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
                   <IconUsers className="w-8 h-8 text-muted-foreground/40" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">Tidak ada antrian</h3>
-                <p className="text-sm text-muted-foreground">Belum ada antrian untuk saat ini</p>
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  {showHistory ? 'Tidak ada riwayat' : 'Tidak ada antrian'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {showHistory ? 'Belum ada antrian yang selesai atau dilewati' : 'Belum ada antrian untuk saat ini'}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -336,67 +341,107 @@ export default function DashboardPage() {
                   >
                     <Card className="rounded-2xl border border-border hover:shadow-md transition-shadow">
                       <CardContent className="p-4 sm:p-5">
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xl font-bold text-primary">{q.queueNumber}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-semibold text-foreground truncate">{q.customerName}</h4>
-                              {statusBadge[q.status] ? (
-                                <Badge variant={statusBadge[q.status]?.variant as any} className={statusBadge[q.status]?.cls}>{statusBadge[q.status]?.label}</Badge>
-                              ) : (
-                                <Badge variant="outline">{q.status}</Badge>
-                              )}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className={`w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center ${
+                              q.status === 'done' ? 'bg-green-500/10' :
+                              q.status === 'skipped' ? 'bg-red-500/10' : 'bg-primary/10'
+                            }`}>
+                              <span className={`text-xl font-bold font-mono ${
+                                q.status === 'done' ? 'text-green-600 dark:text-green-400' :
+                                q.status === 'skipped' ? 'text-red-500 dark:text-red-400' : 'text-primary'
+                              }`}>{q.queueNumber}</span>
                             </div>
-                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                              {q.customerPhone && (
-                                <a
-                                  href={`https://wa.me/${q.customerPhone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 hover:text-primary transition-colors"
-                                >
-                                  <IconBrandWhatsapp className="w-3.5 h-3.5 text-green-500" />
-                                  {q.customerPhone}
-                                </a>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-semibold text-foreground truncate">{q.customerName}</h4>
+                                {statusBadge[q.status] ? (
+                                  <Badge variant={statusBadge[q.status]?.variant as any} className={statusBadge[q.status]?.cls}>{statusBadge[q.status]?.label}</Badge>
+                                ) : (
+                                  <Badge variant="outline">{q.status}</Badge>
+                                )}
+                                {q.isPaid && (
+                                  <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-transparent">Lunas</Badge>
+                                )}
+                              </div>
+                              {q.services?.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {q.services.map((s: any, idx: number) => {
+                                    const baseName = s.variant ? s.name.replace(` (${s.variant})`, '') : s.name;
+                                    return (
+                                      <span key={idx} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                                        {baseName}
+                                        {s.variant && <Badge variant="outline" className="px-1 py-0 text-[10px] font-normal bg-background border-primary/20 text-primary">{s.variant}</Badge>}
+                                        {s.quantity && s.quantity > 1 && <span className="font-mono">×{s.quantity}</span>}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
                               )}
-                              <span>{q.services?.map((s: any) => s.quantity > 1 ? `${s.name} (×${s.quantity})` : s.name).join(', ') || '-'}</span>
-                            </div>
-                            {q.note && (
-                              <p className="text-xs text-muted-foreground/70 mt-1 italic truncate">
-                                Catatan: {q.note}
-                              </p>
-                            )}
-                            {q.customFieldValues && Object.entries(q.customFieldValues).filter(([k]) => k !== 'customerName' && k !== 'customerPhone').map(([k, v]) => {
-                              const label = customFieldsConfig.find(f => f.key === k)?.label || k;
-                              return (
-                                <p key={k} className="text-xs text-muted-foreground/70 mt-1">
-                                  {label}: {v}
+                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
+                                {q.customerPhone && (
+                                  <a
+                                    href={`https://wa.me/${q.customerPhone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 hover:text-primary transition-colors"
+                                  >
+                                    <IconBrandWhatsapp className="w-3.5 h-3.5 text-green-500" />
+                                    {q.customerPhone}
+                                  </a>
+                                )}
+                                {q.customFieldValues && Object.entries(q.customFieldValues).filter(([k]) => k !== 'customerName' && k !== 'customerPhone').map(([k, v]) => {
+                                  const label = customFieldsConfig.find(f => f.key === k)?.label || k;
+                                  return (
+                                    <span key={k} className="inline-flex items-center gap-1">
+                                      <span className="text-muted-foreground/60">{label}:</span>
+                                      <span className="text-foreground/80">{v}</span>
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                              {q.note && (
+                                <p className="text-xs text-muted-foreground/70 mt-1 italic truncate">
+                                  Catatan: {q.note}
                                 </p>
-                              );
-                            })}
+                              )}
+                            </div>
                           </div>
-                          <QueueActions
-                            queue={q}
-                            activeStatuses={activeStatuses}
-                            statusLabels={statusLabels}
-                            specialStatuses={specialStatuses}
-                            updateStatus={updateStatus}
-                            startServing={startServing}
-                            handleMutation={handleMutation}
-                            togglePayment={togglePayment}
-                            confirmStatuses={confirmStatuses}
-                            onConfirmAction={(queue, status, label) => setConfirmAction({ queue, status, label })}
-                            paymentConfirm={paymentConfirm}
-                            onConfirmPayment={(q, isPay) => setConfirmPayment({ queue: q, isPay })}
-                          />
+                          {q.status !== 'done' && q.status !== 'skipped' && (
+                            <div className="flex items-center gap-2 shrink-0 sm:flex-col md:flex-row">
+                              <QueueActions
+                                queue={q}
+                                activeStatuses={activeStatuses}
+                                statusLabels={statusLabels}
+                                specialStatuses={specialStatuses}
+                                updateStatus={updateStatus}
+                                startServing={startServing}
+                                handleMutation={handleMutation}
+                                togglePayment={togglePayment}
+                                confirmStatuses={confirmStatuses}
+                                onConfirmAction={(queue, status, label) => setConfirmAction({ queue, status, label })}
+                                paymentConfirm={paymentConfirm}
+                                onConfirmPayment={(q, isPay) => setConfirmPayment({ queue: q, isPay })}
+                              />
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
                   </motion.div>
                 ))}
               </AnimatePresence>
+
+              <div className="pt-4">
+                <Button
+                  variant="ghost"
+                  className="w-full rounded-xl border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  onClick={() => setShowHistory((v) => !v)}
+                >
+                  <IconClock className="w-4 h-4 mr-2" />
+                  {showHistory ? `Kembali ke Antrian Aktif (${activeOnly.length})` : `Lihat Riwayat Antrian (${historyCount})`}
+                </Button>
+              </div>
             </motion.div>
           )}
         </div>

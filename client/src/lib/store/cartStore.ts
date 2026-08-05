@@ -50,7 +50,7 @@ export const useCartStore = create<CartState>()(
               _id: key,
               serviceId: service._id,
               variant: variant ? { name: variant.name, price: variant.price } : null,
-              name: variant ? `${service.name} (${variant.name})` : service.name,
+              name: service.name,
               price: variant ? variant.price : service.price,
               image: service.image || '',
               quantity: qty,

@@ -179,7 +179,10 @@ export function CartClient({ slug }: { slug: string }) {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm text-foreground truncate">{item.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          {item.variant && (
+                            <span className="inline-block text-[11px] font-medium text-primary bg-primary/10 rounded-full px-2 py-0.5 mt-1">{item.variant.name}</span>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
                             {item.price > 0 ? `Rp${item.price.toLocaleString('id-ID')}` : 'Gratis'}
                           </p>
                         </div>
@@ -241,7 +244,7 @@ export function CartClient({ slug }: { slug: string }) {
                 <CardContent className="p-4 space-y-2">
                   {items.map((item) => (
                     <div key={item._id} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground truncate mr-2">{item.name} <span className="font-mono text-muted-foreground/60">x{item.quantity}</span></span>
+                      <span className="text-muted-foreground truncate mr-2">{item.name}{item.variant && <span className="text-primary font-medium"> · {item.variant.name}</span>} <span className="font-mono text-muted-foreground/60">x{item.quantity}</span></span>
                       <span className="text-foreground tabular-nums whitespace-nowrap">
                         {item.price > 0
                           ? `Rp${(item.price * item.quantity).toLocaleString('id-ID')}`
